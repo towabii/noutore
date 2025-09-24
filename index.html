@@ -467,7 +467,6 @@ PR .............................. 底原永和
         <div class="note">行または列が埋まると消える。1列 = 100点。複数同時消去はコンボボーナス。</div>
       </div>
       
-      <!-- ★★★ 追加点 1/2: フィードバックアンケートへのリンク ★★★ -->
       <div style="margin-top:12px;">
         <div class="muted">フィードバック</div>
         <div class="note">
@@ -550,7 +549,6 @@ PR .............................. 底原永和
       '#FF6B6B', '#FFD166', '#06D6A0', '#4D96FF', '#9B5DE5', '#FF7AB6'
     ];
     
-    // ★★★ 修正点 2/2: ブロック形状の変更 ★★★
     const SHAPES = [
       // 1x1 四角
       [[0,0]],
@@ -721,24 +719,41 @@ PR .............................. 底原永和
       return true;
     }
 
-    function placePiece(piece, baseR, baseC){
-      for(const off of piece.shape){
+    // ★★★ バグ修正点 1/2: placePiece関数を修正 ★★★
+    function placePiece(piece, baseR, baseC) {
+      // 盤面にピースのデータを配置
+      for (const off of piece.shape) {
         const rr = baseR + off[0], cc = baseC + off[1];
         board[rr][cc] = { color: piece.color, id: piece.id };
       }
-      pieces = pieces.filter(p=>p.id !== piece.id);
+      // 使用したピースを手持ちから削除
+      pieces = pieces.filter(p => p.id !== piece.id);
       selectedPieceIndex = -1;
-      const cleared = clearFullLines();
-      if(cleared > 0){
-        const gained = BASE_POINTS_PER_LINE * cleared * cleared;
+
+      // 盤面を即座に再描画して配置を反映
+      renderBoard();
+
+      // ラインクリア処理と、その後の処理を定義したコールバック関数
+      const afterClearActions = () => {
+        replenishPieces();
+        renderBoard(); // ピース補充後にもう一度描画
+        checkSessionEnd();
+      };
+
+      // ラインクリア処理を開始
+      const clearedLinesCount = clearFullLines(afterClearActions);
+
+      // スコア計算と表示
+      if (clearedLinesCount > 0) {
+        const gained = BASE_POINTS_PER_LINE * clearedLinesCount * clearedLinesCount;
         score += gained;
         showScorePopup(gained);
+        // スコア表示のみ即時更新
+        scoreBox.textContent = `Score: ${score}`;
+        currentScoreEl.textContent = score;
+        highBox.textContent = `High: ${best}`;
+        bestScoreEl.textContent = best;
       }
-      
-      replenishPieces();
-      renderBoard();
-      
-      checkSessionEnd();
     }
 
     function showScorePopup(amount){
@@ -749,29 +764,37 @@ PR .............................. 底原永和
         popup.addEventListener('animationend', () => popup.remove());
     }
 
-    function clearFullLines(){
+    // ★★★ バグ修正点 2/2: clearFullLines関数を修正 ★★★
+    function clearFullLines(onClearComplete) {
       const rowsToClear = [], colsToClear = [];
-      for(let r=0;r<ROWS;r++){ if(board[r].every(cell=>cell)) rowsToClear.push(r); }
-      for(let c=0;c<COLS;c++){ if(board.every(row=>row[c])) colsToClear.push(c); }
+      for (let r = 0; r < ROWS; r++) { if (board[r].every(cell => cell)) rowsToClear.push(r); }
+      for (let c = 0; c < COLS; c++) { if (board.every(row => row[c])) colsToClear.push(c); }
+      
       const total = rowsToClear.length + colsToClear.length;
-      if(total === 0) return 0;
+
+      if (total === 0) {
+        onClearComplete(); // 消去するラインがない場合、コールバックを即時実行
+        return 0;
+      }
 
       const clearMarks = new Set();
-      rowsToClear.forEach(r => { for(let c=0;c<COLS;c++) clearMarks.add(`${r},${c}`); });
-      colsToClear.forEach(c => { for(let r=0;r<ROWS;r++) clearMarks.add(`${r},${c}`); });
+      rowsToClear.forEach(r => { for (let c = 0; c < COLS; c++) clearMarks.add(`${r},${c}`); });
+      colsToClear.forEach(c => { for (let r = 0; r < ROWS; r++) clearMarks.add(`${r},${c}`); });
 
-      clearMarks.forEach(key=>{
-        const [r,c] = key.split(',').map(Number);
-        const el = cellEl(r,c);
-        if(el && el.firstChild) el.firstChild.classList.add('clearing');
+      // アニメーション用のクラスを付与
+      clearMarks.forEach(key => {
+        const [r, c] = key.split(',').map(Number);
+        const el = cellEl(r, c);
+        if (el && el.firstChild) el.firstChild.classList.add('clearing');
       });
 
-      setTimeout(()=>{
-        clearMarks.forEach(key=>{
-          const [r,c] = key.split(',').map(Number);
+      // アニメーション（400ms）後にデータ更新とコールバック実行
+      setTimeout(() => {
+        clearMarks.forEach(key => {
+          const [r, c] = key.split(',').map(Number);
           board[r][c] = null;
         });
-        renderBoard();
+        onClearComplete(); // データ更新が完了してからコールバックを実行
       }, 400);
 
       return total;
