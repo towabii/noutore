@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+<title>Jiometrie Dash</title>
+<link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🟩</text></svg>">
+<style>
+  :root{
+    --bg: #222c38;
+    --primary-neon: #00f2ff;
+    --secondary-neon: #ff00ff;
+    --player-color: #39ff14;
+    --ground-color: #384557;
+    --text-primary: #ffffff;
+    --font-family: 'Pusab', sans-serif;
+  }
+
+  @import url('https://fonts.googleapis.com/css2?family=Pusab&display=swap');
+
+  html,body{
+    height:100%; width: 100%; margin:0;
+    font-family: var(--font-family);
+    background: #000;
+    color: var(--text-primary);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    user-select:none;
+    overflow: hidden;
+  }
+
+  #game-viewport { position: fixed; inset: 0; background: radial-gradient(circle, #4a0f70, #1e1033); overflow: hidden; }
+  #game-world { position: absolute; height: 100%; transform-style: preserve-3d; }
+  #background-layer { position: fixed; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 50px 50px; opacity: 0.5; }
+  
+  #player {
+    width: 30px; height: 30px; position: absolute;
+    left: 150px; bottom: 50px; z-index: 10;
+    background-color: var(--player-color);
+    box-shadow: 0 0 15px var(--player-color);
+    display: flex; justify-content: center; align-items: center;
+    transition: transform 0.1s linear;
+  }
+  #player-inner { width: 14px; height: 14px; background: #000; }
+  #player.jump { transform: rotate(90deg); }
+
+  .obstacle { position: absolute; border: 2px solid #fff; box-shadow: 0 0 10px var(--primary-neon), inset 0 0 8px #fff; }
+  .obstacle.block { width: 40px; height: 40px; background-color: var(--ground-color); }
+  
+  /* ▼▼▼ 修正点: スパイクの視認性向上 ▼▼▼ */
+  .obstacle.spike {
+    width: 0; height: 0;
+    border-left: 20px solid transparent;
+    border-right: 20px solid transparent;
+    border-bottom: 30px solid var(--primary-neon);
+    background: transparent;
+    border-style: solid;
+    border-color: transparent transparent var(--primary-neon) transparent;
+    box-shadow: none; /* 本体には影をつけない */
+    position: relative;
+  }
+  .obstacle.spike::before {
+    content: '';
+    position: absolute;
+    left: -22px; top: 1px;
+    width: 0; height: 0;
+    border-left: 22px solid transparent;
+    border-right: 22px solid transparent;
+    border-bottom: 33px solid #fff;
+    z-index: -1;
+    filter: drop-shadow(0 0 8px var(--primary-neon));
+  }
+  /* ▲▲▲ 変更ここまで ▲▲▲ */
+
+  .obstacle.spike.top { transform: rotate(180deg); }
+
+  #ground, #ceiling { position: fixed; left: 0; right: 0; height: 50px; z-index: 20; }
+  #ground { bottom: 0; }
+  #ceiling { top: 0; }
+  .ground-spike-pattern, .ceiling-spike-pattern { position: absolute; width: 200%; height: 100%; will-change: transform; }
+  .ground-spike-pattern { background: linear-gradient(135deg, var(--ground-color) 12px, transparent 0), linear-gradient(-135deg, var(--ground-color) 12px, transparent 0); background-size: 25px 50px; }
+  .ceiling-spike-pattern { background: linear-gradient(45deg, var(--ground-color) 12px, transparent 0), linear-gradient(-45deg, var(--ground-color) 12px, transparent 0); background-size: 25px 50px; }
+  .ground-base, .ceiling-base { position: absolute; left: 0; right: 0; height: 25px; background: var(--ground-color); }
+  .ground-base { bottom: 0; }
+  .ceiling-base { top: 0; }
+
+  .jump-orb { position: absolute; z-index: 5; width: 30px; height: 30px; border-radius: 50%; background: #f6e05e; border: 3px solid #fff; box-shadow: 0 0 20px #f6e05e, 0 0 30px #fff; }
+  #finish-line { position: absolute; width: 20px; height: 100%; bottom: 0; background: repeating-linear-gradient(var(--secondary-neon), var(--secondary-neon) 20px, #fff 20px, #fff 40px); box-shadow: 0 0 20px var(--secondary-neon); }
+  
+  #score-ui { position: fixed; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; align-items: center; color: white; font-size: 1.2rem; text-shadow: 0 0 5px #000, 0 0 10px var(--secondary-neon); z-index: 100; pointer-events: none; }
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; transition: opacity 0.3s ease; }
+  .modal-content { background: rgba(0,0,0,0.8); border: 2px solid var(--primary-neon); box-shadow: 0 0 20px var(--primary-neon); border-radius: 10px; padding: 24px; width: 100%; max-width: 500px; transform: scale(0.95); opacity: 0; animation: modal-enter 0.3s forwards; }
+  @keyframes modal-enter { to { transform: scale(1); opacity: 1; } }
+  #level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px; margin-top: 16px; }
+  .level-btn { padding: 20px 10px; border-radius: 8px; background: #000; border: 2px solid var(--primary-neon); cursor: pointer; font-size: 24px; color: var(--text-primary); text-shadow: 0 0 10px var(--primary-neon); transition: all 0.2s ease; }
+  .level-btn:hover { transform: translateY(-4px) scale(1.05); background: var(--primary-neon); color: #000; text-shadow: none; }
+  button.btn { width: 100%; padding: 12px 18px; border-radius: 8px; background:var(--primary-neon); color:#000; border:none; cursor:pointer; font-size: 18px; font-family: var(--font-family); text-shadow: none; transition: all 0.2s ease; }
+  button.btn.ghost { background:transparent; color: var(--primary-neon); border: 2px solid var(--primary-neon); }
+  button.btn:hover { box-shadow: 0 0 20px var(--primary-neon); transform: scale(1.02); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+    <div id="game-viewport">
+        <div id="background-layer"></div>
+        <div id="game-world"></div>
+        <div id="player">
+            <div id="player-inner"></div>
+        </div>
+        <div id="ground">
+            <div class="ground-base"></div>
+            <div class="ground-spike-pattern"></div>
+        </div>
+        <div id="ceiling">
+            <div class="ceiling-base"></div>
+            <div class="ceiling-spike-pattern"></div>
+        </div>
+    </div>
+    
+    <div id="score-ui">
+        <div id="levelDisplay">LVL: -</div>
+        <div id="scoreDisplay">SCORE: 0</div>
+        <div id="highScoreDisplay">BEST: 0</div>
+    </div>
+    
+    <div id="levelSelectModal" class="modal-overlay">
+      <div class="modal-content">
+        <h2 style="text-align: center; margin-top:0;">SELECT LEVEL</h2>
+        <div id="level-grid"></div>
+      </div>
+    </div>
+    
+    <div id="pauseModal" class="modal-overlay hidden">
+        <div class="modal-content" style="text-align: center;">
+            <h2>PAUSED</h2>
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                <button class="btn" id="resumeBtn">RESUME</button>
+                <button class="btn ghost" id="quitBtn">LEVEL SELECT</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="levelCompleteModal" class="modal-overlay hidden">
+        <div class="modal-content" style="text-align: center;">
+            <h2 id="levelCompleteTitle">LEVEL CLEAR!</h2>
+            <p id="levelCompleteScore" style="font-size: 18px; margin: 16px 0;"></p>
+            <p id="levelCompleteBest" style="font-size: 16px; margin: 16px 0; color: var(--player-color);"></p>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-top: 24px;">
+                <button class="btn" id="nextLevelBtn">NEXT LEVEL</button>
+                <button class="btn ghost" id="quitCompleteBtn">LEVEL SELECT</button>
+            </div>
+        </div>
+    </div>
+
+  <audio id="jumpAudio" src="https://www.soundjay.com/switch/sounds/switch-1.mp3"></audio>
+  <audio id="failAudio" src="https://www.soundjay.com/misc/sounds/fail-buzzer-01.mp3"></audio>
+  <audio id="clearAudio" src="https://www.soundjay.com/buttons/sounds/button-7.mp3"></audio>
+
+  <script>
+  window.addEventListener('DOMContentLoaded', initGame);
+
+  function initGame() {
+    const DOM = {
+        player: document.getElementById('player'),
+        gameWorld: document.getElementById('game-world'),
+        groundSpikes: document.querySelector('.ground-spike-pattern'),
+        ceilingSpikes: document.querySelector('.ceiling-spike-pattern'),
+        levelDisplay: document.getElementById('levelDisplay'),
+        scoreDisplay: document.getElementById('scoreDisplay'),
+        highScoreDisplay: document.getElementById('highScoreDisplay'),
+        levelSelectModal: document.getElementById('levelSelectModal'),
+        levelGrid: document.getElementById('level-grid'),
+        pauseModal: document.getElementById('pauseModal'),
+        levelCompleteModal: document.getElementById('levelCompleteModal'),
+        jumpAudio: document.getElementById('jumpAudio'),
+        failAudio: document.getElementById('failAudio'),
+        clearAudio: document.getElementById('clearAudio'),
+        nextLevelBtn: document.getElementById('nextLevelBtn'),
+        quitCompleteBtn: document.getElementById('quitCompleteBtn'),
+        resumeBtn: document.getElementById('resumeBtn'),
+        quitBtn: document.getElementById('quitBtn'),
+    };
+    
+    const CONSTANTS = {
+        GRAVITY: 0.7,
+        JUMP_POWER: -14,
+        ORB_JUMP_POWER: -15,
+        GROUND_HEIGHT: 50,
+        CEILING_HEIGHT: 50,
+        PLAYER_WIDTH: 30,
+        PLAYER_HEIGHT: 30,
+        PLAYER_START_X: 150,
+        GAME_SPEED: 8.5,
+    };
+    
+    let state = {
+        gameState: 'MENU',
+        currentLevel: 0,
+        score: 0,
+        highScores: {},
+        velocityY: 0,
+        scrollX: 0,
+        gameLoopId: null,
+        playerY: 0,
+        previousPlayerY: 0,
+    };
+    
+    const LEVELS = [
+        { id: 1, len: 6000, data: [ {type: 'spike', x: 800, y: 0}, {type: 'block', x: 1200, y: 0}, {type: 'spike', x: 1500, y: 0}, {type: 'spike', x: 1540, y: 0}, {type: 'block', x: 2000, y: 0}, {type: 'block', x: 2040, y: 40}, {type: 'spike', x: 2500, y: 0}, {type: 'spike', x: 2540, y: 0}, {type: 'spike', x: 2580, y: 0}, {type: 'block', x: 3000, y: 60}, {type: 'block', x: 3500, y: 0}, {type: 'spike', x: 3540, y: 0}, {type: 'block', x: 4000, y: 0}, {type: 'block', x: 4040, y: 0}, {type: 'spike', x: 4500, y: 0}, {type: 'block', x: 5000, y: 0}, {type: 'block', x: 5040, y: 40}, {type: 'block', x: 5080, y: 80}, ]},
+        { id: 2, len: 7000, data: [ {type: 'block', x: 600, y: 0}, {type: 'block', x: 640, y: 40}, {type: 'spike', x: 900, y: 0}, {type: 'spike', x: 940, y: 0}, {type: 'jump-orb', x: 1200, y: 80}, {type: 'spike', x: 1500, y: 0}, {type: 'block', x: 1800, y: 80}, {type: 'jump-orb', x: 2100, y: 40}, {type: 'jump-orb', x: 2280, y: 40}, {type: 'spike', x: 2600, y: 0}, {type: 'block', x: 2640, y: 0}, {type: 'block', x: 3000, y: 0}, {type: 'block', x: 3200, y: 40}, {type: 'block', x: 3400, y: 80}, {type: 'spike', x: 3800, y: 0}, {type: 'jump-orb', x: 4200, y: 100}, {type: 'block', x: 4500, y: 0}, {type: 'spike', x: 5000, y: 0}, {type: 'spike', x: 5040, y: 0}, {type: 'spike', x: 5080, y: 0}, {type: 'block', x: 5500, y: 0}, {type: 'block', x: 5540, y: 0}, {type: 'jump-orb', x: 6000, y: 60}, ]},
+        { id: 3, len: 7500, data: [ {type: 'spike', x: 500, y: 0}, {type: 'block', x: 700, y: 100, top: true}, {type: 'block', x: 900, y: 0}, {type: 'spike', x: 1100, y: 120, top: true}, {type: 'spike', x: 1300, y: 0}, {type: 'spike', x: 1340, y: 0}, {type: 'block', x: 1600, y: 0}, {type: 'jump-orb', x: 1750, y: 80}, {type: 'block', x: 2000, y: 100, top: true}, {type: 'block', x: 2040, y: 100, top: true}, {type: 'spike', x: 2400, y: 0}, {type: 'block', x: 2800, y: 40}, {type: 'spike', x: 3100, y: 0}, {type: 'jump-orb', x: 3400, y: 40}, {type: 'jump-orb', x: 3580, y: 80}, {type: 'spike', x: 3900, y: 120, top: true}, {type: 'spike', x: 3940, y: 120, top: true}, ]},
+        ...Array.from({length: 7}, (_, i) => ({ id: i + 4, len: 8000 + i * 500, data: [ {type: 'spike', x: 500 + i*50, y: 0}, {type: 'spike', x: 540+ i*50, y: 0}, {type: 'block', x: 800 + i*100, y: 0}, {type: 'jump-orb', x: 950 + i*100, y: 80}, {type: 'spike', x: 1200 + i*100, y: 100, top: true}, ]}))
+    ];
+
+    function setupLevel(levelId) {
+        const levelData = LEVELS.find(l => l.id === levelId);
+        if (!levelData) return;
+        state.currentLevel = levelId;
+        state.scrollX = 0; state.score = 0; state.velocityY = 0;
+        
+        DOM.gameWorld.innerHTML = '';
+        DOM.gameWorld.style.width = `${levelData.len}px`;
+        
+        levelData.data.forEach(item => {
+            const el = document.createElement('div');
+            el.className = item.type === 'jump-orb' ? 'jump-orb' : `obstacle ${item.type}`;
+            el.style.left = `${item.x}px`;
+            
+            if (item.top) {
+                el.style.top = `${CONSTANTS.CEILING_HEIGHT + item.y}px`;
+                if(item.type === 'spike') el.classList.add('top');
+            } else {
+                el.style.bottom = `${CONSTANTS.GROUND_HEIGHT + item.y}px`;
+            }
+            DOM.gameWorld.appendChild(el);
+        });
+
+        const finishLine = document.createElement('div');
+        finishLine.id = 'finish-line';
+        finishLine.style.left = `${levelData.len - 100}px`;
+        DOM.gameWorld.appendChild(finishLine);
+        
+        state.playerY = CONSTANTS.GROUND_HEIGHT;
+        DOM.player.style.bottom = `${state.playerY}px`;
+        DOM.player.style.transform = 'rotate(0deg)';
+        updateUI();
+    }
+
+    function startGame(levelId) {
+        setupLevel(levelId);
+        DOM.levelSelectModal.classList.add('hidden');
+        state.gameState = 'PLAYING';
+        gameLoop();
+    }
+    
+    function gameLoop() {
+        if (state.gameState !== 'PLAYING') return;
+
+        state.previousPlayerY = state.playerY;
+        state.velocityY += CONSTANTS.GRAVITY;
+        state.playerY -= state.velocityY;
+        
+        let onPlatform = false;
+        const playerLeft = CONSTANTS.PLAYER_START_X;
+        const playerRight = playerLeft + CONSTANTS.PLAYER_WIDTH;
+
+        // ▼▼▼ 修正点: 衝突判定をプレイヤー周辺のみに限定 ▼▼▼
+        const checkRangeStart = state.scrollX;
+        const checkRangeEnd = state.scrollX + window.innerWidth;
+
+        for (const obs of DOM.gameWorld.children) {
+            const obsLeft = parseFloat(obs.style.left);
+            // 判定範囲外のオブジェクトはスキップ
+            if (obsLeft > checkRangeEnd || obsLeft + 100 < checkRangeStart) {
+                continue;
+            }
+
+            const obsScreenLeft = obsLeft - state.scrollX;
+            const obsWidth = obs.classList.contains('spike') ? 40 : parseFloat(obs.style.width) || 40;
+            const obsRight = obsScreenLeft + obsWidth;
+
+            if (playerRight > obsScreenLeft && playerLeft < obsRight) {
+                const obsIsTop = obs.style.top !== '';
+                const obsVerticalPos = parseFloat(obs.style.bottom || obs.style.top);
+                const obsHeight = obs.classList.contains('spike') ? 30 : 40;
+                const obsBottom = obsIsTop ? window.innerHeight - obsVerticalPos - obsHeight : obsVerticalPos;
+                const obsTop = obsBottom + obsHeight;
+
+                if (state.playerY + CONSTANTS.PLAYER_HEIGHT > obsBottom && state.playerY < obsTop) {
+                    if (obs.id === 'finish-line') { handleLevelComplete(); return; }
+                    if (obs.classList.contains('spike') || obs.classList.contains('jump-orb')) {
+                        // Jump orbs are handled by input, so they don't cause collision here
+                        if(!obs.classList.contains('jump-orb')) {
+                             handleFail(); return;
+                        }
+                    } else if (obs.classList.contains('block')) {
+                        if (state.velocityY >= 0 && state.previousPlayerY >= obsTop) {
+                            state.playerY = obsTop;
+                            state.velocityY = 0;
+                            onPlatform = true;
+                        } else {
+                            handleFail(); return;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!onPlatform && state.playerY < CONSTANTS.GROUND_HEIGHT) {
+            state.playerY = CONSTANTS.GROUND_HEIGHT;
+            state.velocityY = 0;
+        }
+        if (state.playerY + CONSTANTS.PLAYER_HEIGHT > window.innerHeight - CONSTANTS.CEILING_HEIGHT) {
+            handleFail(); return;
+        }
+
+        DOM.player.style.bottom = `${state.playerY}px`;
+        
+        state.scrollX += CONSTANTS.GAME_SPEED;
+        DOM.gameWorld.style.transform = `translateX(-${state.scrollX}px)`;
+        DOM.groundSpikes.style.transform = `translateX(-${state.scrollX % 25}px)`;
+        DOM.ceilingSpikes.style.transform = `translateX(-${state.scrollX % 25}px)`;
+        
+        state.score++;
+        updateUI();
+        state.gameLoopId = requestAnimationFrame(gameLoop);
+    }
+    
+    function handleFail() {
+        if (state.gameState === 'FAIL') return;
+        playSound(DOM.failAudio);
+        state.gameState = 'FAIL';
+        cancelAnimationFrame(state.gameLoopId);
+        DOM.player.style.backgroundColor = '#c53030';
+        setTimeout(() => {
+            DOM.player.style.backgroundColor = 'var(--player-color)';
+            startGame(state.currentLevel);
+        }, 800);
+    }
+
+    function handleLevelComplete() {
+        if (state.gameState !== 'PLAYING') return;
+        playSound(DOM.clearAudio);
+        state.gameState = 'LEVEL_COMPLETE';
+        cancelAnimationFrame(state.gameLoopId);
+        const isNewBest = !state.highScores[state.currentLevel] || state.score < state.highScores[state.currentLevel];
+        if (isNewBest) { state.highScores[state.currentLevel] = state.score; saveHighScores(); }
+        document.getElementById('levelCompleteTitle').textContent = `LEVEL ${state.currentLevel} CLEAR!`;
+        document.getElementById('levelCompleteScore').textContent = `SCORE: ${state.score}`;
+        document.getElementById('levelCompleteBest').textContent = isNewBest ? `NEW BEST!` : `BEST: ${state.highScores[state.currentLevel]}`;
+        DOM.nextLevelBtn.style.display = (state.currentLevel === LEVELS.length) ? 'none' : 'block';
+        DOM.levelCompleteModal.classList.remove('hidden');
+    }
+
+    function jump(isOrbJump) {
+        playSound(DOM.jumpAudio);
+        DOM.player.classList.add('jump');
+        DOM.player.addEventListener('animationend', () => DOM.player.classList.remove('jump'), { once: true });
+        state.velocityY = isOrbJump ? CONSTANTS.ORB_JUMP_POWER : CONSTANTS.JUMP_POWER;
+    }
+    
+    function handleInput() {
+        if (state.gameState !== 'PLAYING') return;
+        const playerRect = DOM.player.getBoundingClientRect();
+        for (const orb of DOM.gameWorld.querySelectorAll('.jump-orb')) {
+            if (checkCollision(playerRect, orb.getBoundingClientRect())) { jump(true); return; }
+        }
+        if (state.velocityY === 0) { jump(false); }
+    }
+
+    function checkCollision(rectA, rectB) { return rectA.right > rectB.left && rectA.left < rectB.right && rectA.bottom > rectB.top && rectA.top < rectB.bottom; }
+    function updateUI() { DOM.levelDisplay.textContent = `LVL: ${state.currentLevel}`; DOM.scoreDisplay.textContent = `SCORE: ${state.score}`; DOM.highScoreDisplay.textContent = `BEST: ${state.highScores[state.currentLevel] || '-'}`; }
+    function createLevelSelection() { DOM.levelGrid.innerHTML = ''; LEVELS.forEach(level => { const btn = document.createElement('button'); btn.className = 'level-btn'; btn.textContent = level.id; btn.onclick = () => startGame(level.id); DOM.levelGrid.appendChild(btn); }); }
+    function showMenu() { state.gameState = 'MENU'; if(state.gameLoopId) cancelAnimationFrame(state.gameLoopId); DOM.levelSelectModal.classList.remove('hidden'); DOM.pauseModal.classList.add('hidden'); DOM.levelCompleteModal.classList.add('hidden'); }
+    function pauseGame() { if (state.gameState !== 'PLAYING') return; state.gameState = 'PAUSED'; cancelAnimationFrame(state.gameLoopId); DOM.pauseModal.classList.remove('hidden'); }
+    function resumeGame() { if (state.gameState !== 'PAUSED') return; state.gameState = 'PLAYING'; DOM.pauseModal.classList.add('hidden'); gameLoop(); }
+    function loadHighScores() { try { state.highScores = JSON.parse(localStorage.getItem('jiometrie_dash_hs')) || {}; } catch (e) { state.highScores = {}; } }
+    function saveHighScores() { localStorage.setItem('jiometrie_dash_hs', JSON.stringify(state.highScores)); }
+    function playSound(audio) { if (!audio) return; audio.currentTime = 0; audio.play().catch(e => {}); }
+
+    document.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp') { e.preventDefault(); handleInput(); } if (e.key === 'Escape') { if (state.gameState === 'PLAYING') pauseGame(); else if (state.gameState === 'PAUSED') resumeGame(); } });
+    DOM.gameViewport.addEventListener('mousedown', handleInput);
+    DOM.gameViewport.addEventListener('touchstart', (e) => { e.preventDefault(); handleInput(); });
+    DOM.resumeBtn.onclick = resumeGame;
+    DOM.quitBtn.onclick = showMenu;
+    DOM.nextLevelBtn.onclick = () => { DOM.levelCompleteModal.classList.add('hidden'); if (state.currentLevel < LEVELS.length) { startGame(state.currentLevel + 1); } };
+    DOM.quitCompleteBtn.onclick = showMenu;
+
+    loadHighScores();
+    createLevelSelection();
+    showMenu();
+  }
+  </script>
+</body>
+</html>
