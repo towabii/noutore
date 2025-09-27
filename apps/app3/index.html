@@ -1,0 +1,987 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ocearya-翻訳</title>
+<link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+<style>
+  :root{
+    --wood-bg: #f3d9b1;
+    --wood-dark: #6f4e37;
+    --panel-bg: #fdf6e8;
+    --text-color: #5a3d2b;
+    --accent-color: #e9c28a;
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --highlight-color: rgba(255, 255, 255, 0.6);
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: 'M PLUS Rounded 1c', "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    background-color: var(--wood-bg);
+    background-image:
+      linear-gradient(90deg, rgba(111, 78, 55, 0.07) 50%, transparent 50%),
+      linear-gradient(rgba(111, 78, 55, 0.07) 50%, transparent 50%);
+    background-size: 50px 50px;
+    color: var(--text-color);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    user-select:none;
+    overflow: hidden;
+  }
+
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  /* ローディング画面のスタイル */
+  #loader {
+    position: fixed;
+    inset: 0;
+    background: #000;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+  .hidden {
+    display: none !important;
+  }
+
+  #skipBtn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 10000;
+    font-weight: bold;
+  }
+  #skipBtn:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* スタッフロールコンテナ */
+  #staffRollContainer {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* クレジットリスト */
+  .credits-list {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 700px;
+    color: #e0e0e0;
+    text-align: center;
+    font-size: 16px;
+    animation: scroll-up 14s linear forwards;
+  }
+  .credits-list pre {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+    font-size: 1em;
+    line-height: 1.8;
+    text-align: left;
+    white-space: pre-wrap;
+    margin: 0;
+  }
+
+  @keyframes scroll-up {
+    0% {
+      top: 100%;
+    }
+    100% {
+      top: -100%;
+    }
+  }
+
+  /* ロード完了後表示 */
+  #loadComplete {
+    text-align: center;
+    color: #fff;
+    opacity: 0;
+  }
+  #loadComplete h1 {
+    font-size: 48px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.1em;
+    text-shadow: 0 0 10px #4D96FF, 0 0 20px #4D96FF;
+    margin-bottom: 8px;
+  }
+
+  /* フェードイン/アウトアニメーション */
+  @keyframes fade-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+  .fade-in { animation: fade-in 1s ease-out forwards; }
+  .fade-out { animation: fade-out 1s ease-in forwards; }
+
+  .app {
+    width: 100%;
+    max-width:1100px;
+    margin: 20px;
+    padding:0;
+    display:grid;
+    grid-template-columns: 1fr 320px;
+    gap:20px;
+    align-items:start;
+    position: relative;
+  }
+
+  /* 左：ゲームパネル */
+  .game-panel {
+    background: var(--panel-bg);
+    border-radius:18px;
+    padding:18px;
+    box-shadow: 0 10px 20px var(--shadow-color), 0 0 0 10px var(--wood-dark), 0 0 0 12px var(--accent-color);
+    position: relative;
+    border: 3px solid var(--highlight-color);
+  }
+
+  .header {
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .title {
+    font-size:24px;
+    font-weight:800;
+  }
+  .meta .box {
+    background: var(--accent-color);
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 16px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 2px 2px rgba(255,255,255,0.5);
+    border: 2px solid var(--text-color);
+  }
+
+  .board-wrap {
+    display:flex;
+    gap:18px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  /* ゲームコンテナ */
+  .board {
+    --game-width: 400px;
+    --game-height: 500px;
+    width: var(--game-width);
+    height: var(--game-height);
+    background-color: #f3d9b1;
+    background-image: linear-gradient(rgba(111, 78, 55, 0.1) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(111, 78, 55, 0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    border-radius: 10px;
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+    border: 10px solid var(--wood-dark);
+    box-sizing: border-box;
+    position: relative;
+  }
+
+  .board canvas {
+    border-radius: 0;
+  }
+
+  .feedback-popup {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 52px;
+    font-weight: 900;
+    color: #fff;
+    -webkit-text-stroke: 2px #d62828;
+    text-shadow: 0 0 10px #f77f00, 0 0 20px #fcbf49, 0 0 30px #eae2b7;
+    pointer-events: none;
+    z-index: 100;
+    white-space: nowrap;
+    animation: feedback-popup-animation 1.2s ease-out forwards;
+  }
+  @keyframes feedback-popup-animation {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
+    20% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
+  }
+
+  /* 右：サイドパネル */
+  .side {
+    background: var(--panel-bg);
+    border-radius: 18px;
+    padding: 18px;
+    box-shadow: 0 8px 16px var(--shadow-color), 0 0 0 10px var(--wood-dark), 0 0 0 12px var(--accent-color);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    border: 3px solid var(--highlight-color);
+  }
+  .side h3 { margin:0; font-size:18px; font-weight:800; text-align: center; }
+  .pieces {
+    display:flex;
+    gap:12px;
+    align-items:center;
+    justify-content:center;
+  }
+  .piece-card {
+    background: var(--accent-color);
+    padding:10px;
+    border-radius: 15px;
+    min-width:100px;
+    min-height:100px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border: 4px solid var(--wood-dark);
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+  }
+
+  .piece-grid {
+    font-size: 50px;
+    filter: drop-shadow(3px 3px 3px rgba(0,0,0,0.3));
+  }
+  
+  button.btn {
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f7b267, #f4845f);
+    color: #fff;
+    border: 3px solid var(--wood-dark);
+    cursor: pointer;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2), inset 0 2px 2px rgba(255,255,255,0.5);
+    transition: all 0.1s ease;
+  }
+  button.btn:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2), inset 0 2px 2px rgba(255,255,255,0.5);
+  }
+
+  .scorebox {
+    display:flex;
+    gap:8px;
+    align-items:center;
+    justify-content:space-between;
+    margin-top:6px;
+    font-size: 18px;
+  }
+
+  /* ★★★ 新規追加: 進化順リスト ★★★ */
+  .evolution-guide {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 3px dashed var(--accent-color);
+  }
+  .evolution-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    margin-top: 8px;
+  }
+  .evolution-item {
+    font-size: 18px;
+  }
+  .evolution-arrow {
+    font-size: 14px;
+    color: var(--wood-dark);
+  }
+
+  
+  .game-over {
+    position:absolute;
+    inset:10px;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(4px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    z-index:40;
+    pointer-events:none;
+  }
+  .go-card {
+    background: var(--panel-bg);
+    padding: 24px;
+    border-radius: 15px;
+    text-align: center;
+    color: var(--text-color);
+    pointer-events: auto;
+    border: 5px solid var(--wood-dark);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  }
+
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-content {
+    background: var(--panel-bg);
+    border: 5px solid var(--wood-dark);
+    border-radius: 12px;
+    padding: 24px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    color: var(--text-color);
+  }
+  .modal-content h2 {
+    color: var(--text-color);
+    margin-top: 0;
+    font-size: 20px;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  .modal-content .sub-header {
+    font-weight: bold;
+    margin-top: 16px;
+    margin-bottom: 4px;
+    color: var(--wood-dark);
+  }
+  .modal-footer { text-align: right; margin-top: 24px; }
+  .cheat-input {
+    width: 100%; padding: 10px; border-radius: 6px;
+    background: var(--accent-color);
+    border: 2px solid var(--wood-dark);
+    color: var(--text-color); font-size: 16px; margin-top: 8px; box-sizing: border-box;
+  }
+  
+  #hamburger-icon {
+    position: absolute; top: 20px; right: 20px; width: 30px; height: 22px; cursor: pointer; z-index: 1002;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  #hamburger-icon span { display: block; height: 4px; width: 100%; background: var(--wood-dark); border-radius: 3px; transition: all 0.3s ease-in-out; }
+  #menu-panel {
+    position: fixed; top: 0; right: -300px; width: 280px; height: 100%;
+    background: var(--panel-bg);
+    border-left: 5px solid var(--wood-dark);
+    box-shadow: -5px 0 25px rgba(0,0,0,0.5); z-index: 1001; transition: right 0.4s ease-in-out;
+    padding: 80px 20px 20px; box-sizing: border-box;
+  }
+  #menu-panel.open { right: 0; }
+  .menu-item { padding: 15px 10px; border-bottom: 2px solid var(--accent-color); color: var(--text-color); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+  .menu-item:hover { background: var(--accent-color); }
+  .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background-color: var(--accent-color); transition: .4s; border-radius: 28px; }
+  .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: #f4845f; }
+  input:checked + .slider:before { transform: translateX(22px); }
+
+  #qrcode { display: flex; justify-content: center; margin: 20px 0; background: white; padding: 10px; border-radius: 8px; }
+  .url-container { display: flex; gap: 8px; }
+  .url-input { flex-grow: 1; padding: 8px; background: var(--accent-color); border: 2px solid var(--wood-dark); color: var(--text-color); border-radius: 6px; }
+
+  /* 偽翻訳サイトはデザイン変更しない */
+  #fake-translator {
+    position: fixed; inset: 0; background: #fff; z-index: 10000; color: #202124;
+    font-family: 'Roboto', 'Noto Sans JP', sans-serif; display: flex; flex-direction: column;
+  }
+  .translator-header { display: flex; justify-content: flex-start; align-items: center; padding: 12px 24px; border-bottom: 1px solid #e0e0e0; }
+  .translator-header .logo { font-size: 22px; font-weight: 500; color: #5f6368; display: flex; align-items: center; gap: 8px; }
+  .translator-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; flex-grow: 1; padding: 24px; }
+  .translator-panel { border: 1px solid #dadce0; border-radius: 8px; display: flex; flex-direction: column; }
+  .lang-selector-bar { display: flex; border-bottom: 1px solid #dadce0; }
+  .lang-selector { padding: 12px 16px; border: none; background: none; cursor: pointer; font-weight: 500; color: #1a73e8; }
+  .translator-textarea { flex-grow: 1; resize: none; border: none; padding: 16px; font-size: 18px; box-sizing: border-box; background: none; color: #202124; }
+  .translator-textarea:focus { outline: none; }
+  .translator-controls { display: flex; align-items: center; }
+  #translate-btn { padding: 10px; background: none; border: 1px solid #dadce0; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; }
+
+  /* small helpers */
+  .note { font-size:14px; color: var(--wood-dark); }
+  .muted { color: #9c7b64; font-size:14px; font-weight: 600; }
+  .center { text-align:center; }
+  @media (max-width:980px){
+    .container { align-items: flex-start; }
+    .app{ grid-template-columns: 1fr; padding: 12px; margin: 0; }
+    .side{ order:2; }
+    .game-panel{ order:1; }
+    .board { --game-width: 90vw; --game-height: 112.5vw; max-width: 400px; max-height: 500px; }
+    .piece-card { min-width: 70px; min-height: 70px; padding: 5px;}
+    .piece-grid { font-size: 36px; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div id="loader">
+      <button id="skipBtn">スキップ</button>
+      <div id="staffRollContainer">
+        <div class="credits-list">
+          <pre>
+プロデューサー .................. 底原永和
+ディレクター .................... 底原永和
+エグゼクティブプロデューサー .... 底原永和
+アシスタントプロデューサー ...... 底原永和
+
+デザイン ........................ 底原永和
+シナリオ ........................ 底原永和
+レベルデザイン .................. 底原永和
+バランス調整 .................... 底原永和
+UI/UXデザイン ................... 底原永和
+
+プログラムリード ................ 底原永和
+エンジンプログラマー ............ 底原永和
+ネットワークプログラマー ........ 底原永和
+AIプログラマー .................. 底原永和
+ツールプログラマー .............. 底原永和
+サウンドプログラマー ............ 底原永和
+グラフィックプログラマー ........ 底原永和
+
+アートディレクター .............. 底原永和
+キャラクターデザイナー .......... 底原永和
+モンスターデザイナー ............ 底原永和
+背景デザイナー .................. 底原永和
+UIデザイナー .................... 底原永和
+2Dアーティスト .................. 底原永和
+3Dモデラー ...................... 底原永和
+リガー .......................... 底原永和
+アニメーター .................... 底原永和
+モーションキャプチャー .......... 底原永和
+VFXアーティスト ................ 底原永和
+ライティングアーティスト ........ 底原永和
+テクスチャーアーティスト ........ 底原永和
+
+サウンドディレクター ............ 底原永和
+作曲 ............................ 底原永和
+効果音制作 ...................... 底原永和
+ボイス収録 ...................... 底原永和
+ミキシング ...................... 底原永和
+
+QAマネージャー .................. 底原永和
+QAリーダー ...................... 底原永和
+QAテスター ...................... 底原永和
+
+ローカライズディレクター ........ 底原永和
+翻訳 ............................ 底原永和
+ローカライズテスター ............ 底原永和
+
+マーケティングマネージャー ...... 底原永和
+PR .............................. 底原永和
+コミュニティマネージャー ........ 底原永和
+公式サイト運営 .................. 底原永和
+
+スペシャルサンクス .............. 底原永和
+          </pre>
+        </div>
+      </div>
+      <div id="loadComplete" class="hidden">
+        <h1>底原永和作成</h1>
+      </div>
+    </div>
+
+    <div id="hamburger-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+    <div id="menu-panel">
+      <div class="menu-item" id="menu-restart-btn">
+        <span>やり直す</span>
+        <span>&#x21BB;</span>
+      </div>
+      <div class="menu-item">
+        <span>サウンド</span>
+        <label class="switch">
+          <input type="checkbox" id="sound-toggle" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="menu-item" id="menu-share-btn">
+          <span>共有する</span>
+          <span>&#x2197;</span>
+      </div>
+    </div>
+
+    <div class="app hidden" role="application" aria-label="フルーツ合体ゲーム" id="appContainer">
+      <div class="game-panel" id="gamePanel">
+        <div class="header">
+          <div class="title">フルーツ合体ゲーム</div>
+          <div class="meta">
+            <div class="box" id="scoreBox">Score: 0</div>
+            <div class="box" id="highBox">High: 0</div>
+          </div>
+        </div>
+        <div class="board-wrap">
+          <div class="board" id="board" aria-label="ゲーム盤"></div>
+        </div>
+      </div>
+      <aside class="side" id="side">
+        <h3>次のフルーツ</h3>
+        <div class="pieces" id="piecesContainer" role="list"></div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div class="scorebox">
+            <div class="muted">Current:</div>
+            <div id="currentScore" style="font-weight:800">0</div>
+          </div>
+          <div class="scorebox">
+            <div class="muted">Best:</div>
+            <div id="bestScore" style="font-weight:800">0</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <button class="btn" id="restartBtn">やり直す</button>
+        </div>
+        
+        <!-- ★★★ 新規追加: 進化順表示エリア ★★★ -->
+        <div class="evolution-guide">
+          <h3>進化の順番</h3>
+          <div class="evolution-list" id="evolutionList"></div>
+        </div>
+
+        <div style="margin-top:auto">
+          <div class="muted">遊び方</div>
+          <div class="note">盤面をクリックしてフルーツを落とします。同じフルーツ同士がぶつかると、より大きなフルーツに進化します！フルーツが上の線からあふれるとゲームオーバーです。</div>
+        </div>
+        <div style="margin-top:12px;">
+          <div class="muted">フィードバック</div>
+          <div class="note">
+              <a href="https://forms.gle/Twv47c7AG9uAM2fG6" target="_blank" rel="noopener noreferrer" style="color: var(--wood-dark);">アンケートにご協力ください</a>
+          </div>
+          <div class="note" style="margin-top: 8px;">
+              【ヒント】エンターキーで偽サイトモードON/OFF
+          </div>
+        </div>
+      </aside>
+    </div>
+    
+    <div id="noticeModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>ゲームへようこそ！</h2>
+        <div class="sub-header">遊び方</div>
+        <ul>
+          <li>盤面の上部をクリックしてフルーツを落とします。</li>
+          <li>同じ種類のフルーツが接触すると、合体して大きなフルーツに進化します。</li>
+          <li>連鎖してフルーツを大きくし、ハイスコアを目指しましょう！</li>
+          <li>フルーツが盤面の上部にある赤い線からあふれるとゲームオーバーです。</li>
+        </ul>
+        <div class="sub-header">注意</div>
+        <p class="note" style="line-height: 1.6;">
+          先生に注意されたり、先生に怒られたりした場合でも底原永和は責任を取りません。あと、音量注意
+        </p>
+        <div class="modal-footer">
+          <button class="btn" id="closeNoticeBtn">閉じる</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="cheatCodeModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>コード入力</h2>
+        <p class="note">コードを入力してください。</p>
+        <input type="password" id="cheatInput" class="cheat-input">
+        <div class="modal-footer">
+          <button class="btn" id="submitCheatBtn">実行</button>
+          <button class="btn ghost" id="closeCheatBtn">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="shareModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>ゲームを共有</h2>
+        <div id="qrcode"></div>
+        <p class="note center">QRコードをスキャンするか、以下のURLをコピーしてください。</p>
+        <div class="url-container">
+          <input type="text" id="urlInput" class="url-input" readonly>
+          <button class="btn" id="copyUrlBtn">コピー</button>
+        </div>
+        <div class="modal-footer">
+          <button class="btn" id="closeShareBtn">閉じる</button>
+        </div>
+      </div>
+    </div>
+    
+    <div id="fake-translator" class="hidden">
+      <div class="translator-header">
+        <div class="logo">
+          <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
+          <span>翻訳</span>
+        </div>
+      </div>
+      <div class="translator-body">
+        <div class="translator-panel">
+          <div class="lang-selector-bar">
+            <select class="lang-selector">
+              <option>日本語</option>
+              <option>英語</option>
+              <option>中国語</option>
+              <option>韓国語</option>
+            </select>
+          </div>
+          <textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea>
+        </div>
+        <div class="translator-controls">
+          <button id="translate-btn" title="翻訳する">→</button>
+        </div>
+        <div class="translator-panel">
+          <div class="lang-selector-bar">
+            <select class="lang-selector">
+              <option>英語</option>
+              <option>日本語</option>
+              <option>スペイン語</option>
+              <option>ロシア語</option>
+            </select>
+          </div>
+          <textarea id="translator-output" class="translator-textarea" readonly></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="bgmAudio" src="bgm.mp3" loop></audio>
+  <audio id="pushAudio" src="push.mp3"></audio>
+  <audio id="delAudio" src="del.mp3"></audio>
+
+  <script>
+  // ランキング機能は削除されました。
+
+  let wasSkipPressed = false;
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const loader = document.getElementById('loader'); const staffRollContainer = document.getElementById('staffRollContainer'); const loadComplete = document.getElementById('loadComplete'); const appContainer = document.getElementById('appContainer'); const skipBtn = document.getElementById('skipBtn'); const staffRollDuration = 14000; const logoDuration = 5000; const totalLoadTime = staffRollDuration + logoDuration; let logoTimer; let startTimer; const startApp = () => { if (loader.parentNode) { loader.classList.add('fade-out'); loader.addEventListener('animationend', () => { if (loader.parentNode) loader.remove(); document.body.style.overflow = 'auto'; }); appContainer.classList.remove('hidden'); appContainer.classList.add('fade-in'); initGame(); } }; const skipLoading = () => { wasSkipPressed = true; clearTimeout(logoTimer); clearTimeout(startTimer); startApp(); }; logoTimer = setTimeout(() => { staffRollContainer.classList.add('fade-out'); loadComplete.classList.remove('hidden'); loadComplete.classList.add('fade-in'); }, staffRollDuration); startTimer = setTimeout(startApp, totalLoadTime); skipBtn.addEventListener('click', skipLoading);
+  });
+
+  function initGame(){
+    const { Engine, Render, Runner, World, Bodies, Composite, Events } = Matter;
+    const gameContainer = document.getElementById('board');
+    const WIDTH = gameContainer.clientWidth;
+    const HEIGHT = gameContainer.clientHeight;
+    const WALL_THICKNESS = 40;
+    const GAME_OVER_LINE_Y = 80;
+
+    const FRUITS_DATA = [
+        { level: 0, radius: 12, score: 1, emoji: '🍒' },
+        { level: 1, radius: 16, score: 3, emoji: '🍓' },
+        { level: 2, radius: 22, score: 6, emoji: '🍇' },
+        { level: 3, radius: 26, score: 10, emoji: '🍊' },
+        { level: 4, radius: 35, score: 15, emoji: '🍎' },
+        { level: 5, radius: 45, score: 21, emoji: '🍐' },
+        { level: 6, radius: 55, score: 28, emoji: '🍑' },
+        { level: 7, radius: 65, score: 36, emoji: '🍍' },
+        { level: 8, radius: 75, score: 45, emoji: '🍈' },
+        { level: 9, radius: 85, score: 55, emoji: '🍉' },
+        { level: 10, radius: 100, score: 66, emoji: '🎃' }
+    ];
+    
+    let engine, render, runner;
+    let score = 0, best = 0, isOver = false, isSoundEnabled = true;
+    let currentFruit = null, nextFruitLevel = 0;
+    let disableAction = false;
+    let gameOverTimeout = null;
+
+    const scoreBox = document.getElementById('scoreBox'), highBox = document.getElementById('highBox'), currentScoreEl = document.getElementById('currentScore'), bestScoreEl = document.getElementById('bestScore'), restartBtn = document.getElementById('restartBtn'), gamePanel = document.getElementById('gamePanel'), piecesContainer = document.getElementById('piecesContainer'), noticeModal = document.getElementById('noticeModal'), closeNoticeBtn = document.getElementById('closeNoticeBtn'), cheatCodeModal = document.getElementById('cheatCodeModal'), cheatInput = document.getElementById('cheatInput'), submitCheatBtn = document.getElementById('submitCheatBtn'), closeCheatBtn = document.getElementById('closeCheatBtn'), hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle'), menuShareBtn = document.getElementById('menu-share-btn'), shareModal = document.getElementById('shareModal'), qrcodeContainer = document.getElementById('qrcode'), urlInput = document.getElementById('urlInput'), copyUrlBtn = document.getElementById('copyUrlBtn'), closeShareBtn = document.getElementById('closeShareBtn'), bgmAudio = document.getElementById('bgmAudio'), pushAudio = document.getElementById('pushAudio'), delAudio = document.getElementById('delAudio'), evolutionListEl = document.getElementById('evolutionList');
+    const fakeTranslator = document.getElementById('fake-translator'), translateBtn = document.getElementById('translate-btn'), translatorInput = document.getElementById('translator-input'), translatorOutput = document.getElementById('translator-output');
+    
+    function setupPhysics() {
+        engine = Engine.create({ timing: { timeScale: 1.1 } });
+        render = Render.create({
+            element: gameContainer,
+            engine: engine,
+            options: {
+                width: WIDTH,
+                height: HEIGHT,
+                wireframes: false,
+                background: 'transparent',
+                pixelRatio: window.devicePixelRatio,
+            }
+        });
+        runner = Runner.create();
+        
+        const wallOptions = { isStatic: true, render: { visible: false } };
+        const ground = Bodies.rectangle(WIDTH / 2, HEIGHT + (WALL_THICKNESS / 2) - 10, WIDTH, WALL_THICKNESS, wallOptions);
+        const leftWall = Bodies.rectangle(-(WALL_THICKNESS / 2) + 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
+        const rightWall = Bodies.rectangle(WIDTH + (WALL_THICKNESS / 2) - 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
+        World.add(engine.world, [ground, leftWall, rightWall]);
+
+        Events.on(render, 'afterRender', () => {
+            const context = render.context;
+            context.strokeStyle = 'rgba(255, 0, 0, 0.7)';
+            context.lineWidth = 3;
+            context.setLineDash([10, 5]);
+            context.beginPath();
+            context.moveTo(0, GAME_OVER_LINE_Y);
+            context.lineTo(WIDTH, GAME_OVER_LINE_Y);
+            context.stroke();
+            context.setLineDash([]);
+        });
+
+        Render.run(render);
+        Runner.run(runner, engine);
+    }
+    
+    function createFruit(x, y, level, isStatic = false) {
+        const data = FRUITS_DATA[level];
+        const fruit = Bodies.circle(x, y, data.radius, {
+            isStatic: isStatic,
+            restitution: 0.3,
+            friction: 0.2,
+            label: 'fruit',
+            fruitLevel: level,
+            render: {
+                sprite: {
+                    texture: createEmojiTexture(data.emoji, data.radius * 2.2),
+                    xScale: 1,
+                    yScale: 1
+                }
+            }
+        });
+        return fruit;
+    }
+    
+    const emojiCanvasCache = {};
+    function createEmojiTexture(emoji, size) {
+        const cacheKey = `${emoji}_${size}`;
+        if (emojiCanvasCache[cacheKey]) {
+            return emojiCanvasCache[cacheKey];
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        ctx.font = `${size * 0.85}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.filter = 'drop-shadow(3px 3px 3px rgba(0,0,0,0.3))';
+        ctx.fillText(emoji, size / 2, size / 2 + size * 0.05);
+        const dataUrl = canvas.toDataURL();
+        emojiCanvasCache[cacheKey] = dataUrl;
+        return dataUrl;
+    }
+
+    function prepareNextFruit() {
+        nextFruitLevel = Math.floor(Math.random() * 5);
+        currentFruit = createFruit(WIDTH / 2, 40, nextFruitLevel, true);
+        World.add(engine.world, currentFruit);
+        renderNextFruit();
+    }
+    
+    function renderNextFruit() {
+        piecesContainer.innerHTML = '';
+        const data = FRUITS_DATA[nextFruitLevel];
+        const card = document.createElement('div');
+        card.className = 'piece-card';
+        const mini = document.createElement('div');
+        mini.className = 'piece-grid';
+        mini.textContent = data.emoji;
+        card.appendChild(mini);
+        piecesContainer.appendChild(card);
+    }
+
+    function updateScoreDisplay() {
+      scoreBox.textContent = `Score: ${score}`;
+      currentScoreEl.textContent = score;
+      highBox.textContent = `High: ${best}`;
+      bestScoreEl.textContent = best;
+    }
+    
+    function dropFruit(x) {
+        if (isOver || disableAction || !currentFruit) return;
+        if (isSoundEnabled) { pushAudio.currentTime = 0; pushAudio.play().catch(()=>{}); }
+        const radius = FRUITS_DATA[currentFruit.fruitLevel].radius;
+        const constrainedX = Math.max(radius + 10, Math.min(WIDTH - radius - 10, x));
+        Matter.Body.setStatic(currentFruit, false);
+        Matter.Body.setPosition(currentFruit, { x: constrainedX, y: currentFruit.position.y });
+        currentFruit = null;
+        disableAction = true;
+        
+        setTimeout(() => {
+            prepareNextFruit();
+            disableAction = false;
+        }, 500);
+    }
+
+    function handleCollisions(event) {
+        const pairs = event.pairs;
+        pairs.forEach(pair => {
+            const { bodyA, bodyB } = pair;
+            if (bodyA.label === 'fruit' && bodyB.label === 'fruit' && bodyA.fruitLevel === bodyB.fruitLevel) {
+                const level = bodyA.fruitLevel;
+                if (level < FRUITS_DATA.length - 1) {
+                    World.remove(engine.world, [bodyA, bodyB]);
+                    const nextLevel = level + 1;
+                    const newX = (bodyA.position.x + bodyB.position.x) / 2;
+                    const newY = (bodyA.position.y + bodyB.position.y) / 2;
+                    const newFruit = createFruit(newX, newY, nextLevel);
+                    Matter.Body.scale(newFruit, 0.7, 0.7);
+                    World.add(engine.world, newFruit);
+                    setTimeout(() => {
+                        Matter.Body.scale(newFruit, 1 / 0.7, 1 / 0.7);
+                    }, 50);
+                    if (isSoundEnabled) { delAudio.currentTime = 0; delAudio.play().catch(()=>{}); }
+                    const gainedScore = FRUITS_DATA[level].score;
+                    score += gainedScore;
+                    updateScoreDisplay();
+                    showFeedbackPopup(`+${gainedScore}`);
+                }
+            }
+        });
+    }
+
+    function checkGameOver() {
+        const fruits = Composite.allBodies(engine.world).filter(b => b.label === 'fruit' && !b.isStatic);
+        let isFruitAboveLine = false;
+        for (const fruit of fruits) {
+            if (fruit.speed < 0.1 && fruit.angularSpeed < 0.1 && fruit.position.y - FRUITS_DATA[fruit.fruitLevel].radius < GAME_OVER_LINE_Y) {
+                isFruitAboveLine = true;
+                break;
+            }
+        }
+        if (isFruitAboveLine) {
+            if (!gameOverTimeout) {
+                gameOverTimeout = setTimeout(() => {
+                    isOver = true;
+                    Runner.stop(runner);
+                    if (score > best) { saveBest(); }
+                    showEndScreen();
+                }, 2000);
+            }
+        } else {
+            clearTimeout(gameOverTimeout);
+            gameOverTimeout = null;
+        }
+    }
+
+    function showEndScreen(){
+        const overlay = document.createElement('div');
+        overlay.className = 'game-over';
+        overlay.id = 'gameOverOverlay';
+        overlay.innerHTML = `<div class="go-card"><div style="font-size:24px;font-weight:800;margin-bottom:8px">ゲームオーバー！</div><div style="margin-bottom:16px; font-size: 20px;">Score: <strong>${score}</strong></div><div style="display:flex;gap:8px;justify-content:center"><button class="btn" id="goRestart">やり直す</button></div></div>`;
+        gamePanel.appendChild(overlay);
+        document.getElementById('goRestart').addEventListener('click', ()=>{ overlay.remove(); startNewSession(); });
+    }
+
+    function startNewSession(){
+      score = 0;
+      isOver = false;
+      updateScoreDisplay();
+      World.clear(engine.world, false);
+      Composite.clear(engine.world, false);
+      
+      const wallOptions = { isStatic: true, render: { visible: false } };
+      const ground = Bodies.rectangle(WIDTH / 2, HEIGHT + (WALL_THICKNESS / 2) - 10, WIDTH, WALL_THICKNESS, wallOptions);
+      const leftWall = Bodies.rectangle(-(WALL_THICKNESS / 2) + 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
+      const rightWall = Bodies.rectangle(WIDTH + (WALL_THICKNESS / 2) - 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
+      World.add(engine.world, [ground, leftWall, rightWall]);
+      
+      prepareNextFruit();
+      const overlay = document.getElementById('gameOverOverlay');
+      if(overlay) overlay.remove();
+      menuPanel.classList.remove('open');
+      Runner.start(runner, engine);
+    }
+    
+    function setupMouseControl() {
+        gameContainer.addEventListener('mousemove', (e) => {
+            if (isOver || disableAction || !currentFruit) return;
+            const rect = gameContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const radius = FRUITS_DATA[currentFruit.fruitLevel].radius;
+            const constrainedX = Math.max(radius + 10, Math.min(WIDTH - radius - 10, x));
+            Matter.Body.setPosition(currentFruit, { x: constrainedX, y: currentFruit.position.y });
+        });
+        
+        gameContainer.addEventListener('click', (e) => {
+            const rect = gameContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            dropFruit(x);
+        });
+    }
+
+    function showFeedbackPopup(text){ const popup = document.createElement('div'); popup.textContent = text; popup.className = 'feedback-popup'; gamePanel.appendChild(popup); popup.addEventListener('animationend', () => popup.remove()); }
+    function saveBest(){ best = Math.max(best, score); try { localStorage.setItem('fruitgame_high', String(best)); } catch(e){} updateScoreDisplay(); }
+    function loadBest(){ try{ best = Number(localStorage.getItem('fruitgame_high')) || 0; } catch(e){ best = 0; } }
+    
+    function handleCheatCode() { const code = cheatInput.value.trim().toLowerCase(); if (code === 'towa.soko0406') { const newScoreStr = prompt('新しいスコアを入力してください:', score); const newScore = parseInt(newScoreStr, 10); if (!isNaN(newScore)) { score = newScore; if (newScore > best) { saveBest(); } isOver = true; Runner.stop(runner); showEndScreen(); } else { alert('無効な数値です。'); } } else if (code === 'deletadata' || code === 'reset') { try { localStorage.removeItem('fruitgame_high'); localStorage.removeItem('blockblast_sound'); alert('保存された全てのデータを削除しました。ページをリロードします。'); location.reload(); } catch (e) { alert('データの削除に失敗しました。'); } } else { alert('コードが違います。'); } cheatInput.value = ''; cheatCodeModal.classList.add('hidden'); }
+    
+    function showFakeTranslator() { fakeTranslator.classList.remove('hidden'); }
+    function hideFakeTranslator() { fakeTranslator.classList.add('hidden'); }
+    function simpleTranslate(text) { const map = {a:'b',b:'c',c:'d',d:'e',e:'f',f:'g',g:'h',h:'i',i:'j',j:'k',k:'l',l:'m',m:'n',o:'p',p:'q',q:'r',r:'s',s:'t',t:'u',u:'v',v:'w',w:'x',x:'y',y:'z', 'あ':'い','い':'う','う':'え','え':'お','お':'か','か':'き','き':'く','く':'け','け':'こ','こ':'さ'}; return text.toLowerCase().split('').map(char => map[char] || char).join(''); }
+    
+    function init(){
+      loadBest();
+      setupPhysics();
+      prepareNextFruit();
+      updateScoreDisplay();
+      setupMouseControl();
+      Events.on(engine, 'collisionStart', handleCollisions);
+      Events.on(engine, 'afterUpdate', checkGameOver);
+      
+      // ★★★ 進化順リストを生成 ★★★
+      evolutionListEl.innerHTML = FRUITS_DATA.map(f => `<span class="evolution-item">${f.emoji}</span>`).join('<span class="evolution-arrow">→</span>');
+
+      noticeModal.classList.remove('hidden');
+      restartBtn.addEventListener('click', startNewSession);
+      closeNoticeBtn.addEventListener('click', () => noticeModal.classList.add('hidden'));
+      closeCheatBtn.addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
+      submitCheatBtn.addEventListener('click', handleCheatCode); cheatInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') handleCheatCode(); });
+      hamburgerIcon.addEventListener('click', () => { menuPanel.classList.toggle('open'); }); menuRestartBtn.addEventListener('click', startNewSession);
+      const savedSoundSetting = localStorage.getItem('blockblast_sound');
+      if (savedSoundSetting !== null) { isSoundEnabled = savedSoundSetting === 'true'; soundToggle.checked = isSoundEnabled; }
+      const playBGM = () => { if(isSoundEnabled) bgmAudio.play().catch(()=>{}); };
+      document.body.addEventListener('click', playBGM, { once: true });
+      soundToggle.addEventListener('change', (e) => { isSoundEnabled = e.target.checked; try { localStorage.setItem('blockblast_sound', isSoundEnabled); } catch(err) {} if (isSoundEnabled) { bgmAudio.play().catch(()=>{}); } else { bgmAudio.pause(); } });
+      menuShareBtn.addEventListener('click', () => { const url = `${window.location.origin}${window.location.pathname}`; urlInput.value = url; qrcodeContainer.innerHTML = ''; QRCode.toCanvas(url, { width: 200, errorCorrectionLevel: 'H' }, function (err, canvas) { if (err) throw err; qrcodeContainer.appendChild(canvas); }); shareModal.classList.remove('hidden'); menuPanel.classList.remove('open'); });
+      closeShareBtn.addEventListener('click', () => shareModal.classList.add('hidden')); copyUrlBtn.addEventListener('click', () => { urlInput.select(); navigator.clipboard.writeText(urlInput.value).then(() => { copyUrlBtn.textContent = 'コピー完了!'; setTimeout(() => { copyUrlBtn.textContent = 'コピー'; }, 2000); }); });
+      
+      const originalTitle = document.title; const favicon = document.getElementById('favicon'); const originalFavicon = favicon ? favicon.href : ''; const fakeTitle = '翻訳'; const fakeFavicon = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>';
+      window.addEventListener('blur', () => { document.title = fakeTitle; if(favicon) favicon.href = fakeFavicon; }); window.addEventListener('focus', () => { document.title = originalTitle; if(favicon) favicon.href = originalFavicon; });
+      translateBtn.addEventListener('click', () => { translatorOutput.value = simpleTranslate(translatorInput.value); });
+      
+      window.addEventListener('keydown', (ev)=>{
+        if (ev.key === 'Enter' && !ev.target.closest('.modal-overlay') && ev.target.tagName !== 'TEXTAREA') {
+            ev.preventDefault();
+            if (fakeTranslator.classList.contains('hidden')) {
+                showFakeTranslator();
+            } else {
+                hideFakeTranslator();
+            }
+        }
+        if (!cheatCodeModal.classList.contains('hidden') || !shareModal.classList.contains('hidden') || !fakeTranslator.classList.contains('hidden')) return;
+        if(ev.key === ' ') { ev.preventDefault(); cheatCodeModal.classList.remove('hidden'); cheatInput.focus(); }
+        if(ev.key.toLowerCase() === 'r') startNewSession();
+      });
+    }
+
+    init();
+  }
+  </script>
+</body>
+</html>
