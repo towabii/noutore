@@ -1,0 +1,2356 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <title>翻訳</title>
+        <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧱</text></svg>">
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap'); :root {
+                --bg-start: #0a0a2a;
+                --bg-end: #020024;
+                --panel-bg: rgba(18, 18, 58, 0.7);
+                --panel-border: rgba(138, 43, 226, 0.3);
+                --accent-color: #944dff;
+                --text-primary: #e0e7ff;
+                --text-secondary: #a7b3d9;
+                --cell-bg: rgba(0, 0, 0, 0.25);
+                --board-border: #8a2be2;
+                --tile-size: clamp(28px, 4.2vh, 48px);
+                --preview-tile-size: 20px;
+            }
+
+            html,body {
+                height: 100%;
+                margin: 0;
+                font-family: 'Roboto', 'Noto Sans JP', "Hiragino Kaku Gothic ProN", sans-serif;
+                background: radial-gradient(circle, var(--bg-start) 0%, var(--bg-end) 100%);
+                color: var(--text-primary);
+                -webkit-font-smoothing: antialiased;
+                -moz-osx-font-smoothing: grayscale;
+                user-select: none;
+                overflow: hidden;
+            }
+
+            .container {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                width: 100%;
+                padding: 16px;
+                box-sizing: border-box;
+            }
+
+            .app {
+                width: 100%;
+                max-width: 1800px;
+                display: grid;
+                grid-template-columns: 240px min-content 240px;
+                gap: 24px;
+                align-items: start;
+                justify-content: center;
+                position: relative;
+            }
+
+            /* ★★★ 背景ぼかしの修正 ★★★ */
+            .app.game-inactive-blur::before {
+                content: '';
+                position: absolute;
+                inset: 0;
+                background: rgba(10, 10, 42, 0.2);
+                backdrop-filter: blur(4px);
+                z-index: 29; /* game-overlay(30)のすぐ下 */
+            }
+
+            .side-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .panel-card {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 12px;
+                padding: 16px;
+                backdrop-filter: blur(10px);
+                box-shadow: 0 0 15px rgba(138, 43, 226, 0.15);
+            }
+
+            .panel-card h3 {
+                margin: 0 0 12px 0;
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--accent-color);
+                text-align: center;
+                letter-spacing: 1px;
+                text-transform: uppercase;
+            }
+
+            .game-container {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 16px;
+            }
+
+            .game-header {
+                width: 100%;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .title {
+                font-size: 28px;
+                font-weight: 900;
+                color: #fff;
+                letter-spacing: 2px;
+                text-transform: uppercase;
+                text-shadow: 0 0 8px var(--accent-color);
+            }
+
+            .meta-box {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                padding: 8px 16px;
+                border-radius: 8px;
+                font-size: 14px;
+                font-weight: 700;
+                box-shadow: 0 0 10px rgba(138, 43, 226, 0.15);
+            }
+
+            .board-wrap {
+                position: relative;
+            }
+
+            .board {
+                width: calc(var(--tile-size) * 10);
+                height: calc(var(--tile-size) * 20);
+                background: rgba(0,0,0,0.3);
+                border-radius: 10px;
+                border: 3px solid var(--board-border);
+                padding: 6px;
+                box-sizing: border-box;
+                display: grid;
+                grid-template-columns: repeat(10, 1fr);
+                grid-template-rows: repeat(20, 1fr);
+                gap: 1px;
+                position: relative;
+                box-shadow: 0 0 20px var(--board-border), inset 0 0 10px rgba(138, 43, 226, 0.3);
+                transition: box-shadow 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            }
+
+            #game-overlay {
+                position: absolute;
+                inset: 6px;
+                background: rgba(2, 0, 36, 0.85);
+                border-radius: 10px;
+                z-index: 30;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                color: #fff;
+                padding: 40px;
+                box-sizing: border-box;
+            }
+
+            .overlay-content {
+                width: 100%;
+            }
+
+            .overlay-content h2 {
+                font-size: 48px;
+                font-weight: 900;
+                letter-spacing: 0.1em;
+                text-shadow: 0 0 15px #fff, 0 0 25px var(--accent-color);
+                margin: 0;
+                white-space: nowrap;
+            }
+
+            .overlay-content p {
+                font-size: 20px;
+                margin-top: 8px;
+                margin-bottom: 24px;
+            }
+
+            #start-screen .overlay-footer {
+                justify-content: center;
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                align-items: center;
+            }
+
+            #start-screen .overlay-footer .btn {
+                width: 90%;
+                max-width: 280px;
+            }
+
+            .overlay-footer {
+                width: 100%;
+                display: flex;
+                justify-content: flex-end;
+                margin-top: auto;
+            }
+
+            #countdown {
+                font-size: 120px;
+                font-weight: 900;
+                color: #fff;
+                text-shadow: 0 0 20px var(--accent-color), 0 0 40px var(--accent-color);
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 31;
+            }
+
+            .cell {
+                background: var(--cell-bg);
+                position: relative;
+                transition: background-color 0.2s ease;
+            }
+            
+            .cell.dead {
+                background-color: #334155;
+            }
+
+            .tile {
+                width: 100%;
+                height: 100%;
+                border-radius: 3px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                background-color: currentColor;
+                box-shadow: inset 0 0 5px rgba(255,255,255,0.4), 0 0 10px currentColor;
+            }
+
+            .ghost-tile {
+                width: 100%;
+                height: 100%;
+                border-radius: 3px;
+                background-color: rgba(255, 255, 255, 0.2);
+                position: absolute;
+                top: 0;
+                left: 0;
+                border: 1px dashed rgba(255,255,255,0.5);
+                box-sizing: border-box;
+            }
+
+            .preview-box {
+                width: 100%;
+                height: calc(var(--preview-tile-size) * 5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0,0,0,0.2);
+                border-radius: 8px;
+            }
+
+            .piece-grid {
+                display: grid;
+                grid-template-columns: repeat(4, var(--preview-tile-size));
+                grid-template-rows: repeat(4, var(--preview-tile-size));
+            }
+
+            .mini-cell {
+                width: var(--preview-tile-size);
+                height: var(--preview-tile-size);
+                position: relative;
+            }
+
+            .mini-cell .tile {
+                box-shadow: inset 0 0 3px rgba(255,255,255,0.4), 0 0 5px currentColor;
+            }
+
+            .score-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .scorebox {
+                display: flex;
+                justify-content: space-between;
+                font-size: 14px;
+                color: var(--text-secondary);
+            }
+
+            .scorebox span:last-child {
+                font-weight: 700;
+                color: var(--text-primary);
+                min-width: 60px;
+                text-align: right;
+                display: inline-block;
+            }
+
+            .controls-panel {
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+                margin-top: 16px;
+            }
+
+            .btn {
+                padding: 10px 12px;
+                border-radius: 8px;
+                background: linear-gradient(145deg, #4f23a6, #3b1a7d);
+                color: var(--text-primary);
+                border: 1px solid var(--panel-border);
+                cursor: pointer;
+                font-weight: 700;
+                text-transform: uppercase;
+                transition: all 0.2s ease;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            }
+
+            .btn:hover {
+                background: linear-gradient(145deg, #6a34d9, #4f23a6);
+                box-shadow: 0 0 15px var(--accent-color);
+            }
+
+            .btn.ghost {
+                background: transparent;
+                border-style: dashed;
+            }
+
+            .note {
+                font-size: 12px;
+                color: var(--text-secondary);
+                line-height: 1.6;
+            }
+
+            @keyframes line-clear-animation {
+                0% {
+                    transform: scale(1.1);
+                    opacity: 1;
+                    background: #fff;
+                    box-shadow: 0 0 25px #fff;
+                }
+                50% {
+                    opacity: 0.8;
+                }
+                100% {
+                    transform: scale(0);
+                    opacity: 0;
+                    background: var(--accent-color);
+                }
+            }
+
+            .line-clearing .tile {
+                background: #fff !important;
+                animation: line-clear-animation 0.4s ease-out forwards;
+            }
+
+            .board.line-clearing-effect {
+                border-color: #fff;
+                box-shadow: 0 0 40px #fff, 0 0 70px var(--accent-color), inset 0 0 20px rgba(255, 255, 255, 0.5);
+            }
+
+            @keyframes piece-lock-animation {
+                0% {
+                    transform: translateY(-5%);
+                    background: rgba(255, 255, 255, 0.6);
+                    opacity: 1;
+                }
+                50% {
+                    transform: translateY(0) scale(1.05, 0.95);
+                    background: rgba(255, 255, 255, 0.2);
+                }
+                100% {
+                    transform: translateY(0) scale(1, 1);
+                    background: transparent;
+                    opacity: 1;
+                }
+            }
+
+            .lock-flash-effect {
+                position: absolute;
+                inset: 0;
+                border-radius: 3px;
+                animation: piece-lock-animation 0.2s ease-out;
+                pointer-events: none;
+            }
+
+            .particle {
+                position: absolute;
+                width: 8px;
+                height: 8px;
+                background: #fff;
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 50;
+                box-shadow: 0 0 10px #fff;
+                animation: particle-anim 0.6s ease-out forwards;
+            }
+
+            @keyframes particle-anim {
+                0% {
+                    transform: translate(0, 0) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translate(var(--x), var(--y)) scale(0);
+                    opacity: 0;
+                }
+            }
+
+            .hidden {
+                display: none !important;
+            }
+
+            #loader {
+                position: fixed;
+                inset: 0;
+                background: #000;
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
+            }
+
+            #skipBtn {
+                position: absolute;
+                bottom: 20px;
+                right: 20px;
+                padding: 8px 16px;
+                background: rgba(255,255,255,0.1);
+                border: 1px solid rgba(255,255,255,0.2);
+                color: #fff;
+                border-radius: 6px;
+                cursor: pointer;
+                z-index: 10000;
+                font-weight: bold;
+            }
+
+            #staffRollContainer {
+                width: 100%;
+                height: 100%;
+                overflow: hidden;
+                position: relative;
+            }
+
+            .credits-list {
+                position: absolute;
+                top: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 700px;
+                color: #e0e0e0;
+                text-align: center;
+                font-size: 16px;
+                animation: scroll-up 14s linear forwards;
+            }
+
+            .credits-list pre {
+                font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
+                font-size: 1em;
+                line-height: 1.8;
+                text-align: left;
+                white-space: pre-wrap;
+                margin: 0;
+            }
+
+            @keyframes scroll-up {
+                0% {
+                    top: 100%;
+                }
+
+                100% {
+                    top: -100%;
+                }
+            }
+
+            .modal-overlay {
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.7);
+                backdrop-filter: blur(8px);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 16px;
+            }
+
+            .modal-content {
+                background: var(--panel-bg);
+                border: 1px solid var(--panel-border);
+                border-radius: 12px;
+                padding: 24px;
+                width: 100%;
+                max-width: 500px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            }
+
+            .modal-content h2 {
+                margin-top: 0;
+                font-size: 20px;
+                border-bottom: 1px solid var(--accent-color);
+                padding-bottom: 8px;
+                margin-bottom: 16px;
+            }
+
+            #hamburger-icon {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                width: 30px;
+                height: 22px;
+                cursor: pointer;
+                z-index: 1002;
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+
+            #hamburger-icon span {
+                display: block;
+                height: 3px;
+                width: 100%;
+                background: #e6eef8;
+                border-radius: 3px;
+                transition: all 0.3s ease-in-out;
+            }
+
+            #menu-panel {
+                position: fixed;
+                top: 0;
+                right: -300px;
+                width: 280px;
+                height: 100%;
+                background: var(--panel-bg);
+                box-shadow: -5px 0 25px rgba(0,0,0,0.5);
+                z-index: 1001;
+                transition: right 0.4s ease-in-out;
+                padding: 80px 20px 20px;
+                box-sizing: border-box;
+            }
+
+            #menu-panel.open {
+                right: 0;
+            }
+
+            .menu-item {
+                padding: 15px 10px;
+                border-bottom: 1px solid var(--panel-border);
+                color: #e6eef8;
+                cursor: pointer;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .feedback-popup {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 48px;
+                font-weight: 900;
+                color: #fff;
+                text-shadow: 0 0 10px #FFD166, 0 0 20px #FF6B6B, 0 0 30px #06D6A0;
+                pointer-events: none;
+                z-index: 100;
+                white-space: nowrap;
+                animation: feedback-popup-animation 1.2s ease-out forwards;
+            }
+
+            @keyframes feedback-popup-animation {
+                0% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(0.8);
+                }
+
+                20% {
+                    opacity: 1;
+                    transform: translate(-50%, -60%) scale(1.2);
+                }
+
+                100% {
+                    opacity: 0;
+                    transform: translate(-50%, -150%) scale(1.2);
+                }
+            }
+
+            #loadComplete h1 {
+                font-size: 48px;
+                font-weight: 800;
+                color: #fff;
+                letter-spacing: 0.1em;
+                text-shadow: 0 0 10px #4D96FF, 0 0 20px #4D96FF;
+                margin-bottom: 8px;
+            }
+
+            @keyframes fade-in {
+                from {
+                    opacity: 0;
+                    transform: scale(0.95);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+
+            @keyframes fade-out {
+                from {
+                    opacity: 1;
+                }
+
+                to {
+                    opacity: 0;
+                }
+            }
+
+            .fade-in {
+                animation: fade-in 1s ease-out forwards;
+            }
+
+            .fade-out {
+                animation: fade-out 1s ease-in forwards;
+            }
+
+            .modal-content ul {
+                padding-left: 20px;
+                line-height: 1.7;
+            }
+
+            .modal-content .sub-header {
+                font-weight: bold;
+                margin-top: 16px;
+                margin-bottom: 4px;
+                color: #a0b0d0;
+            }
+
+            .modal-footer {
+                text-align: right;
+                margin-top: 24px;
+            }
+
+            .cheat-input {
+                width: 100%;
+                padding: 10px;
+                border-radius: 6px;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid var(--panel-border);
+                color: #fff;
+                font-size: 16px;
+                margin-top: 8px;
+                box-sizing: border-box;
+            }
+
+            .menu-item:hover {
+                background: rgba(138, 43, 226, 0.2);
+            }
+
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 50px;
+                height: 28px;
+            }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                inset: 0;
+                background-color: #334155;
+                transition: .4s;
+                border-radius: 28px;
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 20px;
+                width: 20px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: .4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .slider {
+                background-color: var(--accent-color);
+            }
+
+            input:checked + .slider:before {
+                transform: translateX(22px);
+            }
+
+            #qrcode {
+                display: flex;
+                justify-content: center;
+                margin: 20px 0;
+                background: white;
+                padding: 10px;
+                border-radius: 8px;
+            }
+
+            .url-container {
+                display: flex;
+                gap: 8px;
+            }
+
+            .url-input {
+                flex-grow: 1;
+                padding: 8px;
+                background: rgba(0,0,0,0.3);
+                border: 1px solid var(--panel-border);
+                color: #e6eef8;
+                border-radius: 6px;
+            }
+            
+            #key-config-list {
+                display: flex;
+                flex-direction: column;
+                gap: 12px;
+                margin-top: 16px;
+            }
+            .key-config-item {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 12px;
+                background: rgba(0,0,0,0.2);
+                border-radius: 6px;
+            }
+            .key-config-item .action-label {
+                color: var(--text-secondary);
+                font-weight: 500;
+            }
+            .key-config-item .key-display {
+                background: rgba(0,0,0,0.4);
+                padding: 6px 16px;
+                border-radius: 4px;
+                border: 1px solid var(--panel-border);
+                min-width: 80px;
+                text-align: center;
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .key-config-item .key-display:hover {
+                border-color: var(--accent-color);
+            }
+            .key-config-item .key-display.listening {
+                border-color: #FFD166;
+                color: #FFD166;
+                box-shadow: 0 0 10px #FFD166;
+            }
+
+            #fake-translator {
+                position: fixed;
+                inset: 0;
+                background: #fff;
+                z-index: 10000;
+                color: #202124;
+                font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+                display: flex;
+                flex-direction: column;
+            }
+
+            .translator-header {
+                display: flex;
+                justify-content: flex-start;
+                align-items: center;
+                padding: 12px 24px;
+                border-bottom: 1px solid #e0e0e0;
+                flex-shrink: 0;
+            }
+
+            .translator-logo {
+                font-size: 22px;
+                font-weight: 500;
+                color: #5f6368;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .translator-main {
+                display: flex;
+                flex-direction: column;
+                flex-grow: 1;
+                padding: 24px;
+            }
+
+            .translator-lang-bar {
+                display: flex;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+
+            .lang-btn {
+                padding: 8px 16px;
+                border: none;
+                background: none;
+                cursor: pointer;
+                font-weight: 500;
+                font-size: 14px;
+                color: #5f6368;
+                border-bottom: 2px solid transparent;
+            }
+
+            .lang-btn.active {
+                color: #1a73e8;
+                border-bottom-color: #1a73e8;
+            }
+
+            .translator-body {
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
+                gap: 16px;
+                flex-grow: 1;
+                border: 1px solid #dadce0;
+                border-radius: 8px;
+                padding: 16px;
+            }
+
+            .translator-panel {
+                display: flex;
+                flex-direction: column;
+            }
+
+            .translator-textarea {
+                flex-grow: 1;
+                resize: none;
+                border: none;
+                padding: 0;
+                font-size: 24px;
+                font-family: 'Roboto', 'Noto Sans JP', sans-serif;
+                box-sizing: border-box;
+                background: none;
+                color: #202124;
+            }
+
+            .translator-textarea:focus {
+                outline: none;
+            }
+
+            .translator-divider {
+                width: 1px;
+                background: #dadce0;
+            }
+
+            @media (max-width: 980px) {
+                .app {
+                    grid-template-columns: 1fr;
+                    grid-template-rows: auto auto auto;
+                    gap: 16px;
+                }
+
+                .side-panel.left {
+                    order: 2;
+                }
+
+                .game-container {
+                    order: 1;
+                }
+
+                .side-panel.right {
+                    order: 3;
+                }
+
+                .side-panel {
+                    flex-direction: row;
+                    justify-content: space-around;
+                }
+
+                .panel-card {
+                    flex: 1;
+                }
+
+                .title {
+                    font-size: 20px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div id="loader">
+                <button id="skipBtn">スキップ</button>
+                <div id="staffRollContainer">
+                    <div class="credits-list">
+                        <pre>プロデューサー .................. 底原永和
+ディレクター .................... 底原永和
+エグゼクティブプロデューサー .... 底原永和
+アシスタントプロデューサー ...... 底原永和
+デザイン ........................ 底原永和
+シナリオ ........................ 底原永和
+レベルデザイン .................. 底原永和
+バランス調整 .................... 底原永和
+UI/UXデザイン ................... 底原永和
+プログラムリード ................ 底原永和
+エンジンプログラマー ............ 底原永和
+ネットワークプログラマー ........ 底原永和
+AIプログラマー .................. 底原永和
+ツールプログラマー .............. 底原永和
+サウンドプログラマー ............ 底原永和
+グラフィックプログラマー ........ 底原永和
+アートディレクター .............. 底原永和
+キャラクターデザイナー .......... 底原永和
+モンスターデザイナー ............ 底原永和
+背景デザイナー .................. 底原永和
+UIデザイナー .................... 底原永和
+2Dアーティスト .................. 底原永和
+3Dモデラー ...................... 底原永和
+リガー .......................... 底原永和
+アニメーター .................... 底原永和
+モーションキャプチャー .......... 底原永和
+VFXアーティスト ................ 底原永和
+ライティングアーティスト ........ 底原永和
+テクスチャーアーティスト ........ 底原永和
+サウンドディレクター ............ 底原永和
+作曲 ............................ 底原永和
+効果音制作 ...................... 底原永和
+ボイス収録 ...................... 底原永和
+ミキシング ...................... 底原永和
+QAマネージャー .................. 底原永和
+QAリーダー ...................... 底原永和
+QAテスター ...................... 底原永和
+ローカライズディレクター ........ 底原永和
+翻訳 ............................ 底原永和
+ローカライズテスター ............ 底原永和
+マーケティングマネージャー ...... 底原永和
+PR .............................. 底原永和
+コミュニティマネージャー ........ 底原永和
+公式サイト運営 .................. 底原永和
+スペシャルサンクス .............. 底原永和
+</pre>
+                    </div>
+                </div>
+                <div id="loadComplete" class="hidden">
+                    <h1>楽しいね</h1>
+                </div>
+            </div>
+            <div id="hamburger-icon">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div id="menu-panel">
+                <div class="menu-item" id="menu-restart-btn">
+                    <span>やり直す</span>
+                    <span>&#x21BB;</span>
+                </div>
+                <div class="menu-item">
+                    <span>サウンド</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="menu-item" id="menu-key-config-btn">
+                    <span>キー設定</span>
+                    <span>&#x2328;</span>
+                </div>
+                <div class="menu-item" id="menu-share-btn">
+                    <span>共有する</span>
+                    <span>&#x2197;</span>
+                </div>
+                <div class="menu-item" id="menu-cheat-btn">
+                    <span>コード入力</span>
+                    <span>&#x1F511;</span>
+                </div>
+            </div>
+            <div class="app hidden" id="appContainer">
+                <aside class="side-panel left">
+                    <div class="panel-card">
+                        <h3>HOLD</h3>
+                        <div class="preview-box" id="holdContainer"></div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>SCORE</h3>
+                        <div class="score-grid">
+                            <div class="scorebox">
+                                <span>HIGH</span>
+                                <span id="highScore">0</span>
+                            </div>
+                            <div class="scorebox">
+                                <span>SCORE</span>
+                                <span id="currentScore">0</span>
+                            </div>
+                            <div class="scorebox">
+                                <span>LINES</span>
+                                <span id="lines">0</span>
+                            </div>
+                            <div class="scorebox">
+                                <span>LEVEL</span>
+                                <span id="level">1</span>
+                            </div>
+                        </div>
+                        <div class="controls-panel">
+                            <button class="btn" id="pauseButton">停止</button>
+                            <button class="btn ghost" id="forceRestartBtn">やり直す</button>
+                        </div>
+                    </div>
+                    <div class="panel-card hidden" id="modeInfoPanel">
+                        <h3 id="modeInfoTitle">MODE INFO</h3>
+                        <div class="score-grid" id="modeInfoContent"></div>
+                    </div>
+                </aside>
+                <main class="game-container">
+                    <div class="game-header">
+                        <div class="title">ブロック落とし</div>
+                        <div class="meta-box" id="scoreBox">Score: 0</div>
+                    </div>
+                    <div class="board-wrap">
+                        <div id="countdown" class="hidden"></div>
+                        <div id="game-overlay">
+                            <div id="start-screen">
+                                <div class="overlay-content">
+                                    <h2>ブロック落とし</h2>
+                                    <p>モードを選択してください</p>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" data-mode="TRAINING">トレーニング</button>
+                                    <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
+                                    <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
+                                </div>
+                            </div>
+                            <div id="gameover-screen" class="hidden">
+                                <div class="overlay-content">
+                                    <h2 id="gameover-title"></h2>
+                                    <p id="gameover-result"></p>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" id="restartButton">もう一度プレイ</button>
+                                </div>
+                            </div>
+                            <div id="pause-screen" class="hidden">
+                                <div class="overlay-content">
+                                    <h2>PAUSED</h2>
+                                    <p>一時停止...</p>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" id="resumeButton">トレーニングに戻る</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="board" id="board"></div>
+                    </div>
+                </main>
+                <aside class="side-panel right">
+                    <div class="panel-card">
+                        <h3>NEXT</h3>
+                        <div class="preview-box" id="nextContainer"></div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>CONTROLS</h3>
+                        <div class="note">
+                            → : 右移動<br>
+                            ← : 左移動<br>
+                            ↑ : ハードドロップ<br>
+                            ↓ : ソフトドロップ<br>
+                            Z : 左回転<br>
+                            X : 右回転<br>C : ホールド<br>Esc : 停止
+                        </div>
+                    </div>
+                    <div class="panel-card">
+                        <div class="note" style="text-align: center;">
+                            <a href="https://forms.gle/Twv47c7AG9uAM2fG6" target="_blank" rel="noopener noreferrer" style="color: var(--text-secondary);">フィードバック</a>
+                            <br>ヒント: Enterで偽装モード
+                        </div>
+                    </div>
+                </aside>
+            </div>
+            <div id="keyConfigModal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <h2>キー設定</h2>
+                    <div id="key-config-list"></div>
+                    <div class="modal-footer">
+                        <button class="btn ghost" id="resetKeysBtn">初期設定に戻す</button>
+                        <button class="btn" id="saveKeysBtn">保存して閉じる</button>
+                    </div>
+                </div>
+            </div>
+            <div id="cheatCodeModal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <h2>コード入力</h2>
+                    <p class="note">コードを入力してください。</p>
+                    <input type="password" id="cheatInput" class="cheat-input">
+                    <div class="modal-footer">
+                        <button class="btn" id="submitCheatBtn">実行</button>
+                        <button class="btn ghost" id="closeCheatBtn">キャンセル</button>
+                    </div>
+                </div>
+            </div>
+            <div id="shareModal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <h2>ゲームを共有</h2>
+                    <div id="qrcode"></div>
+                    <p class="note center">QRコードをスキャンするか、URLをコピー</p>
+                    <div class="url-container">
+                        <input type="text" id="urlInput" class="url-input" readonly>
+                        <button class="btn" id="copyUrlBtn">コピー</button>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn" id="closeShareBtn">閉じる</button>
+                    </div>
+                </div>
+            </div>
+            <div id="fake-translator" class="hidden">
+                <header class="translator-header">
+                    <div class="translator-logo">
+                        <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path>
+                        </svg>
+                        <span>翻訳</span>
+                    </div>
+                </header>
+                <main class="translator-main">
+                    <div class="translator-lang-bar">
+                        <button class="lang-btn active">日本語</button>
+                        <button class="lang-btn">英語</button>
+                    </div>
+                    <div class="translator-body">
+                        <div class="translator-panel">
+                            <textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea>
+                        </div>
+                        <div class="translator-divider"></div>
+                        <div class="translator-panel">
+                            <textarea id="translator-output" class="translator-textarea" readonly></textarea>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+        <audio id="bgmAudio" src="bgm.mp3" loop></audio>
+        <audio id="pushAudio" src="push.mp3"></audio>
+        <audio id="delAudio" src="del.mp3"></audio>
+        <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                const loader = document.getElementById('loader');
+                const appContainer = document.getElementById('appContainer');
+                const skipBtn = document.getElementById('skipBtn');
+                const startApp = () => {
+                    if (loader.parentNode) {
+                        loader.classList.add('fade-out');
+                        loader.addEventListener('animationend', () => {
+                            if (loader.parentNode)
+                                loader.remove();
+                            document.body.style.overflow = 'auto';
+                        }
+                        );
+                        appContainer.classList.remove('hidden');
+                        appContainer.classList.add('fade-in');
+                        initGame();
+                    }
+                }
+                ;
+                const skipLoading = () => {
+                    clearTimeout(startTimer);
+                    startApp();
+                }
+                ;
+                let startTimer = setTimeout(startApp, 14000);
+                skipBtn.addEventListener('click', skipLoading);
+            }
+            );
+
+            function initGame() {
+                const COLS = 10
+                  , ROWS = 20;
+                const TETROMINOS = {
+                    'I': {
+                        shape: [[0, 0, 0, 0], [1, 1, 1, 1], [0, 0, 0, 0], [0, 0, 0, 0]],
+                        color: '#4D96FF',
+                        name: 'I'
+                    },
+                    'O': {
+                        shape: [[1, 1], [1, 1]],
+                        color: '#FFD166',
+                        name: 'O'
+                    },
+                    'T': {
+                        shape: [[0, 1, 0], [1, 1, 1], [0, 0, 0]],
+                        color: '#9B5DE5',
+                        name: 'T'
+                    },
+                    'S': {
+                        shape: [[0, 1, 1], [1, 1, 0], [0, 0, 0]],
+                        color: '#06D6A0',
+                        name: 'S'
+                    },
+                    'Z': {
+                        shape: [[1, 1, 0], [0, 1, 1], [0, 0, 0]],
+                        color: '#FF6B6B',
+                        name: 'Z'
+                    },
+                    'J': {
+                        shape: [[1, 0, 0], [1, 1, 1], [0, 0, 0]],
+                        color: '#FF7AB6',
+                        name: 'J'
+                    },
+                    'L': {
+                        shape: [[0, 0, 1], [1, 1, 1], [0, 0, 0]],
+                        color: '#f08a5d',
+                        name: 'L'
+                    }
+                };
+                const POINTS = {
+                    1: 100,
+                    2: 300,
+                    3: 500,
+                    4: 800
+                };
+                const WALL_KICK_DATA = {
+                    'J': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
+                    'L': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
+                    'S': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
+                    'Z': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
+                    'T': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
+                    'I': [[[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]], [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]], [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]], [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]]]
+                };
+
+                const appContainer = document.getElementById('appContainer')
+                  , boardEl = document.getElementById('board')
+                  , scoreBox = document.getElementById('scoreBox')
+                  , highScoreEl = document.getElementById('highScore')
+                  , currentScoreEl = document.getElementById('currentScore')
+                  , forceRestartBtn = document.getElementById('forceRestartBtn')
+                  , linesEl = document.getElementById('lines')
+                  , levelEl = document.getElementById('level')
+                  , nextContainer = document.getElementById('nextContainer')
+                  , holdContainer = document.getElementById('holdContainer')
+                  , gameOverlay = document.getElementById('game-overlay')
+                  , startScreen = document.getElementById('start-screen')
+                  , gameoverScreen = document.getElementById('gameover-screen')
+                  , gameoverTitle = document.getElementById('gameover-title')
+                  , gameoverResult = document.getElementById('gameover-result')
+                  , restartButton = document.getElementById('restartButton')
+                  , pauseScreen = document.getElementById('pause-screen')
+                  , resumeButton = document.getElementById('resumeButton')
+                  , pauseButton = document.getElementById('pauseButton')
+                  , modeInfoPanel = document.getElementById('modeInfoPanel')
+                  , modeInfoTitle = document.getElementById('modeInfoTitle')
+                  , modeInfoContent = document.getElementById('modeInfoContent');
+
+                const hamburgerIcon = document.getElementById('hamburger-icon')
+                  , menuPanel = document.getElementById('menu-panel')
+                  , menuRestartBtn = document.getElementById('menu-restart-btn')
+                  , soundToggle = document.getElementById('sound-toggle');
+                const countdownEl = document.getElementById('countdown');
+                const menuCheatBtn = document.getElementById('menu-cheat-btn');
+                const menuKeyConfigBtn = document.getElementById('menu-key-config-btn');
+
+                let board, currentPiece, nextPiece, heldPiece, score, lines, level, isOver, canHold, isPaused;
+                let bestScores = {};
+                let pieceBag, keys = {}, lastTime = 0, dropCounter = 0, dropInterval = 1000, animationFrameId, countdownInterval;
+                let lockDelayTimer, isLanded, landingResets, dasTimer, arrTimer, softDropTimer;
+
+                let gameMode = 'TRAINING';
+                let gameTimer, gameInterval;
+                
+                let keyMap, actionToChange = null;
+                const defaultKeyMap = {
+                    moveLeft: 'ArrowLeft',
+                    moveRight: 'ArrowRight',
+                    softDrop: 'ArrowDown',
+                    hardDrop: 'ArrowUp',
+                    rotateLeft: 'z',
+                    rotateRight: 'x',
+                    hold: 'c'
+                };
+                const actionLabels = {
+                    moveLeft: '左移動',
+                    moveRight: '右移動',
+                    softDrop: 'ソフトドロップ',
+                    hardDrop: 'ハードドロップ',
+                    rotateLeft: '左回転',
+                    rotateRight: '右回転',
+                    hold: 'ホールド'
+                };
+
+                const LOCK_DELAY = 500
+                  , LANDING_RESET_LIMIT = 15
+                  , DAS_DELAY = 160
+                  , ARR_DELAY = 30
+                  , SOFT_DROP_DELAY = 50;
+
+                function init() {
+                    bestScores = loadBestScores();
+                    loadKeyMap();
+                    isPaused = true;
+                    isOver = true;
+                    setupUI();
+                    createEmptyBoard();
+
+                    document.querySelectorAll('#start-screen .btn').forEach(button => {
+                        button.addEventListener('click', (e) => {
+                            startGame(e.target.dataset.mode);
+                        }
+                        );
+                    }
+                    );
+
+                    restartButton.addEventListener('click', showStartScreen);
+                    pauseButton.addEventListener('click', togglePause);
+                    resumeButton.addEventListener('click', togglePause);
+                    forceRestartBtn.addEventListener('click', () => {
+                        if (!isOver && confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) {
+                            showStartScreen();
+                        } else if (isOver) {
+                            showStartScreen();
+                        }
+                    }
+                    );
+                    menuRestartBtn.addEventListener('click', () => {
+                        if (isOver || isPaused || confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) {
+                            showStartScreen();
+                        }
+                        menuPanel.classList.remove('open');
+                    }
+                    );
+                    menuCheatBtn.addEventListener('click', () => {
+                        const cheatModal = document.getElementById('cheatCodeModal');
+                        if (cheatModal)
+                            cheatModal.classList.remove('hidden');
+                        menuPanel.classList.remove('open');
+                    }
+                    );
+                    setupKeyHandlers();
+                    setupExtraFeatures();
+                    setupKeyConfigModal();
+                }
+
+                function startGame(mode) {
+                    gameMode = mode;
+                    startScreen.classList.add('hidden');
+                    gameoverScreen.classList.add('hidden');
+                    pauseScreen.classList.add('hidden');
+                    appContainer.classList.remove('game-inactive-blur');
+                    let count = 3;
+                    countdownEl.textContent = count;
+                    countdownEl.classList.remove('hidden');
+                    if (countdownInterval)
+                        clearInterval(countdownInterval);
+                    countdownInterval = setInterval( () => {
+                        count--;
+                        if (count > 0) {
+                            countdownEl.textContent = count;
+                        } else {
+                            clearInterval(countdownInterval);
+                            countdownEl.classList.add('hidden');
+                            startActualGame();
+                        }
+                    }
+                    , 1000);
+                }
+                function startActualGame() {
+                    gameOverlay.classList.add('hidden');
+                    isPaused = false;
+                    isOver = false;
+                    pauseButton.textContent = "停止";
+                    board = Array.from({
+                        length: ROWS
+                    }, () => Array(COLS).fill(null));
+                    score = 0;
+                    lines = 0;
+                    level = 1;
+                    canHold = true;
+                    heldPiece = null;
+                    pieceBag = [];
+                    spawnPiece();
+                    spawnPiece();
+
+                    if (gameInterval)
+                        clearInterval(gameInterval);
+                    if (gameMode === 'SPRINT') {
+                        gameTimer = 0;
+                    } else if (gameMode === 'ULTRA') {
+                        gameTimer = 180;
+                    }
+                    gameInterval = setInterval( () => {
+                        if (isPaused || isOver)
+                            return;
+                        if (gameMode === 'SPRINT') {
+                            gameTimer++;
+                        } else if (gameMode === 'ULTRA') {
+                            gameTimer--;
+                            if (gameTimer <= 0) {
+                                gameTimer = 0;
+                                gameOver();
+                            }
+                        }
+                        updateUI();
+                    }
+                    , 1000);
+
+                    updateUI();
+                    dropInterval = 1000;
+                    lastTime = 0;
+                    if (animationFrameId)
+                        cancelAnimationFrame(animationFrameId);
+                    gameLoop();
+                    draw();
+                }
+                function gameLoop(time=0) {
+                    if (isOver || isPaused) {
+                        animationFrameId = requestAnimationFrame(gameLoop);
+                        return;
+                    }
+                    const deltaTime = time - lastTime;
+                    lastTime = time;
+                    dropCounter += deltaTime;
+                    if (dropCounter > dropInterval) {
+                        drop();
+                    }
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                }
+                function togglePause() {
+                    if (isOver)
+                        return;
+                    isPaused = !isPaused;
+                    if (isPaused) {
+                        gameOverlay.classList.remove('hidden');
+                        pauseScreen.classList.remove('hidden');
+                        startScreen.classList.add('hidden');
+                        gameoverScreen.classList.add('hidden');
+                        pauseButton.textContent = "再開";
+                        appContainer.classList.add('game-inactive-blur');
+                    } else {
+                        gameOverlay.classList.add('hidden');
+                        pauseScreen.classList.add('hidden');
+                        pauseButton.textContent = "停止";
+                        lastTime = performance.now();
+                        appContainer.classList.remove('game-inactive-blur');
+                    }
+                }
+                function fillPieceBag() {
+                    const pieces = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+                    for (let i = pieces.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [pieces[i],pieces[j]] = [pieces[j], pieces[i]];
+                    }
+                    pieceBag.push(...pieces);
+                }
+                function getNextPieceFromBag() {
+                    if (pieceBag.length === 0) {
+                        fillPieceBag();
+                    }
+                    const name = pieceBag.shift();
+                    const piece = TETROMINOS[name];
+                    return {
+                        name: name,
+                        shape: JSON.parse(JSON.stringify(piece.shape)),
+                        color: piece.color,
+                        x: Math.floor(COLS / 2) - Math.floor(piece.shape[0].length / 2) + (name === 'O' ? 1 : 0),
+                        y: name === 'I' ? -1 : 0,
+                        rotation: 0
+                    };
+                }
+                function spawnPiece() {
+                    currentPiece = nextPiece || getNextPieceFromBag();
+                    nextPiece = getNextPieceFromBag();
+                    resetLandingStatus();
+                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) {
+                        gameOver();
+                    }
+                }
+                function move(dir) {
+                    if (!isValidMove(currentPiece.shape, currentPiece.x + dir, currentPiece.y))
+                        return;
+                    currentPiece.x += dir;
+                    resetLandingTimerOnMove();
+                    draw();
+                }
+                function drop() {
+                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
+                        if (!isLanded) {
+                            isLanded = true;
+                            startLockDelayTimer();
+                        }
+                    } else {
+                        currentPiece.y++;
+                        clearLockDelayTimer();
+                        isLanded = false;
+                    }
+                    dropCounter = 0;
+                    draw();
+                }
+                function hardDrop() {
+                    let dropDist = 0;
+                    while (isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
+                        currentPiece.y++;
+                        dropDist++;
+                    }
+                    if (dropDist > 0) playHardDropAnimation();
+                    lockPiece();
+                    draw();
+                }
+                function rotate(dir) {
+                    const p = currentPiece;
+                    const newRotation = (p.rotation + dir + 4) % 4;
+                    let newShape = JSON.parse(JSON.stringify(p.shape));
+                    if (dir === 1) {
+                        newShape = newShape[0].map( (_, col) => newShape.map(row => row[col]).reverse());
+                    } else {
+                        newShape = newShape[0].map( (_, col) => newShape.map(row => row[row.length - 1 - col]));
+                    }
+                    if (p.name === 'O')
+                        return;
+                    const kickData = WALL_KICK_DATA[p.name][p.rotation];
+                    for (let i = 0; i < kickData.length; i++) {
+                        const offset = kickData[i];
+                        const newX = p.x + offset[0];
+                        const newY = p.y - offset[1];
+                        if (isValidMove(newShape, newX, newY)) {
+                            p.x = newX;
+                            p.y = newY;
+                            p.shape = newShape;
+                            p.rotation = newRotation;
+                            resetLandingTimerOnMove();
+                            draw();
+                            return;
+                        }
+                    }
+                }
+                function hold() {
+                    if (!canHold)
+                        return;
+                    canHold = false;
+                    clearLockDelayTimer();
+                    if (heldPiece) {
+                        [currentPiece,heldPiece] = [heldPiece, currentPiece];
+                        currentPiece.x = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2) + (currentPiece.name === 'O' ? 1 : 0);
+                        currentPiece.y = currentPiece.name === 'I' ? -1 : 0;
+                        currentPiece.rotation = 0;
+                        resetLandingStatus();
+                    } else {
+                        heldPiece = currentPiece;
+                        spawnPiece();
+                    }
+                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) {
+                        gameOver();
+                    }
+                    updateUI();
+                    draw();
+                }
+                function startLockDelayTimer() {
+                    clearLockDelayTimer();
+                    lockDelayTimer = setTimeout(lockPiece, LOCK_DELAY);
+                }
+                function clearLockDelayTimer() {
+                    if (lockDelayTimer)
+                        clearTimeout(lockDelayTimer);
+                    lockDelayTimer = null;
+                }
+                function resetLandingStatus() {
+                    isLanded = false;
+                    landingResets = 0;
+                    clearLockDelayTimer();
+                }
+                function resetLandingTimerOnMove() {
+                    if (isLanded && landingResets < LANDING_RESET_LIMIT) {
+                        startLockDelayTimer();
+                        landingResets++;
+                    }
+                }
+
+                function lockPiece() {
+                    clearLockDelayTimer();
+                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) {
+                        currentPiece.y--;
+                    }
+                    currentPiece.shape.forEach( (row, dy) => {
+                        row.forEach( (val, dx) => {
+                            if (val) {
+                                const bX = currentPiece.x + dx;
+                                const bY = currentPiece.y + dy;
+                                if (bY >= 0 && bY < ROWS && bX >= 0 && bX < COLS) {
+                                    board[bY][bX] = currentPiece.color;
+                                    const cell = boardEl.children[bY * COLS + bX];
+                                    const flash = document.createElement('div');
+                                    flash.className = 'lock-flash-effect';
+                                    cell.appendChild(flash);
+                                    setTimeout( () => flash.remove(), 200);
+                                }
+                            }
+                        }
+                        );
+                    }
+                    );
+                    playSound('pushAudio');
+                    const clearedLineCount = clearLines();
+                    if (clearedLineCount > 0) {
+                        setTimeout( () => {
+                            updateScoreAndLevel(clearedLineCount);
+                            spawnPiece();
+                            canHold = true;
+                            updateUI();
+                            draw();
+                        }
+                        , 400);
+                    } else {
+                        spawnPiece();
+                        canHold = true;
+                        updateUI();
+                        draw();
+                    }
+                }
+
+                function clearLines() {
+                    let rowsToClear = [];
+                    for (let y = ROWS - 1; y >= 0; y--) {
+                        if (board[y].every(cell => cell !== null)) {
+                            rowsToClear.push(y);
+                        }
+                    }
+                    if (rowsToClear.length > 0) {
+                        boardEl.classList.add('line-clearing-effect');
+                        setTimeout( () => boardEl.classList.remove('line-clearing-effect'), 400);
+                        rowsToClear.forEach(y => {
+                            for (let x = 0; x < COLS; x++) {
+                                const cell = boardEl.children[y * COLS + x];
+                                if (cell.firstChild)
+                                    cell.classList.add('line-clearing');
+                            }
+                        }
+                        );
+                        setTimeout( () => {
+                            rowsToClear.sort( (a, b) => a - b).forEach(y => {
+                                board.splice(y, 1);
+                                board.unshift(Array(COLS).fill(null));
+                            }
+                            );
+                            draw();
+                        }
+                        , 350);
+                    }
+                    return rowsToClear.length;
+                }
+
+                function updateScoreAndLevel(clearedCount) {
+                    playSound('delAudio');
+                    if (gameMode !== 'SPRINT') {
+                        score += POINTS[clearedCount] * level;
+                    }
+                    lines += clearedCount;
+
+                    if (gameMode === 'SPRINT' && lines >= 40) {
+                        lines = 40;
+                        gameOver();
+                    }
+
+                    if (clearedCount >= 4)
+                        showFeedbackPopup("PERFECT!");
+
+                    if (gameMode === 'TRAINING') {
+                        const newLevel = Math.floor(lines / 10) + 1;
+                        if (newLevel > level) {
+                            level = newLevel;
+                            showFeedbackPopup(`Level ${level}`);
+                            dropInterval = Math.max(100, 1000 - (level - 1) * 50);
+                        }
+                    }
+                }
+                function isValidMove(shape, x, y) {
+                    for (let dy = 0; dy < shape.length; dy++) {
+                        for (let dx = 0; dx < shape[dy].length; dx++) {
+                            if (shape[dy][dx]) {
+                                const bX = x + dx;
+                                const bY = y + dy;
+                                if (bX < 0 || bX >= COLS || bY >= ROWS || (bY >= 0 && board[bY] && board[bY][bX])) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                    return true;
+                }
+                function createEmptyBoard() {
+                    boardEl.innerHTML = Array.from({
+                        length: ROWS * COLS
+                    }).map( () => `<div class="cell"></div>`).join('');
+                }
+                function draw() {
+                    if (isOver && !gameoverScreen.classList.contains('hidden')) return; // ゲームオーバーアニメーション中は再描画しない
+                    
+                    const cells = Array.from(boardEl.children);
+                    // 1. セルの中身をクリア
+                    for (const cell of cells) {
+                        cell.innerHTML = '';
+                        cell.classList.remove('line-clearing');
+                    }
+                    
+                    // 2. 固定されたボードを描画
+                    board.forEach( (row, y) => row.forEach( (color, x) => {
+                        if (color) {
+                            const tile = document.createElement('div');
+                            tile.className = 'tile';
+                            tile.style.color = color;
+                            cells[y * COLS + x].appendChild(tile);
+                        }
+                    }
+                    ));
+                    
+                    // 3. カレントピースがあれば描画
+                    if (currentPiece && !isOver) {
+                        // 3a. ゴーストピースを描画
+                        let ghostY = currentPiece.y;
+                        while (isValidMove(currentPiece.shape, currentPiece.x, ghostY + 1)) {
+                            ghostY++;
+                        }
+                        currentPiece.shape.forEach( (row, dy) => row.forEach( (val, dx) => {
+                            if (val) {
+                                const x = currentPiece.x + dx;
+                                const gy = ghostY + dy;
+                                if (gy >= 0) {
+                                    const ghostTile = document.createElement('div');
+                                    ghostTile.className = 'ghost-tile';
+                                    cells[gy * COLS + x].appendChild(ghostTile);
+                                }
+                            }
+                        }
+                        ));
+                        
+                        // 3b. カレントピースを描画
+                        currentPiece.shape.forEach( (row, dy) => row.forEach( (val, dx) => {
+                            if (val) {
+                                const x = currentPiece.x + dx;
+                                const y = currentPiece.y + dy;
+                                if (y >= 0) {
+                                    const tile = document.createElement('div');
+                                    tile.className = 'tile';
+                                    tile.style.color = currentPiece.color;
+                                    const cell = cells[y * COLS + x];
+                                    // ゴーストと重なる可能性があるので一度クリア
+                                    while (cell.firstChild) { cell.removeChild(cell.firstChild); }
+                                    cell.appendChild(tile);
+                                }
+                            }
+                        }
+                        ));
+                    }
+                }
+                function drawPreview(container, piece) {
+                    container.innerHTML = '';
+                    if (!piece)
+                        return;
+                    const grid = document.createElement('div');
+                    grid.className = 'piece-grid';
+                    const shape = TETROMINOS[piece.name].shape;
+                    let minRow = shape.length
+                      , maxRow = -1
+                      , minCol = shape[0].length
+                      , maxCol = -1;
+                    for (let r = 0; r < shape.length; r++) {
+                        for (let c = 0; c < shape[r].length; c++) {
+                            if (shape[r][c]) {
+                                minRow = Math.min(minRow, r);
+                                maxRow = Math.max(maxRow, r);
+                                minCol = Math.min(minCol, c);
+                                maxCol = Math.max(maxCol, c);
+                            }
+                        }
+                    }
+                    const trimmedShape = (maxRow === -1) ? [] : shape.slice(minRow, maxRow + 1).map(row => row.slice(minCol, maxCol + 1));
+                    const h = trimmedShape.length;
+                    const w = trimmedShape[0] ? trimmedShape[0].length : 0;
+                    const gridCells = Array.from({
+                        length: 16
+                    }, () => document.createElement('div'));
+                    gridCells.forEach(c => c.className = 'mini-cell');
+                    const startRow = (piece.name === 'I') ? 1 : Math.floor((4 - h) / 2);
+                    const startCol = Math.floor((4 - w) / 2);
+                    for (let r = 0; r < h; r++) {
+                        for (let c = 0; c < w; c++) {
+                            if (trimmedShape[r][c]) {
+                                const index = (startRow + r) * 4 + (startCol + c);
+                                if (gridCells[index]) {
+                                    const tile = document.createElement('div');
+                                    tile.className = 'tile';
+                                    tile.style.color = piece.color;
+                                    gridCells[index].appendChild(tile);
+                                }
+                            }
+                        }
+                    }
+                    gridCells.forEach(c => grid.appendChild(c));
+                    container.appendChild(grid);
+                }
+                function setupUI() {
+                    highScoreEl.textContent = bestScores.training || 0;
+                    currentScoreEl.textContent = 0;
+                    linesEl.textContent = 0;
+                    levelEl.textContent = 1;
+                    appContainer.classList.add('game-inactive-blur');
+                    updateUI();
+                }
+                function updateUI() {
+                    scoreBox.textContent = `Score: ${score}`;
+                    currentScoreEl.textContent = score;
+                    linesEl.textContent = lines;
+                    levelEl.textContent = level;
+
+                    let infoHtml = '';
+                    switch (gameMode) {
+                    case 'TRAINING':
+                        highScoreEl.textContent = bestScores.training || 0;
+                        modeInfoPanel.classList.add('hidden');
+                        break;
+                    case 'SPRINT':
+                        modeInfoTitle.textContent = "SPRINT";
+                        infoHtml = `
+                    <div class="scorebox"><span>TIME</span><span>${formatTime(gameTimer)}</span></div>
+                    <div class="scorebox"><span>BEST</span><span>${bestScores.sprint === Infinity ? 'N/A' : formatTime(bestScores.sprint)}</span></div>
+                    <div class="scorebox"><span>LINES LEFT</span><span>${Math.max(0, 40 - lines)}</span></div>`;
+                        modeInfoPanel.classList.remove('hidden');
+                        break;
+                    case 'ULTRA':
+                        modeInfoTitle.textContent = "ULTRA";
+                        infoHtml = `
+                    <div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div>
+                    <div class="scorebox"><span>HIGH</span><span>${bestScores.ultra || 0}</span></div>
+                    <div class="scorebox"><span>SCORE</span><span>${score}</span></div>`;
+                        modeInfoPanel.classList.remove('hidden');
+                        break;
+                    }
+                    modeInfoContent.innerHTML = infoHtml;
+                    drawPreview(nextContainer, nextPiece);
+                    drawPreview(holdContainer, heldPiece);
+                }
+                function gameOver() {
+                    if (isOver) return;
+                    isOver = true;
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    if (gameInterval) clearInterval(gameInterval);
+                    
+                    playGameOverAnimation().then(() => {
+                        switch (gameMode) {
+                        case 'TRAINING':
+                            gameoverTitle.textContent = "TRAINING COMPLETE";
+                            gameoverResult.textContent = `Score: ${score}`;
+                            if (score > (bestScores.training || 0)) {
+                                bestScores.training = score;
+                                saveBestScores();
+                                showFeedbackPopup("New High Score!");
+                            }
+                            break;
+                        case 'SPRINT':
+                            gameoverTitle.textContent = "SPRINT COMPLETE";
+                            gameoverResult.textContent = `Time: ${formatTime(gameTimer)}`;
+                            if (gameTimer < (bestScores.sprint || Infinity)) {
+                                bestScores.sprint = gameTimer;
+                                saveBestScores();
+                                showFeedbackPopup("New Best Time!");
+                            }
+                            break;
+                        case 'ULTRA':
+                            gameoverTitle.textContent = "TIME UP!";
+                            gameoverResult.textContent = `Score: ${score}`;
+                            if (score > (bestScores.ultra || 0)) {
+                                bestScores.ultra = score;
+                                saveBestScores();
+                                showFeedbackPopup("New High Score!");
+                            }
+                            break;
+                        }
+                        showGameOverScreen();
+                    });
+                }
+                function showStartScreen() {
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    if (gameInterval) clearInterval(gameInterval);
+                    
+                    countdownEl.classList.add('hidden');
+                    gameOverlay.classList.remove('hidden');
+                    startScreen.classList.remove('hidden');
+                    gameoverScreen.classList.add('hidden');
+                    pauseScreen.classList.add('hidden');
+                    appContainer.classList.add('game-inactive-blur');
+                    
+                    isOver = true;
+                    isPaused = true;
+                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                    
+                    createEmptyBoard();
+                    setupUI();
+                    pauseButton.textContent = "停止";
+                }
+                function showGameOverScreen() {
+                    gameOverlay.classList.remove('hidden');
+                    startScreen.classList.add('hidden');
+                    gameoverScreen.classList.remove('hidden');
+                    pauseScreen.classList.add('hidden');
+                    appContainer.classList.add('game-inactive-blur');
+                }
+                function saveBestScores() {
+                    try {
+                        localStorage.setItem('blockfall_bests', JSON.stringify(bestScores));
+                    } catch (e) {}
+                }
+                function loadBestScores() {
+                    try {
+                        const loaded = JSON.parse(localStorage.getItem('blockfall_bests'));
+                        return {
+                            training: loaded?.training || 0,
+                            sprint: loaded?.sprint || Infinity,
+                            ultra: loaded?.ultra || 0
+                        };
+                    } catch (e) {
+                        return {
+                            training: 0,
+                            sprint: Infinity,
+                            ultra: 0
+                        };
+                    }
+                }
+                function formatTime(totalSeconds) {
+                    const minutes = Math.floor(totalSeconds / 60);
+                    const seconds = totalSeconds % 60;
+                    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                }
+
+                function setupKeyHandlers() {
+                    document.addEventListener('keydown', e => {
+                        if (actionToChange) return; 
+
+                        if (e.key === 'Enter' && !e.target.closest('.modal-overlay') && !e.target.closest('.cheat-input')) {
+                            document.getElementById('fake-translator').classList.toggle('hidden');
+                            return;
+                        }
+
+                        if (e.key === 'Escape' && !isOver && !document.querySelector('.modal-overlay:not(.hidden)')) {
+                            e.preventDefault();
+                            togglePause();
+                            return;
+                        }
+                        
+                        if (isPaused || isOver || document.querySelector('.modal-overlay:not(.hidden)')) return;
+                        
+                        if (!keys[e.key]) {
+                            const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase());
+                            if(action) handleKeyPress(action);
+                        }
+                        keys[e.key] = true;
+                    });
+
+                    document.addEventListener('keyup', e => {
+                        keys[e.key] = false;
+                        const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase());
+                        if (action === 'moveLeft' || action === 'moveRight') {
+                            clearTimeout(dasTimer);
+                            clearInterval(arrTimer);
+                            dasTimer = null;
+                            arrTimer = null;
+                        }
+                        if (action === 'softDrop') {
+                            clearInterval(softDropTimer);
+                            softDropTimer = null;
+                        }
+                    });
+                }
+                function handleKeyPress(action) {
+                    if (isOver || isPaused) return;
+                    switch (action) {
+                    case 'moveLeft':
+                        move(-1);
+                        dasTimer = setTimeout(() => { arrTimer = setInterval(() => move(-1), ARR_DELAY); }, DAS_DELAY);
+                        break;
+                    case 'moveRight':
+                        move(1);
+                        dasTimer = setTimeout(() => { arrTimer = setInterval(() => move(1), ARR_DELAY); }, DAS_DELAY);
+                        break;
+                    case 'softDrop':
+                        drop();
+                        softDropTimer = setInterval(drop, SOFT_DROP_DELAY);
+                        break;
+                    case 'hardDrop':
+                        hardDrop();
+                        break;
+                    case 'rotateLeft':
+                        rotate(-1);
+                        break;
+                    case 'rotateRight':
+                        rotate(1);
+                        break;
+                    case 'hold':
+                        hold();
+                        break;
+                    }
+                }
+
+                function playHardDropAnimation() {
+                    const pieceCells = [];
+                    currentPiece.shape.forEach((row, dy) => {
+                        row.forEach((val, dx) => {
+                            if (val) {
+                                pieceCells.push({x: currentPiece.x + dx, y: currentPiece.y + dy});
+                            }
+                        });
+                    });
+
+                    const landingY = pieceCells.reduce((max, cell) => Math.max(max, cell.y), -1);
+                    if (landingY < 0) return;
+
+                    const boardRect = boardEl.getBoundingClientRect();
+                    const cellWidth = boardRect.width / COLS;
+                    const cellHeight = boardRect.height / ROWS;
+
+                    for (let i = 0; i < 15; i++) {
+                        const p = document.createElement('div');
+                        p.className = 'particle';
+                        document.body.appendChild(p);
+                        
+                        const startX = boardRect.left + (Math.random() * COLS) * cellWidth;
+                        const startY = boardRect.top + (landingY + 0.5) * cellHeight;
+
+                        p.style.left = `${startX}px`;
+                        p.style.top = `${startY}px`;
+                        
+                        const angle = Math.random() * Math.PI - Math.PI;
+                        const velocity = Math.random() * 80 + 40;
+                        const endX = Math.cos(angle) * velocity;
+                        const endY = Math.sin(angle) * velocity - 30;
+
+                        p.style.setProperty('--x', `${endX}px`);
+                        p.style.setProperty('--y', `${endY}px`);
+
+                        setTimeout(() => p.remove(), 600);
+                    }
+                }
+
+                function playGameOverAnimation() {
+                    return new Promise(resolve => {
+                        let row = ROWS - 1;
+                        const interval = setInterval(() => {
+                            if (row < 0) {
+                                clearInterval(interval);
+                                setTimeout(resolve, 300);
+                                return;
+                            }
+                            for (let col = 0; col < COLS; col++) {
+                                boardEl.children[row * COLS + col].classList.add('dead');
+                            }
+                            row--;
+                        }, 30);
+                    });
+                }
+                
+                function playSound(id) {
+                    if (!soundToggle.checked)
+                        return;
+                    const a = document.getElementById(id);
+                    if (a) {
+                        a.currentTime = 0;
+                        a.play().catch(() => {});
+                    }
+                }
+                function showFeedbackPopup(text) {
+                    const p = document.createElement('div');
+                    p.textContent = text;
+                    p.className = 'feedback-popup';
+                    document.body.appendChild(p);
+                    p.addEventListener('animationend', () => p.remove());
+                }
+                
+                function loadKeyMap() {
+                    try {
+                        const savedMap = JSON.parse(localStorage.getItem('blockfall_keymap'));
+                        if (savedMap) {
+                            keyMap = { ...defaultKeyMap, ...savedMap };
+                        } else {
+                           keyMap = { ...defaultKeyMap };
+                        }
+                    } catch (e) {
+                        keyMap = { ...defaultKeyMap };
+                    }
+                }
+
+                function saveKeyMap() {
+                     try {
+                        localStorage.setItem('blockfall_keymap', JSON.stringify(keyMap));
+                    } catch (e) {
+                        alert('設定の保存に失敗しました。');
+                    }
+                }
+
+                function setupKeyConfigModal() {
+                    const modal = document.getElementById('keyConfigModal');
+                    const keyConfigList = document.getElementById('key-config-list');
+                    const saveBtn = document.getElementById('saveKeysBtn');
+                    const resetBtn = document.getElementById('resetKeysBtn');
+                    
+                    menuKeyConfigBtn.addEventListener('click', () => {
+                        populateKeyConfigList();
+                        modal.classList.remove('hidden');
+                    });
+
+                    saveBtn.addEventListener('click', () => {
+                        saveKeyMap();
+                        modal.classList.add('hidden');
+                        showFeedbackPopup('キー設定を保存しました');
+                    });
+
+                    resetBtn.addEventListener('click', () => {
+                        if (confirm('キー設定を初期状態に戻しますか？')) {
+                            keyMap = { ...defaultKeyMap };
+                            populateKeyConfigList();
+                        }
+                    });
+                    
+                    modal.addEventListener('click', (e) => {
+                       if (e.target === modal) {
+                           modal.classList.add('hidden');
+                       }
+                    });
+
+                    function populateKeyConfigList() {
+                        keyConfigList.innerHTML = '';
+                        for (const action in actionLabels) {
+                            const item = document.createElement('div');
+                            item.className = 'key-config-item';
+                            item.innerHTML = `
+                                <span class="action-label">${actionLabels[action]}</span>
+                                <span class="key-display" data-action="${action}">${keyMap[action]}</span>
+                            `;
+                            keyConfigList.appendChild(item);
+                        }
+                        
+                        document.querySelectorAll('.key-display').forEach(el => {
+                            el.addEventListener('click', startKeyChange);
+                        });
+                    }
+
+                    function startKeyChange(e) {
+                        if (actionToChange) return;
+                        const targetEl = e.target;
+                        actionToChange = targetEl.dataset.action;
+                        targetEl.textContent = 'キーを押して下さい';
+                        targetEl.classList.add('listening');
+                        
+                        document.addEventListener('keydown', captureKey, { capture: true, once: true });
+                        document.addEventListener('click', cancelKeyChange, { once: true });
+                    }
+
+                    function captureKey(e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const newKey = e.key;
+                        const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`);
+
+                        if (newKey === 'Escape') {
+                            if(currentEl) currentEl.textContent = keyMap[actionToChange];
+                        } else {
+                            const isUsed = Object.values(keyMap).some(k => k.toLowerCase() === newKey.toLowerCase());
+                            if (isUsed && keyMap[actionToChange].toLowerCase() !== newKey.toLowerCase()) {
+                                alert(`キー「${newKey}」は既に使用されています。`);
+                                if(currentEl) currentEl.textContent = keyMap[actionToChange];
+                            } else {
+                                keyMap[actionToChange] = newKey;
+                                if(currentEl) currentEl.textContent = newKey;
+                            }
+                        }
+                        
+                        if(currentEl) currentEl.classList.remove('listening');
+                        document.removeEventListener('click', cancelKeyChange);
+                        actionToChange = null;
+                    }
+
+                    function cancelKeyChange(e) {
+                        if (e.target.dataset.action !== actionToChange) {
+                            const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`);
+                            if(currentEl) {
+                                currentEl.textContent = keyMap[actionToChange];
+                                currentEl.classList.remove('listening');
+                            }
+                            document.removeEventListener('keydown', captureKey, { capture: true });
+                            actionToChange = null;
+                        }
+                    }
+                }
+
+
+                function setupExtraFeatures() {
+                    const cheatCodeModal = document.getElementById('cheatCodeModal')
+                      , cheatInput = document.getElementById('cheatInput')
+                      , submitCheatBtn = document.getElementById('submitCheatBtn')
+                      , closeCheatBtn = document.getElementById('closeCheatBtn')
+                      , menuShareBtn = document.getElementById('menu-share-btn')
+                      , shareModal = document.getElementById('shareModal')
+                      , qrcodeContainer = document.getElementById('qrcode')
+                      , urlInput = document.getElementById('urlInput')
+                      , copyUrlBtn = document.getElementById('copyUrlBtn')
+                      , closeShareBtn = document.getElementById('closeShareBtn')
+                      , bgmAudio = document.getElementById('bgmAudio')
+                      , translatorInput = document.getElementById('translator-input')
+                      , translatorOutput = document.getElementById('translator-output');
+                    if (closeCheatBtn)
+                        closeCheatBtn.addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
+                    if (submitCheatBtn)
+                        submitCheatBtn.addEventListener('click', handleCheatCode);
+                    if (cheatInput)
+                        cheatInput.addEventListener('keydown', (ev) => {
+                            if (ev.key === 'Enter')
+                                handleCheatCode();
+                        }
+                        );
+                    document.addEventListener('keydown', (e) => {
+                        if (e.code === 'Space' && !e.target.closest('.modal-overlay')) {
+                            e.preventDefault();
+                            if (cheatCodeModal)
+                                cheatCodeModal.classList.remove('hidden');
+                            if (cheatInput)
+                                cheatInput.focus();
+                        }
+                    }
+                    );
+                    hamburgerIcon.addEventListener('click', () => menuPanel.classList.toggle('open'));
+                    const savedSoundSetting = localStorage.getItem('blockblast_sound');
+                    if (savedSoundSetting !== null)
+                        soundToggle.checked = savedSoundSetting === 'true';
+                    const playBGM = () => {
+                        if (soundToggle.checked && bgmAudio)
+                            bgmAudio.play().catch( () => {}
+                            );
+                    }
+                    ;
+                    document.body.addEventListener('click', playBGM, {
+                        once: true
+                    });
+                    soundToggle.addEventListener('change', (e) => {
+                        try {
+                            localStorage.setItem('blockblast_sound', e.target.checked);
+                        } catch (err) {}
+                        if (e.target.checked && bgmAudio)
+                            bgmAudio.play().catch( () => {}
+                            );
+                        else if (bgmAudio)
+                            bgmAudio.pause();
+                    }
+                    );
+                    if (menuShareBtn)
+                        menuShareBtn.addEventListener('click', () => {
+                            if (!shareModal)
+                                return;
+                            const url = `${window.location.origin}${window.location.pathname}`;
+                            if (urlInput)
+                                urlInput.value = url;
+                            if (qrcodeContainer)
+                                qrcodeContainer.innerHTML = '';
+                            if (typeof QRCode !== 'undefined') {
+                                QRCode.toCanvas(url, {
+                                    width: 200,
+                                    errorCorrectionLevel: 'H'
+                                }, (err, canvas) => {
+                                    if (err) {
+                                        console.error(err);
+                                        return;
+                                    }
+                                    if (qrcodeContainer)
+                                        qrcodeContainer.appendChild(canvas);
+                                }
+                                );
+                            }
+                            shareModal.classList.remove('hidden');
+                            menuPanel.classList.remove('open');
+                        }
+                        );
+                    if (closeShareBtn)
+                        closeShareBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
+                    if (copyUrlBtn)
+                        copyUrlBtn.addEventListener('click', () => {
+                            if (urlInput) {
+                                urlInput.select();
+                                navigator.clipboard.writeText(urlInput.value).then( () => {
+                                    copyUrlBtn.textContent = 'コピー完了!';
+                                    setTimeout( () => {
+                                        copyUrlBtn.textContent = 'コピー';
+                                    }
+                                    , 2000);
+                                }
+                                );
+                            }
+                        }
+                        );
+                    const originalTitle = document.title
+                      , favicon = document.getElementById('favicon')
+                      , originalFavicon = favicon ? favicon.href : ''
+                      , fakeTitle = '翻訳'
+                      , fakeFavicon = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>';
+                    window.addEventListener('blur', () => {
+                        document.title = fakeTitle;
+                        if (favicon)
+                            favicon.href = fakeFavicon;
+                    }
+                    );
+                    window.addEventListener('focus', () => {
+                        document.title = originalTitle;
+                        if (favicon)
+                            favicon.href = originalFavicon;
+                    }
+                    );
+                    if (translatorInput) {
+                        translatorInput.addEventListener('keyup', () => {
+                            if (translatorOutput)
+                                translatorOutput.value = simpleTranslate(translatorInput.value);
+                        }
+                        );
+                    }
+                    function simpleTranslate(text) {
+                        const map = {
+                            'a': 'b',
+                            'あ': 'い',
+                            'i': 'j'
+                        };
+                        return text.toLowerCase().split('').map(char => map[char] || char).join('');
+                    }
+                }
+                function handleCheatCode() {
+                    const cheatInput = document.getElementById('cheatInput')
+                      , cheatCodeModal = document.getElementById('cheatCodeModal');
+                    const code = cheatInput.value.trim().toLowerCase();
+                    if (code === 'towa.soko0406') {
+                        const newScoreStr = prompt('新しいスコアを入力:', score);
+                        const newScore = parseInt(newScoreStr, 10);
+                        if (!isNaN(newScore)) {
+                            score = newScore;
+                            updateUI();
+                        } else {
+                            alert('無効な数値');
+                        }
+                    } else if (code === 'deletadata' || code === 'reset') {
+                        try {
+                            localStorage.removeItem('blockfall_bests');
+                            localStorage.removeItem('blockfall_keymap');
+                            alert('全モードのハイスコアとキー設定を削除しました');
+                            location.reload();
+                        } catch (e) {
+                            alert('削除失敗');
+                        }
+                    } else {
+                        alert('コードが違います');
+                    }
+                    if (cheatInput)
+                        cheatInput.value = '';
+                    if (cheatCodeModal)
+                        cheatCodeModal.classList.add('hidden');
+                }
+
+                init();
+            }
+        </script>
+    </body>
+
+</html>
