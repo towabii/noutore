@@ -34,6 +34,7 @@
     justify-content: center;
     min-height: 100vh;
     width: 100%;
+    position: relative;
   }
 
   /* ローディング画面 */
@@ -63,7 +64,7 @@
   .title { font-size:22px; font-weight:700; letter-spacing:0.4px; color: var(--neon-cyan); text-shadow: 0 0 5px var(--neon-cyan); }
   .meta { display:flex; gap:10px; align-items:center; }
   .meta .box { background:var(--accent); border: 1px solid #333; padding:8px 16px; border-radius:8px; font-weight:600; font-size:16px; min-width: 100px; text-align: center; }
-  .meta .box#phaseBox { cursor: pointer; } /* 巻き戻し機能のためにカーソルを変更 */
+  .meta .box#phaseBox { cursor: pointer; }
 
   #canvas-wrapper { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
   #trainingCanvas { display: block; background-color: #000; cursor: pointer; }
@@ -80,8 +81,10 @@
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
   .modal-content { background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
   .modal-content h2 { margin-top: 0; font-size: 20px; border-bottom: 1px solid var(--accent); padding-bottom: 8px; margin-bottom: 16px; color: var(--neon-cyan); }
+  .modal-content ul { padding-left: 20px; line-height: 1.7; }
+  .modal-content .sub-header { font-weight: bold; margin-top: 16px; margin-bottom: 4px; color: var(--neon-cyan); }
   .modal-footer { text-align: right; margin-top: 24px; }
-  .cheat-input { width: 100%; padding: 10px; border-radius: 6px; background: var(--accent); border: 1px solid #333; color: var(--text-light); font-size: 16px; margin-top: 8px; box-sizing: border-box; }
+  .password-input, .cheat-input { width: 100%; padding: 10px; border-radius: 6px; background: var(--accent); border: 1px solid #333; color: var(--text-light); font-size: 16px; margin-top: 8px; box-sizing: border-box; }
   
   /* ハンバーガーメニュー */
   #hamburger-icon { position: fixed; top: 20px; right: 20px; width: 30px; height: 22px; cursor: pointer; z-index: 1002; display: flex; flex-direction: column; justify-content: space-between; }
@@ -116,17 +119,44 @@
   .translator-textarea:focus { outline: none; }
   .translator-controls { display: flex; align-items: center; }
   #translate-btn { padding: 10px; background: none; border: 1px solid #dadce0; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; }
+  
+  /* ========== 開発者モードHUDここから ========== */
+  #dev-hud { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: limegreen; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 12px; padding: 10px; border-radius: 8px; z-index: 9999; pointer-events: none; white-space: pre; line-height: 1.4; display: flex; gap: 20px; }
+  .fps-good { color: #86efac; } .fps-warn { color: #fde047; } .fps-bad { color: #f87171; }
+  .dev-controls-panel { display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
+  .dev-controls-panel button { background: rgba(120, 255, 120, 0.2); border: 1px solid limegreen; color: limegreen; font-family: monospace; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+  .dev-controls-panel button:hover { background: rgba(120, 255, 120, 0.4); }
+  #dev-console { position: fixed; bottom: 10px; right: 10px; left: auto; width: calc(100% - 20px); max-width: 600px; height: 100px; background: rgba(10,10,20,0.8); border: 1px solid var(--accent); border-radius: 8px; z-index: 9998; overflow-y: auto; padding: 8px; font-family: monospace; font-size: 11px; color: #ccc; pointer-events: none; }
+  #dev-console .log-error { color: #ff8080; } #dev-console .log-warn { color: #fde047; }
+  /* ========== 開発者モードHUDここまで ========== */
+
+  /* ========== Sokohara Record ここから ========== */
+  #sokohara-record { position: fixed; top: 20px; left: 50%; background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 12px 24px; border-radius: 10px; font-size: 18px; font-weight: bold; z-index: 1005; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px rgba(255,255,255,0.3); }
+  @keyframes fade-in-then-out {
+      0% { opacity: 0; transform: translate(-50%, -80px); }
+      15% { opacity: 1; transform: translate(-50%, 0); }
+      85% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -80px); }
+  }
+  /* ========== Sokohara Record ここまで ========== */
 
   .note { font-size:13px; color: #999; }
   .center { text-align:center; }
-  @media (max-width:980px){ .app{ padding: 12px; margin: 0; } }
+  @media (max-width:980px){ .app{ padding: 12px; margin: 0; } #dev-hud { font-size: 10px; flex-direction: column; } #dev-console { max-width: 100%; height: 80px; } }
 </style>
 </head>
 <body>
+  <!-- 開発者モードHUD -->
+  <div id="dev-hud" class="hidden"></div>
+  <div id="dev-console" class="hidden"></div>
+  <!-- Sokohara Record -->
+  <div id="sokohara-record" class="hidden">底原永和の最高記録: 6分21秒</div>
+
   <div class="container">
     <div id="loader">
       <button id="skipBtn" class="btn">スキップ</button>
-      <div id="staffRollContainer"><div class="credits-list"><pre>PRODUCER ................. 底原永和
+      <div id="staffRollContainer"><div class="credits-list"><pre>
+PRODUCER ................. 底原永和
 DIRECTOR ................... 底原永和
 EXECUTIVE PRODUCER ..... 底原永和
 LEAD PROGRAMMER .......... 底原永和
@@ -136,36 +166,51 @@ SPECIAL THANKS ........... 底原永和</pre></div></div>
     </div>
 
     <div id="difficulty-selector" class="hidden">
-        <h2>SELECT COURSE</h2>
+        <h2>コース選択</h2>
         <div class="difficulty-buttons">
-            <button class="btn difficulty-btn" id="easy-btn">EASY</button>
-            <button class="btn difficulty-btn" id="hard-btn">HARD</button>
+            <button class="btn difficulty-btn" id="easy-btn">イージー</button>
+            <button class="btn difficulty-btn" id="hard-btn">ハード</button>
         </div>
     </div>
     
     <div id="hamburger-icon" class="hidden"><span></span><span></span><span></span></div>
     <div id="menu-panel">
-      <div class="menu-item" id="menu-change-mode-btn"><span>コース選択に戻る</span><span>&#x1F504;</span></div>
-      <div class="menu-item" id="menu-restart-btn"><span>最初からやり直す</span><span>&#x21BB;</span></div>
+      <div class="menu-item" id="menu-change-mode-btn"><span>モード選択に戻る</span></div>
+      <div class="menu-item" id="menu-restart-btn"><span>訓練をリセット</span></div>
       <div class="menu-item"><span>サウンド</span><label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label></div>
-      <div class="menu-item" id="menu-share-btn"><span>共有する</span><span>&#x2197;</span></div>
-      <div class="menu-item" id="menu-cheat-btn"><span>裏コード</span><span>&#x1F511;</span></div>
+      <div class="menu-item" id="menu-share-btn"><span>共有する</span></div>
+      <div class="menu-item" id="menu-cheat-btn"><span>コード入力</span></div>
+      <div class="menu-item" id="menu-dev-mode-btn"><span>開発者モード</span></div>
     </div>
 
     <div class="app hidden" id="appContainer">
       <div class="training-panel" id="trainingPanel">
         <div class="header">
-          <div class="title">CORE PIN TRAINING</div>
+          <div class="title">コアピン 訓練</div>
           <div class="meta">
-            <div class="box" id="phaseBox">Phase: 1</div>
-            <div class="box" id="maxPhaseBox">Max Phase: 0</div>
+            <div class="box" id="phaseBox">フェーズ: 1</div>
+            <div class="box" id="maxPhaseBox">最高フェーズ: 0</div>
           </div>
         </div>
         <div id="canvas-wrapper"><canvas id="trainingCanvas"></canvas></div>
       </div>
-       <div class="note center">Click or Press [SPACE] to shoot. | [ENTER] for fake screen.</div>
+       <div class="note center">クリックまたは[SPACE]で発射 | [ENTER]で偽装画面</div>
     </div>
     
+    <div id="noticeModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>アップデート情報</h2>
+            <div class="sub-header">今回の修正・追加</div>
+            <ul>
+                <li>開発者モードを追加しました。（メニューから）</li>
+                <li>UIの表記を日本語に更新しました。</li>
+            </ul>
+            <div class="sub-header">操作方法</div>
+            <p class="note" style="color: var(--text-light)">画面をクリックするか[SPACE]キーを押して、下のピンを回転するコアに発射します。<br>すでに刺さっているピンにぶつからないように、全てのピンを刺せばフェーズクリアです。</p>
+            <div class="modal-footer"><button class="btn" id="closeNoticeBtn">OK</button></div>
+        </div>
+    </div>
+
     <div id="cheatCodeModal" class="modal-overlay hidden">
       <div class="modal-content">
         <h2>コード入力</h2>
@@ -178,9 +223,21 @@ SPECIAL THANKS ........... 底原永和</pre></div></div>
       </div>
     </div>
 
+    <div id="devPasswordModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>開発者モード</h2>
+        <p class="note">パスワードを入力してください。</p>
+        <input type="password" id="devPasswordInput" class="password-input">
+        <div class="modal-footer">
+          <button class="btn" id="submitDevPasswordBtn">認証</button>
+          <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
     <div id="shareModal" class="modal-overlay hidden">
       <div class="modal-content">
-        <h2>セッションを共有</h2>
+        <h2>共有</h2>
         <div id="qrcode"></div>
         <p class="note center">QRコードをスキャンするか、以下のURLをコピーしてください。</p>
         <div class="url-container">
@@ -229,85 +286,94 @@ window.addEventListener('DOMContentLoaded', () => {
     skipBtn.addEventListener('click', skipLoading);
 
     // --- コース選択 ---
+    document.getElementById('easy-btn').addEventListener('click', () => handleCourseSelection('easy'));
+    document.getElementById('hard-btn').addEventListener('click', () => handleCourseSelection('hard'));
+});
+
+function handleCourseSelection(mode) {
     const difficultySelector = document.getElementById('difficulty-selector');
+    difficultySelector.classList.add('hidden');
+    
+    const noticeModal = document.getElementById('noticeModal');
+    noticeModal.classList.remove('hidden');
+
+    document.getElementById('closeNoticeBtn').addEventListener('click', () => {
+        noticeModal.classList.add('hidden');
+        showSokoharaRecordAndStart(mode);
+    }, { once: true });
+}
+
+function showSokoharaRecordAndStart(mode) {
+    const recordEl = document.getElementById('sokohara-record');
+    recordEl.classList.remove('hidden');
+    recordEl.style.animation = 'fade-in-then-out 5s ease-out forwards';
+    recordEl.addEventListener('animationend', () => {
+        recordEl.classList.add('hidden');
+        recordEl.style.animation = '';
+        startMainApp(mode);
+    }, { once: true });
+}
+
+function startMainApp(mode) {
     const appContainer = document.getElementById('appContainer');
     const hamburgerIcon = document.getElementById('hamburger-icon');
-    
-    document.getElementById('easy-btn').addEventListener('click', () => {
-        difficultySelector.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        hamburgerIcon.classList.remove('hidden');
-        initTraining('easy');
-    });
+    appContainer.classList.remove('hidden');
+    hamburgerIcon.classList.remove('hidden');
+    initTraining(mode);
+}
 
-    document.getElementById('hard-btn').addEventListener('click', () => {
-        difficultySelector.classList.add('hidden');
-        appContainer.classList.remove('hidden');
-        hamburgerIcon.classList.remove('hidden');
-        initTraining('hard');
-    });
+// ========== 開発者モードHUDここから ==========
+const devHUD = {
+    enabled: false,
+    elements: { hud: document.getElementById('dev-hud'), console: document.getElementById('dev-console'), },
+    perf: { lastTime: performance.now(), frames: 0, fps: 0, frameTime: 0, cpuUsage: 0 },
+    progress: { phase: 1, state: 'playing', pinsLeft: 0, coreSpeed: 0, dir: 1 },
+    input: { lastKey: 'N/A' },
+    system: { userAgent: navigator.userAgent.substring(0, 40) + '...', windowSize: `${window.innerWidth}x${window.innerHeight}` }
+};
+function updateDevHUD() {
+    if (!devHUD.enabled) { requestAnimationFrame(updateDevHUD); return; }
+    const now = performance.now(); const delta = now - devHUD.perf.lastTime;
+    devHUD.perf.frameTime = delta; devHUD.perf.lastTime = now; devHUD.perf.frames++;
+    if (now > (devHUD.perf.lastCalcTime || 0) + 1000) { devHUD.perf.fps = devHUD.perf.frames; devHUD.perf.frames = 0; devHUD.perf.lastCalcTime = now; }
+    const targetFrameTime = 1000 / 60;
+    devHUD.perf.cpuUsage = Math.min(100, (devHUD.perf.frameTime / targetFrameTime) * 100);
+    const fpsClass = devHUD.perf.fps >= 55 ? 'fps-good' : devHUD.perf.fps >= 30 ? 'fps-warn' : 'fps-bad';
+    const hudText = `
+<div>
+--[ 📊 PERFORMANCE ]---------
+FPS        : <span class="${fpsClass}">${devHUD.perf.fps}</span>
+Frame Time : ${devHUD.perf.frameTime.toFixed(2)} ms
+CPU Usage  : ${devHUD.perf.cpuUsage.toFixed(1)} %
 
-    // --- メニューとモーダルの汎用制御 ---
-    const menuPanel = document.getElementById('menu-panel');
-    const shareModal = document.getElementById('shareModal');
-    const cheatCodeModal = document.getElementById('cheatCodeModal');
-    const fakeTranslator = document.getElementById('fake-translator');
+--[ 🚀 PROGRESS ]------------
+Phase      : ${devHUD.progress.phase}
+State      : ${devHUD.progress.state}
+Pins Left  : ${devHUD.progress.pinsLeft}
+Core Speed : ${(devHUD.progress.coreSpeed * 1000).toFixed(2)}
+Direction  : ${devHUD.progress.dir > 0 ? 'CW' : 'CCW'}
+</div>
+<div>
+--[ ⚙️ SYSTEM ]--------------
+User Agent : ${devHUD.system.userAgent}
+Window Size: ${devHUD.system.windowSize}
 
-    hamburgerIcon.addEventListener('click', () => menuPanel.classList.toggle('open'));
-    document.addEventListener('click', (e) => { if (!menuPanel.contains(e.target) && !hamburgerIcon.contains(e.target)) menuPanel.classList.remove('open'); });
-    document.getElementById('menu-change-mode-btn').addEventListener('click', () => window.location.reload());
-    
-    // 共有モーダル
-    document.getElementById('menu-share-btn').addEventListener('click', () => {
-        const url = window.location.href;
-        document.getElementById('urlInput').value = url;
-        const qrcodeContainer = document.getElementById('qrcode');
-        qrcodeContainer.innerHTML = '';
-        QRCode.toCanvas(document.createElement('canvas'), url, { width: 200, errorCorrectionLevel: 'H' }, (err, canvas) => {
-            if (err) throw err;
-            qrcodeContainer.appendChild(canvas);
-        });
-        shareModal.classList.remove('hidden');
-        menuPanel.classList.remove('open');
-    });
-    document.getElementById('closeShareBtn').addEventListener('click', () => shareModal.classList.add('hidden'));
-    document.getElementById('copyUrlBtn').addEventListener('click', (e) => {
-        document.getElementById('urlInput').select();
-        navigator.clipboard.writeText(document.getElementById('urlInput').value).then(() => {
-            e.target.textContent = 'コピー完了!';
-            setTimeout(() => { e.target.textContent = 'コピー'; }, 2000);
-        });
-    });
+--[ 🔍 INPUT ]----------------
+Last Key   : ${devHUD.input.lastKey}
 
-    // 裏コードモーダル
-    document.getElementById('menu-cheat-btn').addEventListener('click', () => {
-        cheatCodeModal.classList.remove('hidden');
-        menuPanel.classList.remove('open');
-    });
-    document.getElementById('closeCheatBtn').addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
-    document.getElementById('submitCheatBtn').addEventListener('click', () => {
-        const cheatInput = document.getElementById('cheatInput');
-        const phase = parseInt(cheatInput.value, 10);
-        if (phase >= 1 && phase <= 100 && window.corePinTraining) {
-            window.corePinTraining.goToPhase(phase);
-        }
-        cheatInput.value = '';
-        cheatCodeModal.classList.add('hidden');
-    });
+--[ 🐞 DEBUG ]----------------
+<div class="dev-controls-panel">
+  <button data-action="set-phase">フェーズ設定</button>
+</div>
+</div>`;
+    devHUD.elements.hud.innerHTML = hudText.trim();
+    requestAnimationFrame(updateDevHUD);
+}
+function logToDevConsole(message, type = 'log') { if (!devHUD.enabled) return; const p = document.createElement('p'); p.className = `log-${type}`; p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`; devHUD.elements.console.appendChild(p); devHUD.elements.console.scrollTop = devHUD.elements.console.scrollHeight; }
+window.addEventListener('keydown', e => { devHUD.input.lastKey = e.key; });
+requestAnimationFrame(updateDevHUD);
+// ========== 開発者モードHUDここまで ==========
 
-    // --- グローバルキーボードイベント ---
-    window.addEventListener('keydown', (e) => {
-        const isModalOpen = !!document.querySelector('.modal-overlay:not(.hidden)');
-        if (e.key === 'Enter' && !isModalOpen) {
-            e.preventDefault();
-            fakeTranslator.classList.toggle('hidden');
-        }
-        if (e.code === 'Space' && !isModalOpen && fakeTranslator.classList.contains('hidden') && window.corePinTraining) { 
-            e.preventDefault(); 
-            window.corePinTraining.shoot();
-        }
-    });
-});
 
 function initTraining(trainingMode) {
     const canvas = document.getElementById('trainingCanvas'), ctx = canvas.getContext('2d'), wrapper = document.getElementById('canvas-wrapper'), phaseBox = document.getElementById('phaseBox'), maxPhaseBox = document.getElementById('maxPhaseBox');
@@ -324,29 +390,9 @@ function initTraining(trainingMode) {
     const PHASE_CONFIG = Array.from({ length: 100 }, (_, i) => {
         const phase = i + 1;
         if (trainingMode === 'hard') {
-            return {
-                speed: 0.015 + phase * 0.0022,
-                initialPins: Math.min(5 + Math.floor(phase / 2.5), 40),
-                playerPins: Math.min(7 + Math.floor(phase / 8), 16),
-                changeDir: phase > 5,
-                changeDirInterval: Math.max(6000 - phase * 70, 1200),
-                pulsate: true,
-                pulsateAmplitude: 0.08,
-                randomPlacement: true,
-                intermittentRotation: phase > 40,
-            };
+            return { speed: 0.015 + phase * 0.0022, initialPins: Math.min(5 + Math.floor(phase / 2.5), 40), playerPins: Math.min(7 + Math.floor(phase / 8), 16), changeDir: phase > 5, changeDirInterval: Math.max(6000 - phase * 70, 1200), pulsate: true, pulsateAmplitude: 0.08, randomPlacement: true, intermittentRotation: phase > 40, };
         } else { // EASY
-            return {
-                speed: 0.008 + phase * 0.0011,
-                initialPins: Math.min(3 + Math.floor(phase / 3.0), 30),
-                playerPins: Math.min(8 + Math.floor(phase / 6), 18),
-                changeDir: phase > 15,
-                changeDirInterval: Math.max(7500 - phase * 50, 2500),
-                pulsate: phase > 50,
-                pulsateAmplitude: 0.05,
-                randomPlacement: false,
-                intermittentRotation: false,
-            };
+            return { speed: 0.008 + phase * 0.0011, initialPins: Math.min(3 + Math.floor(phase / 3.0), 30), playerPins: Math.min(8 + Math.floor(phase / 6), 18), changeDir: phase > 15, changeDirInterval: Math.max(7500 - phase * 50, 2500), pulsate: phase > 50, pulsateAmplitude: 0.05, randomPlacement: false, intermittentRotation: false, };
         }
     });
     
@@ -377,31 +423,27 @@ function initTraining(trainingMode) {
         }
         player.pins = Array(config.playerPins).fill(true);
         launchingPin = null;
-        phaseBox.textContent = `Phase: ${phase}`;
+        phaseBox.textContent = `フェーズ: ${phase}`;
         
         if(core.dirChangeTimer) clearInterval(core.dirChangeTimer);
         if (config.changeDir) {
             core.dirChangeTimer = setInterval(() => { if(sessionState === 'playing') core.dir *= -1; }, config.changeDirInterval + Math.random() * 500);
         }
+        if (devHUD.enabled) { devHUD.progress.phase = phase; devHUD.progress.coreSpeed = core.speed; }
     }
     
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        
-        ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25;
-        ctx.fillStyle = '#00ffff';
+        ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25; ctx.fillStyle = '#00ffff';
         ctx.beginPath(); ctx.arc(core.x, core.y, core.radius, 0, Math.PI * 2); ctx.fill();
         ctx.shadowBlur = 0;
-        
         ctx.fillStyle = '#000'; ctx.font = `bold ${core.radius * 0.7}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.fillText(currentPhase <= 100 ? currentPhase : '★', core.x, core.y);
 
         stuckPins.forEach(p => {
             const angle = core.angle + p.angle;
-            const startX = core.x + Math.cos(angle) * core.radius;
-            const startY = core.y + Math.sin(angle) * core.radius;
-            const endX = core.x + Math.cos(angle) * (core.radius + pin.length);
-            const endY = core.y + Math.sin(angle) * (core.radius + pin.length);
+            const startX = core.x + Math.cos(angle) * core.radius; const startY = core.y + Math.sin(angle) * core.radius;
+            const endX = core.x + Math.cos(angle) * (core.radius + pin.length); const endY = core.y + Math.sin(angle) * (core.radius + pin.length);
             ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke();
             ctx.fillStyle = '#e0e0e0'; ctx.beginPath(); ctx.arc(endX, endY, pin.headRadius, 0, Math.PI * 2); ctx.fill();
         });
@@ -420,9 +462,9 @@ function initTraining(trainingMode) {
         if (sessionState !== 'playing') {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.font = `bold ${core.originalRadius * 0.4}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            if (sessionState === 'sessionFailed') { ctx.fillStyle = '#ff0055'; ctx.fillText('TRY AGAIN', core.x, core.y - 30); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.2}px Inter`; ctx.fillText('Click or Space to retry', core.x, core.y + 40); }
-            else if (sessionState === 'sessionComplete') { ctx.fillStyle = '#00ffaa'; ctx.fillText('SESSION COMPLETE', core.x, core.y - 30); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.2}px Inter`; ctx.fillText('Click or Space to continue', core.x, core.y + 40); }
-            else if (sessionState === 'courseComplete') { ctx.fillStyle = '#f0ff00'; ctx.fillText('COURSE COMPLETE!', core.x, core.y - 40); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.25}px Inter`; ctx.fillText('Congratulations!', core.x, core.y + 20); ctx.font = `normal ${core.originalRadius * 0.18}px Inter`; ctx.fillText('Click or Space to start over.', core.x, core.y + 60); }
+            if (sessionState === 'sessionFailed') { ctx.fillStyle = '#ff0055'; ctx.fillText('失敗', core.x, core.y - 30); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.2}px Inter`; ctx.fillText('クリックまたはSPACEでリトライ', core.x, core.y + 40); }
+            else if (sessionState === 'sessionComplete') { ctx.fillStyle = '#00ffaa'; ctx.fillText('フェーズクリア', core.x, core.y - 30); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.2}px Inter`; ctx.fillText('クリックまたはSPACEで次へ', core.x, core.y + 40); }
+            else if (sessionState === 'courseComplete') { ctx.fillStyle = '#f0ff00'; ctx.fillText('全フェーズクリア!', core.x, core.y - 40); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.25}px Inter`; ctx.fillText('おめでとうございます！', core.x, core.y + 20); ctx.font = `normal ${core.originalRadius * 0.18}px Inter`; ctx.fillText('クリックまたはSPACEで最初から', core.x, core.y + 60); }
         }
     }
 
@@ -436,7 +478,6 @@ function initTraining(trainingMode) {
                  else if (intermittentFactor > 0.7) speedModifier = 0.5;
              }
              core.angle += core.speed * core.dir * speedModifier;
-             
              if (config.pulsate) {
                  const pulseFactor = Math.sin(Date.now() / 280) * (core.originalRadius * config.pulsateAmplitude);
                  core.radius = core.originalRadius + pulseFactor;
@@ -462,7 +503,7 @@ function initTraining(trainingMode) {
                         if (player.pins.length === 0) {
                             sessionState = 'sessionComplete'; playSound(levelUpAudio);
                             setTimeout(() => {
-                                if (currentPhase > highestPhaseCompleted) { highestPhaseCompleted = currentPhase; localStorage.setItem(storageKey, highestPhaseCompleted); maxPhaseBox.textContent = `Max Phase: ${highestPhaseCompleted}`; }
+                                if (currentPhase > highestPhaseCompleted) { highestPhaseCompleted = currentPhase; localStorage.setItem(storageKey, highestPhaseCompleted); maxPhaseBox.textContent = `最高: ${highestPhaseCompleted}`; }
                                 currentPhase++; setupPhase(currentPhase);
                             }, 800);
                         }
@@ -471,6 +512,7 @@ function initTraining(trainingMode) {
             }
             if (launchingPin && launchingPin.y < -pin.length) launchingPin = null;
         }
+        if(devHUD.enabled) { devHUD.progress.state = sessionState; devHUD.progress.pinsLeft = player.pins.length; devHUD.progress.dir = core.dir; }
     }
 
     function gameLoop() {
@@ -485,12 +527,11 @@ function initTraining(trainingMode) {
         } else if (sessionState === 'sessionFailed') {
             setupPhase(currentPhase);
         } else if (sessionState === 'courseComplete') {
-            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `Max Phase: 0`;
+            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `最高: 0`;
             currentPhase = 1; setupPhase(currentPhase);
         }
     }
     
-    // --- 巻き戻し機能 ---
     phaseBox.onclick = () => {
         if (highestPhaseCompleted > 0) {
             const targetPhase = prompt(`挑戦したいフェーズを入力してください (1～${highestPhaseCompleted+1})`, currentPhase);
@@ -511,7 +552,7 @@ function initTraining(trainingMode) {
     window.corePinTraining = {
         restart: () => { 
             if (core.dirChangeTimer) clearInterval(core.dirChangeTimer);
-            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `Max Phase: 0`;
+            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `最高: 0`;
             currentPhase = 1; setupPhase(currentPhase); 
         },
         goToPhase: (phase) => { 
@@ -529,15 +570,124 @@ function initTraining(trainingMode) {
     } catch(e) {}
     
     currentPhase = highestPhaseCompleted + 1;
-    maxPhaseBox.textContent = `Max Phase: ${highestPhaseCompleted}`;
+    maxPhaseBox.textContent = `最高: ${highestPhaseCompleted}`;
     
     window.addEventListener('resize', resizeCanvas);
     canvas.addEventListener('click', handleAction);
     resizeCanvas(); setupPhase(currentPhase);
     if (animationFrameId) cancelAnimationFrame(animationFrameId);
     gameLoop();
+    setupDevMode();
+    
+    // --- グローバルキーボードイベント ---
+    const menuPanel = document.getElementById('menu-panel');
+    const cheatCodeModal = document.getElementById('cheatCodeModal');
+    const fakeTranslator = document.getElementById('fake-translator');
+
+    window.addEventListener('keydown', (e) => {
+        const isModalOpen = !!document.querySelector('.modal-overlay:not(.hidden)');
+        const isFakeScreenOpen = !fakeTranslator.classList.contains('hidden');
+
+        if (e.key === 'Enter' && !isModalOpen) {
+            e.preventDefault();
+            fakeTranslator.classList.toggle('hidden');
+        }
+        if (e.code === 'Space' && !isModalOpen && !isFakeScreenOpen && window.corePinTraining) { 
+            e.preventDefault(); 
+            window.corePinTraining.shoot();
+        }
+    });
+
+    // --- メニューとモーダルの汎用制御 ---
+    document.getElementById('hamburger-icon').addEventListener('click', () => menuPanel.classList.toggle('open'));
+    document.addEventListener('click', (e) => { 
+        const hamburgerIcon = document.getElementById('hamburger-icon');
+        if (!menuPanel.contains(e.target) && !hamburgerIcon.contains(e.target)) menuPanel.classList.remove('open'); 
+    });
+    document.getElementById('menu-change-mode-btn').addEventListener('click', () => window.location.reload());
+    
+    // 共有モーダル
+    document.getElementById('menu-share-btn').addEventListener('click', () => {
+        const shareModal = document.getElementById('shareModal');
+        const url = window.location.href;
+        document.getElementById('urlInput').value = url;
+        const qrcodeContainer = document.getElementById('qrcode');
+        qrcodeContainer.innerHTML = '';
+        QRCode.toCanvas(document.createElement('canvas'), url, { width: 200, errorCorrectionLevel: 'H' }, (err, canvas) => {
+            if (err) throw err;
+            qrcodeContainer.appendChild(canvas);
+        });
+        shareModal.classList.remove('hidden');
+        menuPanel.classList.remove('open');
+    });
+    document.getElementById('closeShareBtn').addEventListener('click', () => document.getElementById('shareModal').classList.add('hidden'));
+    document.getElementById('copyUrlBtn').addEventListener('click', (e) => {
+        document.getElementById('urlInput').select();
+        navigator.clipboard.writeText(document.getElementById('urlInput').value).then(() => {
+            e.target.textContent = 'コピー完了!';
+            setTimeout(() => { e.target.textContent = 'コピー'; }, 2000);
+        });
+    });
+
+    // 裏コードモーダル
+    document.getElementById('menu-cheat-btn').addEventListener('click', () => {
+        cheatCodeModal.classList.remove('hidden');
+        menuPanel.classList.remove('open');
+    });
+    document.getElementById('closeCheatBtn').addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
+    document.getElementById('submitCheatBtn').addEventListener('click', () => {
+        const cheatInput = document.getElementById('cheatInput');
+        const phase = parseInt(cheatInput.value, 10);
+        if (phase >= 1 && phase <= 100 && window.corePinTraining) {
+            window.corePinTraining.goToPhase(phase);
+        }
+        cheatInput.value = '';
+        cheatCodeModal.classList.add('hidden');
+    });
+}
+
+
+function setupDevMode() {
+    const menuDevModeBtn = document.getElementById('menu-dev-mode-btn');
+    const devPasswordModal = document.getElementById('devPasswordModal'), devPasswordInput = document.getElementById('devPasswordInput'), submitDevPasswordBtn = document.getElementById('submitDevPasswordBtn'), closeDevPasswordBtn = document.getElementById('closeDevPasswordBtn');
+    if (menuDevModeBtn) menuDevModeBtn.addEventListener('click', () => { devPasswordModal.classList.remove('hidden'); devPasswordInput.focus(); document.getElementById('menu-panel').classList.remove('open'); });
+    if (closeDevPasswordBtn) closeDevPasswordBtn.addEventListener('click', () => devPasswordModal.classList.add('hidden'));
+    if (submitDevPasswordBtn) {
+        submitDevPasswordBtn.addEventListener('click', handleDevPassword);
+        devPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleDevPassword(); });
+    }
+    devHUD.elements.hud.addEventListener('click', (e) => {
+        if (!devHUD.enabled || e.target.dataset.action !== 'set-phase') return;
+        const newPhaseStr = prompt('新しいフェーズを入力してください(1-100):', devHUD.progress.phase);
+        const newPhase = parseInt(newPhaseStr, 10);
+        if (!isNaN(newPhase) && newPhase >= 1 && newPhase <= 100) {
+            logToDevConsole(`Phase changed to ${newPhase}`);
+            if (window.corePinTraining) window.corePinTraining.goToPhase(newPhase);
+        } else { alert('無効なフェーズです。'); }
+    });
+}
+function handleDevPassword() {
+    const devPasswordInput = document.getElementById('devPasswordInput'), devPasswordModal = document.getElementById('devPasswordModal');
+    const password = devPasswordInput.value.trim();
+    if (password === 'towa.soko0406') {
+        devHUD.enabled = !devHUD.enabled;
+        if (devHUD.enabled) { devHUD.elements.hud.classList.remove('hidden'); devHUD.elements.console.classList.remove('hidden'); alert('開発者モードが有効になりました。'); logToDevConsole('Developer mode enabled.'); } 
+        else { devHUD.elements.hud.classList.add('hidden'); devHUD.elements.console.classList.add('hidden'); alert('開発者モードが無効になりました。'); }
+    } else if (password === 'reset') {
+        if (confirm('本当に保存されている最高到達フェーズをリセットしますか？')) {
+            try { 
+                localStorage.removeItem('corepin_maxphase_easy'); 
+                localStorage.removeItem('corepin_maxphase_hard'); 
+                localStorage.removeItem('corepin_sound'); 
+                alert('データをリセットしました。ページをリロードします。'); 
+                window.location.reload();
+            } 
+            catch (e) { alert('データのリセットに失敗しました。'); logToDevConsole('Failed to reset data.', 'error'); }
+        }
+    } else { alert('パスワードが違います。'); }
+    devPasswordModal.classList.add('hidden');
+    devPasswordInput.value = '';
 }
 </script>
 </body>
 </html>
-
