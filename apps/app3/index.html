@@ -39,6 +39,7 @@
     justify-content: center;
     min-height: 100vh;
     width: 100%;
+    position: relative;
   }
 
   /* ローディング画面のスタイル */
@@ -293,7 +294,6 @@
     font-size: 18px;
   }
 
-  /* ★★★ 新規追加: 進化順リスト ★★★ */
   .evolution-guide {
     margin-top: 10px;
     padding-top: 10px;
@@ -375,7 +375,7 @@
     color: var(--wood-dark);
   }
   .modal-footer { text-align: right; margin-top: 24px; }
-  .cheat-input {
+  .password-input, .cheat-input {
     width: 100%; padding: 10px; border-radius: 6px;
     background: var(--accent-color);
     border: 2px solid var(--wood-dark);
@@ -409,10 +409,7 @@
   .url-input { flex-grow: 1; padding: 8px; background: var(--accent-color); border: 2px solid var(--wood-dark); color: var(--text-color); border-radius: 6px; }
 
   /* 偽翻訳サイトはデザイン変更しない */
-  #fake-translator {
-    position: fixed; inset: 0; background: #fff; z-index: 10000; color: #202124;
-    font-family: 'Roboto', 'Noto Sans JP', sans-serif; display: flex; flex-direction: column;
-  }
+  #fake-translator { position: fixed; inset: 0; background: #fff; z-index: 10000; color: #202124; font-family: 'Roboto', 'Noto Sans JP', sans-serif; display: flex; flex-direction: column; }
   .translator-header { display: flex; justify-content: flex-start; align-items: center; padding: 12px 24px; border-bottom: 1px solid #e0e0e0; }
   .translator-header .logo { font-size: 22px; font-weight: 500; color: #5f6368; display: flex; align-items: center; gap: 8px; }
   .translator-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; flex-grow: 1; padding: 24px; }
@@ -423,6 +420,26 @@
   .translator-textarea:focus { outline: none; }
   .translator-controls { display: flex; align-items: center; }
   #translate-btn { padding: 10px; background: none; border: 1px solid #dadce0; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; }
+  
+  /* ========== 開発者モードHUDここから ========== */
+  #dev-hud { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: limegreen; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 12px; padding: 10px; border-radius: 8px; z-index: 9999; pointer-events: none; white-space: pre; line-height: 1.4; display: flex; gap: 20px; }
+  .fps-good { color: #86efac; } .fps-warn { color: #fde047; } .fps-bad { color: #f87171; }
+  .dev-controls-panel { display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
+  .dev-controls-panel button { background: rgba(120, 255, 120, 0.2); border: 1px solid limegreen; color: limegreen; font-family: monospace; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+  .dev-controls-panel button:hover { background: rgba(120, 255, 120, 0.4); }
+  #dev-console { position: fixed; bottom: 10px; right: 10px; left: auto; width: calc(100% - 20px); max-width: 600px; height: 100px; background: rgba(10,10,20,0.8); border: 1px solid var(--accent-color); border-radius: 8px; z-index: 9998; overflow-y: auto; padding: 8px; font-family: monospace; font-size: 11px; color: #ccc; pointer-events: none; }
+  #dev-console .log-error { color: #ff8080; } #dev-console .log-warn { color: #fde047; }
+  /* ========== 開発者モードHUDここまで ========== */
+
+  /* ========== Sokohara Record ここから ========== */
+  #sokohara-record { position: fixed; top: 20px; left: 50%; background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 12px 24px; border-radius: 10px; font-size: 18px; font-weight: bold; z-index: 1005; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px rgba(255,255,255,0.3); }
+  @keyframes fade-in-then-out {
+      0% { opacity: 0; transform: translate(-50%, -80px); }
+      15% { opacity: 1; transform: translate(-50%, 0); }
+      85% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -80px); }
+  }
+  /* ========== Sokohara Record ここまで ========== */
 
   /* small helpers */
   .note { font-size:14px; color: var(--wood-dark); }
@@ -436,10 +453,18 @@
     .board { --game-width: 90vw; --game-height: 112.5vw; max-width: 400px; max-height: 500px; }
     .piece-card { min-width: 70px; min-height: 70px; padding: 5px;}
     .piece-grid { font-size: 36px; }
+    #dev-hud { font-size: 10px; flex-direction: column; }
+    #dev-console { max-width: 100%; height: 80px; }
   }
 </style>
 </head>
 <body>
+  <!-- 開発者モードHUD -->
+  <div id="dev-hud" class="hidden"></div>
+  <div id="dev-console" class="hidden"></div>
+  <!-- Sokohara Record -->
+  <div id="sokohara-record" class="hidden">底原永和の最高記録: 13000点</div>
+
   <div class="container">
     <div id="loader">
       <button id="skipBtn">スキップ</button>
@@ -515,7 +540,6 @@ PR .............................. 底原永和
     <div id="menu-panel">
       <div class="menu-item" id="menu-restart-btn">
         <span>やり直す</span>
-        <span>&#x21BB;</span>
       </div>
       <div class="menu-item">
         <span>サウンド</span>
@@ -526,21 +550,23 @@ PR .............................. 底原永和
       </div>
       <div class="menu-item" id="menu-share-btn">
           <span>共有する</span>
-          <span>&#x2197;</span>
+      </div>
+      <div class="menu-item" id="menu-dev-mode-btn">
+          <span>開発者モード</span>
       </div>
     </div>
 
-    <div class="app hidden" role="application" aria-label="フルーツ合体ゲーム" id="appContainer">
+    <div class="app hidden" role="application" aria-label="フルーツ合体" id="appContainer">
       <div class="game-panel" id="gamePanel">
         <div class="header">
-          <div class="title">フルーツ合体ゲーム</div>
+          <div class="title">フルーツ合体</div>
           <div class="meta">
             <div class="box" id="scoreBox">Score: 0</div>
             <div class="box" id="highBox">High: 0</div>
           </div>
         </div>
         <div class="board-wrap">
-          <div class="board" id="board" aria-label="ゲーム盤"></div>
+          <div class="board" id="board" aria-label="盤面"></div>
         </div>
       </div>
       <aside class="side" id="side">
@@ -560,7 +586,6 @@ PR .............................. 底原永和
           <button class="btn" id="restartBtn">やり直す</button>
         </div>
         
-        <!-- ★★★ 新規追加: 進化順表示エリア ★★★ -->
         <div class="evolution-guide">
           <h3>進化の順番</h3>
           <div class="evolution-list" id="evolutionList"></div>
@@ -584,12 +609,16 @@ PR .............................. 底原永和
     
     <div id="noticeModal" class="modal-overlay hidden">
       <div class="modal-content">
-        <h2>ゲームへようこそ！</h2>
+        <h2>アップデート情報</h2>
+        <div class="sub-header">今回の修正・追加</div>
+        <ul>
+          <li>ハイスコアが保存されるようになりました。</li>
+          <li>開発者モードを追加しました。（メニューから）</li>
+        </ul>
         <div class="sub-header">遊び方</div>
         <ul>
           <li>盤面の上部をクリックしてフルーツを落とします。</li>
           <li>同じ種類のフルーツが接触すると、合体して大きなフルーツに進化します。</li>
-          <li>連鎖してフルーツを大きくし、ハイスコアを目指しましょう！</li>
           <li>フルーツが盤面の上部にある赤い線からあふれるとゲームオーバーです。</li>
         </ul>
         <div class="sub-header">注意</div>
@@ -613,10 +642,22 @@ PR .............................. 底原永和
         </div>
       </div>
     </div>
+    
+    <div id="devPasswordModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>開発者モード</h2>
+        <p class="note">パスワードを入力してください。</p>
+        <input type="password" id="devPasswordInput" class="password-input">
+        <div class="modal-footer">
+          <button class="btn" id="submitDevPasswordBtn">認証</button>
+          <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
+        </div>
+      </div>
+    </div>
 
     <div id="shareModal" class="modal-overlay hidden">
       <div class="modal-content">
-        <h2>ゲームを共有</h2>
+        <h2>共有</h2>
         <div id="qrcode"></div>
         <p class="note center">QRコードをスキャンするか、以下のURLをコピーしてください。</p>
         <div class="url-container">
@@ -671,13 +712,118 @@ PR .............................. 底原永和
   <audio id="delAudio" src="del.mp3"></audio>
 
   <script>
-  // ランキング機能は削除されました。
-
   let wasSkipPressed = false;
 
   window.addEventListener('DOMContentLoaded', () => {
-    const loader = document.getElementById('loader'); const staffRollContainer = document.getElementById('staffRollContainer'); const loadComplete = document.getElementById('loadComplete'); const appContainer = document.getElementById('appContainer'); const skipBtn = document.getElementById('skipBtn'); const staffRollDuration = 14000; const logoDuration = 5000; const totalLoadTime = staffRollDuration + logoDuration; let logoTimer; let startTimer; const startApp = () => { if (loader.parentNode) { loader.classList.add('fade-out'); loader.addEventListener('animationend', () => { if (loader.parentNode) loader.remove(); document.body.style.overflow = 'auto'; }); appContainer.classList.remove('hidden'); appContainer.classList.add('fade-in'); initGame(); } }; const skipLoading = () => { wasSkipPressed = true; clearTimeout(logoTimer); clearTimeout(startTimer); startApp(); }; logoTimer = setTimeout(() => { staffRollContainer.classList.add('fade-out'); loadComplete.classList.remove('hidden'); loadComplete.classList.add('fade-in'); }, staffRollDuration); startTimer = setTimeout(startApp, totalLoadTime); skipBtn.addEventListener('click', skipLoading);
+    const loader = document.getElementById('loader');
+    const skipBtn = document.getElementById('skipBtn');
+
+    const startAppSequence = () => {
+        if (loader.parentNode) {
+            loader.classList.add('fade-out');
+            loader.addEventListener('animationend', () => {
+                if (loader.parentNode) loader.remove();
+                
+                const noticeModal = document.getElementById('noticeModal');
+                noticeModal.classList.remove('hidden');
+
+                document.getElementById('closeNoticeBtn').addEventListener('click', () => {
+                    noticeModal.classList.add('hidden');
+                    showSokoharaRecord();
+                }, { once: true });
+            }, { once: true });
+        }
+    };
+    
+    const skipLoading = () => {
+        clearTimeout(startTimer);
+        startAppSequence();
+    };
+
+    let startTimer = setTimeout(startAppSequence, 14000);
+    skipBtn.addEventListener('click', skipLoading);
   });
+
+  function showSokoharaRecord() {
+      const recordEl = document.getElementById('sokohara-record');
+      recordEl.classList.remove('hidden');
+      recordEl.style.animation = 'fade-in-then-out 5s ease-out forwards';
+      recordEl.addEventListener('animationend', () => {
+          recordEl.classList.add('hidden');
+          recordEl.style.animation = '';
+          startMainApp();
+      }, { once: true });
+  }
+
+  function startMainApp() {
+      const appContainer = document.getElementById('appContainer');
+      appContainer.classList.remove('hidden');
+      appContainer.classList.add('fade-in');
+      initGame();
+  }
+
+  // ========== 開発者モードHUDここから ==========
+  const devHUD = {
+      enabled: false,
+      elements: { hud: document.getElementById('dev-hud'), console: document.getElementById('dev-console'), },
+      perf: { lastTime: performance.now(), frames: 0, fps: 0, frameTime: 0, cpuUsage: 0, memory: 'N/A', drawCalls: 0 },
+      progress: { score: 0, playTime: 0, startTime: performance.now(), isOver: false, fruits: 0 },
+      input: { lastKey: 'N/A', mouse: { x: 0, y: 0 } },
+      data: { nextFruit: 'None' },
+      system: { userAgent: navigator.userAgent.substring(0, 40) + '...', windowSize: `${window.innerWidth}x${window.innerHeight}` },
+      debug: { flags: { devMode: false } }
+  };
+  function updateDevHUD() {
+      if (!devHUD.enabled) { requestAnimationFrame(updateDevHUD); return; }
+      const now = performance.now(); const delta = now - devHUD.perf.lastTime;
+      devHUD.perf.frameTime = delta; devHUD.perf.lastTime = now; devHUD.perf.frames++;
+      if (now > (devHUD.perf.lastCalcTime || 0) + 1000) { devHUD.perf.fps = devHUD.perf.frames; devHUD.perf.frames = 0; devHUD.perf.lastCalcTime = now; }
+      const targetFrameTime = 1000 / 60;
+      devHUD.perf.cpuUsage = Math.min(100, (devHUD.perf.frameTime / targetFrameTime) * 100);
+      devHUD.perf.memory = performance.memory ? `${(performance.memory.usedJSHeapSize / 1048576).toFixed(2)} MB` : 'N/A';
+      devHUD.progress.playTime = (now - devHUD.progress.startTime) / 1000;
+      const fpsClass = devHUD.perf.fps >= 55 ? 'fps-good' : devHUD.perf.fps >= 30 ? 'fps-warn' : 'fps-bad';
+      const hudText = `
+<div>
+--[ 📊 PERFORMANCE ]---------
+FPS        : <span class="${fpsClass}">${devHUD.perf.fps}</span>
+Frame Time : ${devHUD.perf.frameTime.toFixed(2)} ms
+CPU Usage  : ${devHUD.perf.cpuUsage.toFixed(1)} %
+Memory     : ${devHUD.perf.memory}
+Bodies     : ${devHUD.progress.fruits}
+
+--[ 🚀 PROGRESS ]------------
+Score      : ${devHUD.progress.score}
+Time       : ${devHUD.progress.playTime.toFixed(1)} s
+Finished   : ${devHUD.progress.isOver}
+
+--[ 🧩 DATA ]----------------
+Next Fruit : ${devHUD.data.nextFruit}
+</div>
+<div>
+--[ ⚙️ SYSTEM ]--------------
+User Agent : ${devHUD.system.userAgent}
+Window Size: ${devHUD.system.windowSize}
+
+--[ 🔍 INPUT ]----------------
+Last Key   : ${devHUD.input.lastKey}
+Mouse      : ${devHUD.input.mouse.x}, ${devHUD.input.mouse.y}
+
+--[ 🐞 DEBUG ]----------------
+<div class="dev-controls-panel">
+  Score Controls:
+  <button data-action="set-score">Set Score</button>
+</div>
+</div>`;
+      devHUD.elements.hud.innerHTML = hudText.trim();
+      requestAnimationFrame(updateDevHUD);
+  }
+  function logToDevConsole(message, type = 'log') { if (!devHUD.enabled) return; const p = document.createElement('p'); p.className = `log-${type}`; p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`; devHUD.elements.console.appendChild(p); devHUD.elements.console.scrollTop = devHUD.elements.console.scrollHeight; }
+  window.addEventListener('keydown', e => { devHUD.input.lastKey = e.key; });
+  window.addEventListener('mousemove', e => { devHUD.input.mouse = { x: e.clientX, y: e.clientY }; });
+  requestAnimationFrame(updateDevHUD);
+  // ========== 開発者モードHUDここまで ==========
+
 
   function initGame(){
     const { Engine, Render, Runner, World, Bodies, Composite, Events } = Matter;
@@ -688,17 +834,10 @@ PR .............................. 底原永和
     const GAME_OVER_LINE_Y = 80;
 
     const FRUITS_DATA = [
-        { level: 0, radius: 12, score: 1, emoji: '🍒' },
-        { level: 1, radius: 16, score: 3, emoji: '🍓' },
-        { level: 2, radius: 22, score: 6, emoji: '🍇' },
-        { level: 3, radius: 26, score: 10, emoji: '🍊' },
-        { level: 4, radius: 35, score: 15, emoji: '🍎' },
-        { level: 5, radius: 45, score: 21, emoji: '🍐' },
-        { level: 6, radius: 55, score: 28, emoji: '🍑' },
-        { level: 7, radius: 65, score: 36, emoji: '🍍' },
-        { level: 8, radius: 75, score: 45, emoji: '🍈' },
-        { level: 9, radius: 85, score: 55, emoji: '🍉' },
-        { level: 10, radius: 100, score: 66, emoji: '🎃' }
+        { level: 0, radius: 12, score: 1, emoji: '🍒' }, { level: 1, radius: 16, score: 3, emoji: '🍓' }, { level: 2, radius: 22, score: 6, emoji: '🍇' },
+        { level: 3, radius: 26, score: 10, emoji: '🍊' }, { level: 4, radius: 35, score: 15, emoji: '🍎' }, { level: 5, radius: 45, score: 21, emoji: '🍐' },
+        { level: 6, radius: 55, score: 28, emoji: '🍑' }, { level: 7, radius: 65, score: 36, emoji: '🍍' }, { level: 8, radius: 75, score: 45, emoji: '🍈' },
+        { level: 9, radius: 85, score: 55, emoji: '🍉' }, { level: 10, radius: 100, score: 66, emoji: '🎃' }
     ];
     
     let engine, render, runner;
@@ -707,83 +846,43 @@ PR .............................. 底原永和
     let disableAction = false;
     let gameOverTimeout = null;
 
-    const scoreBox = document.getElementById('scoreBox'), highBox = document.getElementById('highBox'), currentScoreEl = document.getElementById('currentScore'), bestScoreEl = document.getElementById('bestScore'), restartBtn = document.getElementById('restartBtn'), gamePanel = document.getElementById('gamePanel'), piecesContainer = document.getElementById('piecesContainer'), noticeModal = document.getElementById('noticeModal'), closeNoticeBtn = document.getElementById('closeNoticeBtn'), cheatCodeModal = document.getElementById('cheatCodeModal'), cheatInput = document.getElementById('cheatInput'), submitCheatBtn = document.getElementById('submitCheatBtn'), closeCheatBtn = document.getElementById('closeCheatBtn'), hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle'), menuShareBtn = document.getElementById('menu-share-btn'), shareModal = document.getElementById('shareModal'), qrcodeContainer = document.getElementById('qrcode'), urlInput = document.getElementById('urlInput'), copyUrlBtn = document.getElementById('copyUrlBtn'), closeShareBtn = document.getElementById('closeShareBtn'), bgmAudio = document.getElementById('bgmAudio'), pushAudio = document.getElementById('pushAudio'), delAudio = document.getElementById('delAudio'), evolutionListEl = document.getElementById('evolutionList');
+    const scoreBox = document.getElementById('scoreBox'), highBox = document.getElementById('highBox'), currentScoreEl = document.getElementById('currentScore'), bestScoreEl = document.getElementById('bestScore'), restartBtn = document.getElementById('restartBtn'), gamePanel = document.getElementById('gamePanel'), piecesContainer = document.getElementById('piecesContainer'), cheatCodeModal = document.getElementById('cheatCodeModal'), cheatInput = document.getElementById('cheatInput'), submitCheatBtn = document.getElementById('submitCheatBtn'), closeCheatBtn = document.getElementById('closeCheatBtn'), hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle'), menuShareBtn = document.getElementById('menu-share-btn'), shareModal = document.getElementById('shareModal'), qrcodeContainer = document.getElementById('qrcode'), urlInput = document.getElementById('urlInput'), copyUrlBtn = document.getElementById('copyUrlBtn'), closeShareBtn = document.getElementById('closeShareBtn'), bgmAudio = document.getElementById('bgmAudio'), pushAudio = document.getElementById('pushAudio'), delAudio = document.getElementById('delAudio'), evolutionListEl = document.getElementById('evolutionList');
     const fakeTranslator = document.getElementById('fake-translator'), translateBtn = document.getElementById('translate-btn'), translatorInput = document.getElementById('translator-input'), translatorOutput = document.getElementById('translator-output');
+    const menuDevModeBtn = document.getElementById('menu-dev-mode-btn');
     
     function setupPhysics() {
         engine = Engine.create({ timing: { timeScale: 1.1 } });
-        render = Render.create({
-            element: gameContainer,
-            engine: engine,
-            options: {
-                width: WIDTH,
-                height: HEIGHT,
-                wireframes: false,
-                background: 'transparent',
-                pixelRatio: window.devicePixelRatio,
-            }
-        });
+        render = Render.create({ element: gameContainer, engine: engine, options: { width: WIDTH, height: HEIGHT, wireframes: false, background: 'transparent', pixelRatio: window.devicePixelRatio, } });
         runner = Runner.create();
-        
         const wallOptions = { isStatic: true, render: { visible: false } };
         const ground = Bodies.rectangle(WIDTH / 2, HEIGHT + (WALL_THICKNESS / 2) - 10, WIDTH, WALL_THICKNESS, wallOptions);
         const leftWall = Bodies.rectangle(-(WALL_THICKNESS / 2) + 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
         const rightWall = Bodies.rectangle(WIDTH + (WALL_THICKNESS / 2) - 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
         World.add(engine.world, [ground, leftWall, rightWall]);
-
         Events.on(render, 'afterRender', () => {
             const context = render.context;
-            context.strokeStyle = 'rgba(255, 0, 0, 0.7)';
-            context.lineWidth = 3;
-            context.setLineDash([10, 5]);
-            context.beginPath();
-            context.moveTo(0, GAME_OVER_LINE_Y);
-            context.lineTo(WIDTH, GAME_OVER_LINE_Y);
-            context.stroke();
+            context.strokeStyle = 'rgba(255, 0, 0, 0.7)'; context.lineWidth = 3; context.setLineDash([10, 5]);
+            context.beginPath(); context.moveTo(0, GAME_OVER_LINE_Y); context.lineTo(WIDTH, GAME_OVER_LINE_Y); context.stroke();
             context.setLineDash([]);
         });
-
-        Render.run(render);
-        Runner.run(runner, engine);
+        Render.run(render); Runner.run(runner, engine);
     }
     
     function createFruit(x, y, level, isStatic = false) {
         const data = FRUITS_DATA[level];
-        const fruit = Bodies.circle(x, y, data.radius, {
-            isStatic: isStatic,
-            restitution: 0.3,
-            friction: 0.2,
-            label: 'fruit',
-            fruitLevel: level,
-            render: {
-                sprite: {
-                    texture: createEmojiTexture(data.emoji, data.radius * 2.2),
-                    xScale: 1,
-                    yScale: 1
-                }
-            }
-        });
-        return fruit;
+        return Bodies.circle(x, y, data.radius, { isStatic: isStatic, restitution: 0.3, friction: 0.2, label: 'fruit', fruitLevel: level, render: { sprite: { texture: createEmojiTexture(data.emoji, data.radius * 2.2), xScale: 1, yScale: 1 } } });
     }
     
     const emojiCanvasCache = {};
     function createEmojiTexture(emoji, size) {
         const cacheKey = `${emoji}_${size}`;
-        if (emojiCanvasCache[cacheKey]) {
-            return emojiCanvasCache[cacheKey];
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
+        if (emojiCanvasCache[cacheKey]) return emojiCanvasCache[cacheKey];
+        const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
         const ctx = canvas.getContext('2d');
-        ctx.font = `${size * 0.85}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        ctx.font = `${size * 0.85}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
         ctx.filter = 'drop-shadow(3px 3px 3px rgba(0,0,0,0.3))';
         ctx.fillText(emoji, size / 2, size / 2 + size * 0.05);
-        const dataUrl = canvas.toDataURL();
-        emojiCanvasCache[cacheKey] = dataUrl;
-        return dataUrl;
+        return (emojiCanvasCache[cacheKey] = canvas.toDataURL());
     }
 
     function prepareNextFruit() {
@@ -794,22 +893,17 @@ PR .............................. 底原永和
     }
     
     function renderNextFruit() {
-        piecesContainer.innerHTML = '';
-        const data = FRUITS_DATA[nextFruitLevel];
-        const card = document.createElement('div');
-        card.className = 'piece-card';
-        const mini = document.createElement('div');
-        mini.className = 'piece-grid';
-        mini.textContent = data.emoji;
-        card.appendChild(mini);
-        piecesContainer.appendChild(card);
+        piecesContainer.innerHTML = ''; const data = FRUITS_DATA[nextFruitLevel];
+        const card = document.createElement('div'); card.className = 'piece-card';
+        const mini = document.createElement('div'); mini.className = 'piece-grid'; mini.textContent = data.emoji;
+        card.appendChild(mini); piecesContainer.appendChild(card);
+        if (devHUD.enabled) devHUD.data.nextFruit = data.emoji;
     }
 
     function updateScoreDisplay() {
-      scoreBox.textContent = `Score: ${score}`;
-      currentScoreEl.textContent = score;
-      highBox.textContent = `High: ${best}`;
-      bestScoreEl.textContent = best;
+      scoreBox.textContent = `Score: ${score}`; currentScoreEl.textContent = score;
+      highBox.textContent = `High: ${best}`; bestScoreEl.textContent = best;
+      if (devHUD.enabled) { devHUD.progress.score = score; }
     }
     
     function dropFruit(x) {
@@ -819,13 +913,8 @@ PR .............................. 底原永和
         const constrainedX = Math.max(radius + 10, Math.min(WIDTH - radius - 10, x));
         Matter.Body.setStatic(currentFruit, false);
         Matter.Body.setPosition(currentFruit, { x: constrainedX, y: currentFruit.position.y });
-        currentFruit = null;
-        disableAction = true;
-        
-        setTimeout(() => {
-            prepareNextFruit();
-            disableAction = false;
-        }, 500);
+        currentFruit = null; disableAction = true;
+        setTimeout(() => { prepareNextFruit(); disableAction = false; }, 500);
     }
 
     function handleCollisions(event) {
@@ -842,14 +931,10 @@ PR .............................. 底原永和
                     const newFruit = createFruit(newX, newY, nextLevel);
                     Matter.Body.scale(newFruit, 0.7, 0.7);
                     World.add(engine.world, newFruit);
-                    setTimeout(() => {
-                        Matter.Body.scale(newFruit, 1 / 0.7, 1 / 0.7);
-                    }, 50);
+                    setTimeout(() => { Matter.Body.scale(newFruit, 1 / 0.7, 1 / 0.7); }, 50);
                     if (isSoundEnabled) { delAudio.currentTime = 0; delAudio.play().catch(()=>{}); }
-                    const gainedScore = FRUITS_DATA[level].score;
-                    score += gainedScore;
-                    updateScoreDisplay();
-                    showFeedbackPopup(`+${gainedScore}`);
+                    const gainedScore = FRUITS_DATA[level].score; score += gainedScore;
+                    updateScoreDisplay(); showFeedbackPopup(`+${gainedScore}`);
                 }
             }
         });
@@ -857,53 +942,45 @@ PR .............................. 底原永和
 
     function checkGameOver() {
         const fruits = Composite.allBodies(engine.world).filter(b => b.label === 'fruit' && !b.isStatic);
+        if (devHUD.enabled) devHUD.progress.fruits = fruits.length;
         let isFruitAboveLine = false;
         for (const fruit of fruits) {
             if (fruit.speed < 0.1 && fruit.angularSpeed < 0.1 && fruit.position.y - FRUITS_DATA[fruit.fruitLevel].radius < GAME_OVER_LINE_Y) {
-                isFruitAboveLine = true;
-                break;
+                isFruitAboveLine = true; break;
             }
         }
         if (isFruitAboveLine) {
             if (!gameOverTimeout) {
                 gameOverTimeout = setTimeout(() => {
                     isOver = true;
+                    if (devHUD.enabled) devHUD.progress.isOver = true;
                     Runner.stop(runner);
                     if (score > best) { saveBest(); }
                     showEndScreen();
                 }, 2000);
             }
-        } else {
-            clearTimeout(gameOverTimeout);
-            gameOverTimeout = null;
-        }
+        } else { clearTimeout(gameOverTimeout); gameOverTimeout = null; }
     }
 
     function showEndScreen(){
-        const overlay = document.createElement('div');
-        overlay.className = 'game-over';
-        overlay.id = 'gameOverOverlay';
+        const overlay = document.createElement('div'); overlay.className = 'game-over'; overlay.id = 'gameOverOverlay';
         overlay.innerHTML = `<div class="go-card"><div style="font-size:24px;font-weight:800;margin-bottom:8px">ゲームオーバー！</div><div style="margin-bottom:16px; font-size: 20px;">Score: <strong>${score}</strong></div><div style="display:flex;gap:8px;justify-content:center"><button class="btn" id="goRestart">やり直す</button></div></div>`;
         gamePanel.appendChild(overlay);
         document.getElementById('goRestart').addEventListener('click', ()=>{ overlay.remove(); startNewSession(); });
     }
 
     function startNewSession(){
-      score = 0;
-      isOver = false;
+      score = 0; isOver = false;
+      if (devHUD.enabled) { devHUD.progress.isOver = false; devHUD.progress.startTime = performance.now(); }
       updateScoreDisplay();
-      World.clear(engine.world, false);
-      Composite.clear(engine.world, false);
-      
+      World.clear(engine.world, false); Composite.clear(engine.world, false);
       const wallOptions = { isStatic: true, render: { visible: false } };
       const ground = Bodies.rectangle(WIDTH / 2, HEIGHT + (WALL_THICKNESS / 2) - 10, WIDTH, WALL_THICKNESS, wallOptions);
       const leftWall = Bodies.rectangle(-(WALL_THICKNESS / 2) + 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
       const rightWall = Bodies.rectangle(WIDTH + (WALL_THICKNESS / 2) - 10, HEIGHT / 2, WALL_THICKNESS, HEIGHT, wallOptions);
       World.add(engine.world, [ground, leftWall, rightWall]);
-      
       prepareNextFruit();
-      const overlay = document.getElementById('gameOverOverlay');
-      if(overlay) overlay.remove();
+      const overlay = document.getElementById('gameOverOverlay'); if(overlay) overlay.remove();
       menuPanel.classList.remove('open');
       Runner.start(runner, engine);
     }
@@ -911,29 +988,21 @@ PR .............................. 底原永和
     function setupMouseControl() {
         gameContainer.addEventListener('mousemove', (e) => {
             if (isOver || disableAction || !currentFruit) return;
-            const rect = gameContainer.getBoundingClientRect();
-            const x = e.clientX - rect.left;
+            const rect = gameContainer.getBoundingClientRect(); const x = e.clientX - rect.left;
             const radius = FRUITS_DATA[currentFruit.fruitLevel].radius;
             const constrainedX = Math.max(radius + 10, Math.min(WIDTH - radius - 10, x));
             Matter.Body.setPosition(currentFruit, { x: constrainedX, y: currentFruit.position.y });
         });
-        
-        gameContainer.addEventListener('click', (e) => {
-            const rect = gameContainer.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            dropFruit(x);
-        });
+        gameContainer.addEventListener('click', (e) => { const rect = gameContainer.getBoundingClientRect(); const x = e.clientX - rect.left; dropFruit(x); });
     }
 
     function showFeedbackPopup(text){ const popup = document.createElement('div'); popup.textContent = text; popup.className = 'feedback-popup'; gamePanel.appendChild(popup); popup.addEventListener('animationend', () => popup.remove()); }
-    function saveBest(){ best = Math.max(best, score); try { localStorage.setItem('fruitgame_high', String(best)); } catch(e){} updateScoreDisplay(); }
-    function loadBest(){ try{ best = Number(localStorage.getItem('fruitgame_high')) || 0; } catch(e){ best = 0; } }
-    
-    function handleCheatCode() { const code = cheatInput.value.trim().toLowerCase(); if (code === 'towa.soko0406') { const newScoreStr = prompt('新しいスコアを入力してください:', score); const newScore = parseInt(newScoreStr, 10); if (!isNaN(newScore)) { score = newScore; if (newScore > best) { saveBest(); } isOver = true; Runner.stop(runner); showEndScreen(); } else { alert('無効な数値です。'); } } else if (code === 'deletadata' || code === 'reset') { try { localStorage.removeItem('fruitgame_high'); localStorage.removeItem('blockblast_sound'); alert('保存された全てのデータを削除しました。ページをリロードします。'); location.reload(); } catch (e) { alert('データの削除に失敗しました。'); } } else { alert('コードが違います。'); } cheatInput.value = ''; cheatCodeModal.classList.add('hidden'); }
-    
+    function saveBest(){ best = Math.max(best, score); try { localStorage.setItem('fruitfall_high', String(best)); } catch(e){} updateScoreDisplay(); }
+    function loadBest(){ try{ best = Number(localStorage.getItem('fruitfall_high')) || 0; } catch(e){ best = 0; } }
+    function handleCheatCode() { const code = cheatInput.value.trim().toLowerCase(); if (code === 'towa.soko0406') { const newScoreStr = prompt('新しいスコアを入力してください:', score); const newScore = parseInt(newScoreStr, 10); if (!isNaN(newScore)) { score = newScore; updateScoreDisplay(); saveBest(); } else { alert('無効な数値です。'); } } else if (code === 'reset') { try { localStorage.removeItem('fruitfall_high'); localStorage.removeItem('blockblast_sound'); alert('保存された全てのデータを削除しました。ページをリロードします。'); location.reload(); } catch (e) { alert('データの削除に失敗しました。'); } } else { alert('コードが違います。'); } cheatInput.value = ''; cheatCodeModal.classList.add('hidden'); }
     function showFakeTranslator() { fakeTranslator.classList.remove('hidden'); }
     function hideFakeTranslator() { fakeTranslator.classList.add('hidden'); }
-    function simpleTranslate(text) { const map = {a:'b',b:'c',c:'d',d:'e',e:'f',f:'g',g:'h',h:'i',i:'j',j:'k',k:'l',l:'m',m:'n',o:'p',p:'q',q:'r',r:'s',s:'t',t:'u',u:'v',v:'w',w:'x',x:'y',y:'z', 'あ':'い','い':'う','う':'え','え':'お','お':'か','か':'き','き':'く','く':'け','け':'こ','こ':'さ'}; return text.toLowerCase().split('').map(char => map[char] || char).join(''); }
+    function simpleTranslate(text) { const map = {a:'b',b:'c',d:'e',f:'g',h:'i',j:'k',l:'m',n:'o',p:'q',r:'s',t:'u',v:'w',x:'y',z:'a', 'あ':'い','い':'う','う':'え','え':'お','お':'か','か':'き','き':'く','く':'け','け':'こ','こ':'さ'}; return text.toLowerCase().split('').map(char => map[char] || char).join(''); }
     
     function init(){
       loadBest();
@@ -943,13 +1012,9 @@ PR .............................. 底原永和
       setupMouseControl();
       Events.on(engine, 'collisionStart', handleCollisions);
       Events.on(engine, 'afterUpdate', checkGameOver);
-      
-      // ★★★ 進化順リストを生成 ★★★
       evolutionListEl.innerHTML = FRUITS_DATA.map(f => `<span class="evolution-item">${f.emoji}</span>`).join('<span class="evolution-arrow">→</span>');
 
-      noticeModal.classList.remove('hidden');
       restartBtn.addEventListener('click', startNewSession);
-      closeNoticeBtn.addEventListener('click', () => noticeModal.classList.add('hidden'));
       closeCheatBtn.addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
       submitCheatBtn.addEventListener('click', handleCheatCode); cheatInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') handleCheatCode(); });
       hamburgerIcon.addEventListener('click', () => { menuPanel.classList.toggle('open'); }); menuRestartBtn.addEventListener('click', startNewSession);
@@ -958,26 +1023,55 @@ PR .............................. 底原永和
       const playBGM = () => { if(isSoundEnabled) bgmAudio.play().catch(()=>{}); };
       document.body.addEventListener('click', playBGM, { once: true });
       soundToggle.addEventListener('change', (e) => { isSoundEnabled = e.target.checked; try { localStorage.setItem('blockblast_sound', isSoundEnabled); } catch(err) {} if (isSoundEnabled) { bgmAudio.play().catch(()=>{}); } else { bgmAudio.pause(); } });
-      menuShareBtn.addEventListener('click', () => { const url = `${window.location.origin}${window.location.pathname}`; urlInput.value = url; qrcodeContainer.innerHTML = ''; QRCode.toCanvas(url, { width: 200, errorCorrectionLevel: 'H' }, function (err, canvas) { if (err) throw err; qrcodeContainer.appendChild(canvas); }); shareModal.classList.remove('hidden'); menuPanel.classList.remove('open'); });
+      menuShareBtn.addEventListener('click', () => { const url = `${window.location.origin}${window.location.pathname}`; urlInput.value = url; qrcodeContainer.innerHTML = ''; QRCode.toCanvas(url, { width: 200, errorCorrectionLevel: 'H' }, (err, canvas) => { if (err) throw err; qrcodeContainer.appendChild(canvas); }); shareModal.classList.remove('hidden'); menuPanel.classList.remove('open'); });
       closeShareBtn.addEventListener('click', () => shareModal.classList.add('hidden')); copyUrlBtn.addEventListener('click', () => { urlInput.select(); navigator.clipboard.writeText(urlInput.value).then(() => { copyUrlBtn.textContent = 'コピー完了!'; setTimeout(() => { copyUrlBtn.textContent = 'コピー'; }, 2000); }); });
       
-      const originalTitle = document.title; const favicon = document.getElementById('favicon'); const originalFavicon = favicon ? favicon.href : ''; const fakeTitle = '翻訳'; const fakeFavicon = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>';
+      const originalTitle = document.title, favicon = document.getElementById('favicon'), originalFavicon = favicon ? favicon.href : ''; const fakeTitle = '翻訳', fakeFavicon = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>';
       window.addEventListener('blur', () => { document.title = fakeTitle; if(favicon) favicon.href = fakeFavicon; }); window.addEventListener('focus', () => { document.title = originalTitle; if(favicon) favicon.href = originalFavicon; });
       translateBtn.addEventListener('click', () => { translatorOutput.value = simpleTranslate(translatorInput.value); });
       
       window.addEventListener('keydown', (ev)=>{
-        if (ev.key === 'Enter' && !ev.target.closest('.modal-overlay') && ev.target.tagName !== 'TEXTAREA') {
-            ev.preventDefault();
-            if (fakeTranslator.classList.contains('hidden')) {
-                showFakeTranslator();
-            } else {
-                hideFakeTranslator();
-            }
-        }
-        if (!cheatCodeModal.classList.contains('hidden') || !shareModal.classList.contains('hidden') || !fakeTranslator.classList.contains('hidden')) return;
+        if (ev.key === 'Enter' && !ev.target.closest('.modal-overlay') && ev.target.tagName !== 'TEXTAREA') { ev.preventDefault(); if (fakeTranslator.classList.contains('hidden')) { showFakeTranslator(); } else { hideFakeTranslator(); } }
+        if (document.querySelector('.modal-overlay:not(.hidden)')) return;
         if(ev.key === ' ') { ev.preventDefault(); cheatCodeModal.classList.remove('hidden'); cheatInput.focus(); }
         if(ev.key.toLowerCase() === 'r') startNewSession();
       });
+
+      setupDevMode();
+    }
+    
+    function setupDevMode() {
+        const devPasswordModal = document.getElementById('devPasswordModal'), devPasswordInput = document.getElementById('devPasswordInput'), submitDevPasswordBtn = document.getElementById('submitDevPasswordBtn'), closeDevPasswordBtn = document.getElementById('closeDevPasswordBtn');
+        if (menuDevModeBtn) menuDevModeBtn.addEventListener('click', () => { devPasswordModal.classList.remove('hidden'); devPasswordInput.focus(); menuPanel.classList.remove('open'); });
+        if (closeDevPasswordBtn) closeDevPasswordBtn.addEventListener('click', () => devPasswordModal.classList.add('hidden'));
+        if (submitDevPasswordBtn) {
+            submitDevPasswordBtn.addEventListener('click', handleDevPassword);
+            devPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleDevPassword(); });
+        }
+        devHUD.elements.hud.addEventListener('click', (e) => {
+            if (!devHUD.enabled || e.target.dataset.action !== 'set-score') return;
+            const newScoreStr = prompt('新しいスコアを入力してください:', score);
+            const newScore = parseInt(newScoreStr, 10);
+            if (!isNaN(newScore) && newScore >= 0) { score = newScore; logToDevConsole(`Score changed to ${score}`); updateScoreDisplay(); saveBest(); } 
+            else { alert('無効な数値です。'); }
+        });
+    }
+
+    function handleDevPassword() {
+        const devPasswordInput = document.getElementById('devPasswordInput'), devPasswordModal = document.getElementById('devPasswordModal');
+        const password = devPasswordInput.value.trim();
+        if (password === 'towa.soko0406') {
+            devHUD.enabled = !devHUD.enabled;
+            if (devHUD.enabled) { devHUD.elements.hud.classList.remove('hidden'); devHUD.elements.console.classList.remove('hidden'); alert('開発者モードが有効になりました。'); logToDevConsole('Developer mode enabled.'); } 
+            else { devHUD.elements.hud.classList.add('hidden'); devHUD.elements.console.classList.add('hidden'); alert('開発者モードが無効になりました。'); }
+        } else if (password === 'reset') {
+            if (confirm('本当に保存されているハイスコアをリセットしますか？')) {
+                try { localStorage.removeItem('fruitfall_high'); localStorage.removeItem('blockblast_sound'); alert('データをリセットしました。ページをリロードします。'); location.reload(); } 
+                catch (e) { alert('データのリセットに失敗しました。'); logToDevConsole('Failed to reset data.', 'error'); }
+            }
+        } else { alert('パスワードが違います。'); }
+        devPasswordModal.classList.add('hidden');
+        devPasswordInput.value = '';
     }
 
     init();
