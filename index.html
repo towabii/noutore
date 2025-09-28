@@ -26,10 +26,19 @@
             height: 100%;
             margin: 0;
             font-family: var(--font-family);
-            background: radial-gradient(circle, var(--bg-start) 0%, var(--bg-end) 100%);
+            background: linear-gradient(135deg, var(--bg-start) 0%, var(--bg-end) 100%);
+            background-size: 200% 200%;
+            animation: background-pan 25s ease infinite;
             color: var(--text-primary);
-            overflow: hidden;
             user-select: none;
+        }
+        body.no-scroll {
+            overflow: hidden;
+        }
+        @keyframes background-pan {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
         .hidden { display: none !important; }
         #loader {
@@ -108,6 +117,9 @@
             border-bottom: 1px solid var(--panel-border);
             background: rgba(10, 10, 42, 0.5);
             backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .site-title {
             font-size: 24px;
@@ -127,10 +139,53 @@
             font-weight: 700;
             cursor: pointer;
             transition: color 0.2s, text-shadow 0.2s;
+            position: relative;
+            padding-bottom: 4px;
+        }
+        .site-header nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--accent-color);
+            transform: scaleX(0);
+            transform-origin: right;
+            transition: transform 0.3s ease-out;
         }
         .site-header nav a:hover {
             color: #fff;
             text-shadow: 0 0 5px var(--accent-color);
+        }
+        .site-header nav a:hover::after {
+            transform: scaleX(1);
+            transform-origin: left;
+        }
+        #countdown-container {
+            padding: 1rem 2.5rem;
+            background: rgba(10, 10, 42, 0.3);
+            text-align: center;
+            border-bottom: 1px solid var(--panel-border);
+        }
+        #countdown-container h3 {
+            margin: 0 0 0.5rem 0;
+            font-size: 1rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+            letter-spacing: 1px;
+        }
+        #countdown-timer {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: var(--accent-color);
+            text-shadow: 0 0 10px var(--accent-color);
+            letter-spacing: 2px;
+        }
+        #countdown-message {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
         }
         main {
             flex-grow: 1;
@@ -139,7 +194,6 @@
             width: 100%;
             margin: 0 auto;
             box-sizing: border-box;
-            overflow-y: auto;
         }
         .content-section {
             display: none;
@@ -149,8 +203,8 @@
             animation: fade-in 0.5s;
         }
         @keyframes fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .item-grid {
             display: grid;
@@ -169,14 +223,18 @@
             position: relative;
         }
         .item-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 0 25px var(--accent-color);
+            transform: translateY(-8px) scale(1.03);
+            box-shadow: 0 0 30px rgba(148, 77, 255, 0.7);
         }
         .item-card .thumbnail-container img {
             width: 100%;
             height: 180px;
             object-fit: cover;
             display: block;
+            transition: transform 0.3s;
+        }
+        .item-card:hover .thumbnail-container img {
+            transform: scale(1.1);
         }
         .item-card-content {
             padding: 16px;
@@ -195,220 +253,94 @@
         }
         .recommend-badge {
             position: absolute;
-            top: 12px;
-            right: 12px;
+            top: 25px;
+            right: -30px;
             background: var(--accent-color);
             color: white;
-            padding: 4px 10px;
+            padding: 6px 30px;
             font-size: 12px;
             font-weight: bold;
-            border-radius: 6px;
+            transform: rotate(45deg);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            z-index: 1;
+            width: 120px;
+            text-align: center;
         }
-        /* FAQセクションのスタイル */
-        .faq-container {
-            padding: 24px;
+
+        .info-container {
+            padding: 24px 32px;
             max-width: 800px;
             margin: auto;
             background: var(--panel-bg);
             border: 1px solid var(--panel-border);
             border-radius: 12px;
+            backdrop-filter: blur(10px);
         }
-        .faq-container dt {
-            font-weight: 700;
-            color: var(--accent-color);
-            margin-top: 1.5em;
-        }
-        .faq-container dd {
-            margin-left: 0;
-            padding-left: 1em;
-            border-left: 3px solid var(--panel-border);
-            color: var(--text-secondary);
-        }
+        .info-container h2 { font-size: 2rem; color: var(--accent-color); border-bottom: 2px solid var(--panel-border); padding-bottom: 0.5em; margin-bottom: 1em; }
+        .info-container dt { font-weight: 700; color: var(--accent-color); margin-top: 1.5em; }
+        .info-container dd { margin-left: 0; padding-left: 1em; border-left: 3px solid var(--panel-border); color: var(--text-secondary); }
+        .author-profile { display: flex; align-items: center; gap: 2rem; }
+        .author-profile img { width: 150px; height: 150px; border-radius: 50%; border: 3px solid var(--accent-color); box-shadow: 0 0 15px var(--accent-color); }
+        .author-details p { margin: 0.5em 0; font-size: 1.1rem; }
+        .author-details .name { font-size: 1.8rem; font-weight: bold; }
+
         .btn {
-            padding: 10px 18px;
-            border-radius: 8px;
-            background: linear-gradient(145deg, #4f23a6, #3b1a7d);
-            color: var(--text-primary);
-            border: 1px solid var(--panel-border);
-            cursor: pointer;
-            font-weight: 700;
-            text-transform: uppercase;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            font-family: inherit;
+            padding: 10px 18px; border-radius: 8px; background: linear-gradient(145deg, #4f23a6, #3b1a7d);
+            color: var(--text-primary); border: 1px solid var(--panel-border); cursor: pointer;
+            font-weight: 700; text-transform: uppercase; transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-family: inherit;
         }
-        .btn:hover {
-            background: linear-gradient(145deg, #6a34d9, #4f23a6);
-            box-shadow: 0 0 15px var(--accent-color);
-        }
-        .btn:disabled {
-            background: #555;
-            cursor: not-allowed;
-            box-shadow: none;
-        }
-        .btn.ghost {
-            background: transparent;
-            border-style: dashed;
-        }
+        .btn:hover { background: linear-gradient(145deg, #6a34d9, #4f23a6); box-shadow: 0 0 15px var(--accent-color); transform: translateY(-2px); }
+        .btn:disabled { background: #555; cursor: not-allowed; box-shadow: none; transform: none; }
+        .btn.ghost { background: transparent; border-style: dashed; }
+
         .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s;
-            pointer-events: none;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);
+            z-index: 1000; display: flex; align-items: center; justify-content: center;
+            opacity: 0; transition: opacity 0.3s; pointer-events: none;
         }
-        .modal-overlay.visible {
-            opacity: 1;
-            pointer-events: auto;
-        }
+        .modal-overlay.visible { opacity: 1; pointer-events: auto; }
         .modal-content {
-            background: var(--panel-bg);
-            border: 1px solid var(--panel-border);
-            border-radius: 12px;
-            padding: 24px;
-            width: 100%;
-            max-width: 500px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            transform: scale(0.95);
-            transition: transform 0.3s;
+            background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px;
+            padding: 24px; width: 100%; max-width: 500px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5); transform: scale(0.95);
+            transition: transform 0.3s, opacity 0.3s;
         }
-        .modal-overlay.visible .modal-content {
-            transform: scale(1);
-        }
-        .modal-content h2 {
-            margin-top: 0;
-            font-size: 22px;
-            border-bottom: 1px solid var(--accent-color);
-            padding-bottom: 8px;
-            margin-bottom: 16px;
-        }
-        .modal-footer {
-            text-align: right;
-            margin-top: 24px;
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        #details-modal-img {
-            width: 100%;
-            height: 240px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-        #details-modal-desc {
-            color: var(--text-secondary);
-            line-height: 1.7;
-        }
-        #qrcode {
-            display: flex;
-            justify-content: center;
-            margin: 20px 0;
-            background: white;
-            padding: 10px;
-            border-radius: 8px;
-        }
-        .url-container {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        .url-input {
-            flex-grow: 1;
-            padding: 10px;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--panel-border);
-            color: #e6eef8;
-            border-radius: 6px;
-        }
+        .modal-overlay.visible .modal-content { transform: scale(1); }
+        .modal-content h2 { margin-top: 0; font-size: 22px; border-bottom: 1px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 16px; }
+        .modal-footer { text-align: right; margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; }
+        
+        #oneword-modal img { max-width: 100%; border-radius: 8px; margin-bottom: 1rem; }
+        #details-modal-img { width: 100%; height: 240px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; }
+        #details-modal-desc { color: var(--text-secondary); line-height: 1.7; }
+        
+        #qrcode { display: flex; justify-content: center; margin: 20px 0; background: white; padding: 10px; border-radius: 8px; }
+        .url-container { display: flex; gap: 8px; margin-top: 8px; }
+        .url-input { flex-grow: 1; padding: 10px; background: rgba(0,0,0,0.3); border: 1px solid var(--panel-border); color: #e6eef8; border-radius: 6px; }
+        
+        #terms-modal .modal-content { max-width: 600px; }
+        #terms-text { height: 300px; overflow-y: auto; border: 1px solid var(--panel-border); padding: 1rem; border-radius: 8px; font-size: 0.9rem; color: var(--text-secondary); background: rgba(0,0,0,0.2); }
+
+        #tutorial-modal .tutorial-step { display: none; }
+        #tutorial-modal .tutorial-step.active { display: block; animation: fade-in 0.3s; }
+        #tutorial-modal .tutorial-nav { display: flex; justify-content: space-between; align-items: center; }
+        #tutorial-modal .step-indicator { font-size: 0.9em; color: var(--text-secondary); }
+
         #fake-translator {
-            position: fixed;
-            inset: 0;
-            background: #fff;
-            z-index: 10000;
-            color: #202124;
-            font-family: 'Roboto', 'Noto Sans JP', sans-serif;
-            display: flex;
-            flex-direction: column;
+            position: fixed; inset: 0; background: #fff; z-index: 10000; color: #202124;
+            font-family: 'Roboto', 'Noto Sans JP', sans-serif; display: flex; flex-direction: column;
         }
-        .translator-header {
-            display: flex;
-            justify-content: flex-start;
-            align-items: center;
-            padding: 12px 24px;
-            border-bottom: 1px solid #e0e0e0;
-            flex-shrink: 0;
-        }
-        .translator-logo {
-            font-size: 22px;
-            font-weight: 500;
-            color: #5f6368;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .translator-main {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            padding: 24px;
-        }
-        .translator-lang-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-        .lang-btn {
-            padding: 8px 16px;
-            border: none;
-            background: none;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            color: #5f6368;
-            border-bottom: 2px solid transparent;
-        }
-        .lang-btn.active {
-            color: #1a73e8;
-            border-bottom-color: #1a73e8;
-        }
-        .translator-body {
-            display: grid;
-            grid-template-columns: 1fr auto 1fr;
-            gap: 16px;
-            flex-grow: 1;
-            border: 1px solid #dadce0;
-            border-radius: 8px;
-            padding: 16px;
-        }
-        .translator-panel {
-            display: flex;
-            flex-direction: column;
-        }
-        .translator-textarea {
-            flex-grow: 1;
-            resize: none;
-            border: none;
-            padding: 0;
-            font-size: 24px;
-            font-family: 'Roboto', 'Noto Sans JP', sans-serif;
-            box-sizing: border-box;
-            background: none;
-            color: #202124;
-        }
-        .translator-textarea:focus {
-            outline: none;
-        }
-        .translator-divider {
-            width: 1px;
-            background: #dadce0;
-        }
+        .translator-header { display: flex; justify-content: flex-start; align-items: center; padding: 12px 24px; border-bottom: 1px solid #e0e0e0; flex-shrink: 0; }
+        .translator-logo { font-size: 22px; font-weight: 500; color: #5f6368; display: flex; align-items: center; gap: 8px; }
+        .translator-main { display: flex; flex-direction: column; flex-grow: 1; padding: 24px; }
+        .translator-lang-bar { display: flex; gap: 8px; margin-bottom: 8px; }
+        .lang-btn { padding: 8px 16px; border: none; background: none; cursor: pointer; font-weight: 500; font-size: 14px; color: #5f6368; border-bottom: 2px solid transparent; }
+        .lang-btn.active { color: #1a73e8; border-bottom-color: #1a73e8; }
+        .translator-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 16px; flex-grow: 1; border: 1px solid #dadce0; border-radius: 8px; padding: 16px; }
+        .translator-panel { display: flex; flex-direction: column; }
+        .translator-textarea { flex-grow: 1; resize: none; border: none; padding: 0; font-size: 24px; font-family: 'Roboto', 'Noto Sans JP', sans-serif; box-sizing: border-box; background: none; color: #202124; }
+        .translator-textarea:focus { outline: none; }
+        .translator-divider { width: 1px; background: #dadce0; }
     </style>
 </head>
 <body>
@@ -476,11 +408,19 @@ PR .............................. 底原永和
                 <ul>
                     <li><a data-target="home">ホーム</a></li>
                     <li><a data-target="faq">よくある質問</a></li>
+                    <li><a data-target="author">作成者情報</a></li>
+                    <li><a id="share-site-btn">共有</a></li>
                     <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSdUZqH-vSXeZr6nbuqrmJgiaLfytVIOxdlo4ylDFp-koLPT0g/viewform" target="_blank" rel="noopener noreferrer">フィードバック</a></li>
                     <li><a id="replay-staffroll">スタッフロール</a></li>
                 </ul>
             </nav>
         </header>
+
+        <div id="countdown-container">
+            <h3>人生が終わるまでの時間</h3>
+            <div id="countdown-timer"></div>
+            <div id="countdown-message"></div>
+        </div>
 
         <main>
             <!-- ホーム（作品一覧） -->
@@ -492,54 +432,117 @@ PR .............................. 底原永和
 
             <!-- よくある質問 -->
             <div id="content-faq" class="content-section">
-                <div class="faq-container">
+                <div class="info-container">
                     <h2>よくある質問</h2>
                     <dl>
                         <dt>Q. なぜ、アイフィルターにブロックされないのですか？</dt>
                         <dd>A. アイフィルターは特定の文字列を含むサイトをブロックする仕組みになっています。文字列を工夫して含めないようにしているためブロックされません。また、タブの名前を変えてあるので先生にも気づかれにくく、エンターキーを押すとすべてのサイトで偽の翻訳サイトが表示されるようになっています。後ろから先生が来ても安心です。</dd>
-
                         <dt>Q. アップデートの頻度はどれくらいですか？</dt>
                         <dd>A. 基本的に毎日です。毎日のアップデートで細かな不具合を修正しています。特に土日には新しいゲームが追加されるので、ぜひフィードバックから「追加してほしいゲーム」を教えてください。</dd>
-                        
                         <dt>Q. 本当に底原永和が作ったんですか？</dt>
                         <dd>A. もちろんです。当たり前だろ、なめんな。</dd>
-
                         <dt>Q. 万が一ブロックされたらどうしますか？</dt>
                         <dd>A. 必ずプレイできるように修正します。</dd>
-
                         <dt>Q. セキュリティは大丈夫ですか？</dt>
                         <dd>A. ご安心ください。あの「伝説の底原永和」が作ったので大丈夫です。</dd>
-
                         <dt>Q. 実装されたと書かれているのに、されていない機能があります。</dt>
                         <dd>A. それは申し訳ありません。</dd>
-
                         <dt>Q. くそゲーですね。</dt>
                         <dd>A. BANです。</dd>
-
                         <dt>Q. なぜ本名を入力しないといけないのですか？</dt>
                         <dd>A. 管理をしやすくするためです。</dd>
-
                         <dt>Q. スマホでもできますか？</dt>
                         <dd>A. スマホには対応していません。推奨環境はPCです。</dd>
-
                         <dt>Q. 有料ですか？</dt>
                         <dd>A. 無料で遊べます。</dd>
-
                         <dt>Q. 広告は入っていますか？</dt>
                         <dd>A. 広告は一切ありません。</dd>
-
                         <dt>Q. 不具合を見つけた場合はどうすればいいですか？</dt>
                         <dd>A. フィードバックから送ってください。</dd>
-
                         <dt>Q. フィードバックはどこから送れますか？</dt>
                         <dd>A. 上のメニューから入力できます。</dd>
-
                         <dt>Q. データは保存されますか？</dt>
                         <dd>A. ハイスコアなどはローカルで保存されます。</dd>
                     </dl>
                 </div>
             </div>
+
+            <!-- 作成者情報 -->
+            <div id="content-author" class="content-section">
+                <div class="info-container">
+                    <h2>作成者情報</h2>
+                    <div class="author-profile">
+                        <img src="kao.png" alt="作成者の顔写真" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2E3YjNkOSI+PHBhdGggZD0iTTEyIDJhMTAgMTAgMCAwIDAgMCAyMCAxMCAxMCAwIDAgMCAwLTIwem0wIDE4YTEuNSAxLjUgMCAxIDEgMS41LTEuNUExLjUgMS41IDAgMCAxIDEyIDIwWm0yLjA3LTExLjI1bC0uOS45MkM١٢LjUgOS45OCAxMiA١٠LjUgMTIgMTJINDBhMyAzIDAgMCAxIDMtM2MuMDItMS40Ny0xLjI5LTIuNjYtMi44My0yLjQ5LS4yNS4wMy0uNS4xLS43Mi4yWiIvPjwvc3ZnPg=='; this.style.border='none';">
+                        <div class="author-details">
+                            <p class="name">底原 永和</p>
+                            <p>Ocearya Group 会長</p>
+                            <p>しがない中学2年生</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
+    </div>
+    
+    <!-- チュートリアルモーダル -->
+    <div id="tutorial-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="tutorial-step-1" class="tutorial-step active">
+                <h2>ようこそ！</h2>
+                <p>このサイトの便利な機能を紹介します！<br>いくつかのステップで簡単に説明します。</p>
+            </div>
+            <div id="tutorial-step-2" class="tutorial-step">
+                <h2>緊急回避！偽装サイトモード</h2>
+                <p>先生が近くに来た時など、すぐに画面を切り替えたい時はキーボードの <strong style="color:var(--accent-color)">Enterキー</strong> を押してください。</p>
+                <p>一瞬で翻訳サイトの画面に切り替わります。もう一度押すと元の画面に戻ります。</p>
+            </div>
+            <div id="tutorial-step-3" class="tutorial-step">
+                <h2>人生の残り時間</h2>
+                <p>画面上部には、あなたが90歳になるまでの残り時間が表示されています。<br>限りある時間を大切に、そして楽しんで使いましょう！</p>
+            </div>
+             <div id="tutorial-step-4" class="tutorial-step">
+                <h2>準備完了！</h2>
+                <p>これでチュートリアルは終わりです。<br>このサイトを存分にお楽しみください！</p>
+            </div>
+            <div class="modal-footer tutorial-nav">
+                <button id="tutorial-skip-btn" class="btn ghost">スキップ</button>
+                <span id="tutorial-step-indicator" class="step-indicator">1 / 4</span>
+                <div>
+                    <button id="tutorial-prev-btn" class="btn ghost">戻る</button>
+                    <button id="tutorial-next-btn" class="btn">次へ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 利用規約モーダル -->
+    <div id="terms-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>利用規約</h2>
+            <div id="terms-text">
+                <p>本サイトをご利用になる前に、以下の利用規約をよくお読みください。本サイトの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                <p><strong>第1条 (自己責任)</strong></p>
+                <p>本サイトの利用は、利用者自身の責任において行うものとします。学校のネットワーク内で本サイトを利用し、それによって発生したいかなる問題（先生からの指導、PCの没収、成績への影響など）についても、サイト作成者は一切の責任を負いません。</p>
+                <p><strong>第2条 (コンテンツの利用)</strong></p>
+                <p>本サイトで提供されるすべてのコンテンツ（ゲーム、テキスト、画像など）の著作権は、サイト作成者「底原 永和」に帰属します。無断での複製、転載、配布を固く禁じます。</p>
+                <p><strong>第3条 (禁止事項)</strong></p>
+                <p>利用者は、本サイトの利用にあたり、以下の行為を行ってはなりません。</p>
+                <ul>
+                    <li>法令または公序良俗に違反する行為</li>
+                    <li>本サイトのサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li>
+                    <li>他の利用者に関する個人情報等を収集または蓄積する行為</li>
+                    <li>他の利用者に成りすます行為</li>
+                    <li>その他、作成者が不適切と判断する行為</li>
+                </ul>
+                <p><strong>第4条 (免責事項)</strong></p>
+                <p>サイト作成者は、本サイトのコンテンツの正確性、完全性、安全性等について、いかなる保証も行いません。また、本サイトの利用によって利用者に生じたいかなる損害についても、一切の責任を負いません。</p>
+                <p><strong>第5条 (規約の変更)</strong></p>
+                <p>サイト作成者は、必要と判断した場合には、利用者に通知することなくいつでも本規約を変更することができるものとします。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="terms-agree-btn" class="btn">同意して利用する</button>
+            </div>
+        </div>
     </div>
 
     <!-- 作品詳細モーダル -->
@@ -559,7 +562,7 @@ PR .............................. 底原永和
     <!-- 共有モーダル -->
     <div id="share-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>作品を共有</h2>
+            <h2 id="share-modal-title">作品を共有</h2>
             <div id="qrcode"></div>
             <p style="font-size: 14px; text-align: center; color: var(--text-secondary);">QRコードをスキャンするか、URLをコピー</p>
             <div class="url-container">
@@ -575,7 +578,8 @@ PR .............................. 底原永和
     <!-- 一言モーダル -->
     <div id="oneword-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>底原永和の一言</h2>
+            <h2>底原永和の今日のひとこと</h2>
+            <img src="story.png" alt="今日のストーリー" onerror="this.style.display='none';">
             <p style="line-height: 1.7; font-size: 16px;">土日これの開発に時間を使ったから課題終わってない(^▽^)何すればいいのか教えて！</p>
             <div class="modal-footer">
                 <button data-close-modal class="btn">閉じる</button>
@@ -654,10 +658,32 @@ PR .............................. 底原永和
             thumbnail: "./apps/app6/thumbnail.png", 
             url: "./apps/app6/index.html",
             recommend: null
+          },
+          {
+            title: "3Dトレーニング",
+            description: "三次元空間で頭を鍛える新しい体験。完成までもう少し待っててね！",
+            thumbnail: "./apps/app7/thumbnail.png", 
+            url: "#",
+            recommend: "作成中"
+          },
+          {
+            title: "7番出口",
+            description: "不思議な地下通路を探索する作品。異変を見逃さないで。現在工事中。",
+            thumbnail: "./apps/app8/thumbnail.png", 
+            url: "#",
+            recommend: "工事中"
+          },
+          {
+            title: "ちょっとGPT",
+            description: "高性能な対話プログラムとおしゃべり。君は何を話す？今はまだ調整中。",
+            thumbnail: "./apps/app9/thumbnail.png", 
+            url: "#",
+            recommend: "調整中"
           }
         ];
 
         document.addEventListener('DOMContentLoaded', function() {
+            // --- 要素取得 ---
             const loader = document.getElementById('loader');
             const skipBtn = document.getElementById('skipBtn');
             const siteWrapper = document.getElementById('site-wrapper');
@@ -666,8 +692,138 @@ PR .............................. 底原永和
             const translatorInput = document.getElementById('translator-input');
             const translatorOutput = document.getElementById('translator-output');
             
+            // --- 変数定義 ---
             let staffRollTimer;
+            let countdownInterval;
+            
+            // --- サイト初期化フロー ---
+            function initSiteFlow() {
+                const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+                if (!tutorialCompleted) {
+                    runTutorial(() => checkTerms());
+                } else {
+                    checkTerms();
+                }
+            }
 
+            function runTutorial(callback) {
+                const modal = document.getElementById('tutorial-modal');
+                const steps = modal.querySelectorAll('.tutorial-step');
+                const nextBtn = document.getElementById('tutorial-next-btn');
+                const prevBtn = document.getElementById('tutorial-prev-btn');
+                const skipBtn = document.getElementById('tutorial-skip-btn');
+                const indicator = document.getElementById('tutorial-step-indicator');
+                let currentStep = 0;
+                const totalSteps = steps.length;
+
+                function updateStep() {
+                    steps.forEach((step, index) => {
+                        step.classList.toggle('active', index === currentStep);
+                    });
+                    indicator.textContent = `${currentStep + 1} / ${totalSteps}`;
+                    prevBtn.style.visibility = currentStep === 0 ? 'hidden' : 'visible';
+                    nextBtn.textContent = currentStep === totalSteps - 1 ? '完了' : '次へ';
+                }
+
+                function completeTutorial() {
+                    localStorage.setItem('tutorialCompleted', 'true');
+                    modal.classList.remove('visible');
+                    callback();
+                }
+
+                nextBtn.addEventListener('click', () => {
+                    if (currentStep < totalSteps - 1) {
+                        currentStep++;
+                        updateStep();
+                    } else {
+                        completeTutorial();
+                    }
+                });
+
+                prevBtn.addEventListener('click', () => {
+                    if (currentStep > 0) {
+                        currentStep--;
+                        updateStep();
+                    }
+                });
+                
+                skipBtn.addEventListener('click', completeTutorial);
+                
+                modal.classList.add('visible');
+                updateStep();
+            }
+
+            function checkTerms() {
+                const termsAgreed = localStorage.getItem('termsAgreed');
+                if (!termsAgreed) {
+                    const termsModal = document.getElementById('terms-modal');
+                    termsModal.classList.add('visible');
+                    document.getElementById('terms-agree-btn').addEventListener('click', () => {
+                        localStorage.setItem('termsAgreed', 'true');
+                        termsModal.classList.remove('visible');
+                        checkAgeAndStart();
+                    });
+                } else {
+                    checkAgeAndStart();
+                }
+            }
+
+            function checkAgeAndStart() {
+                let userAge = localStorage.getItem('userAge');
+                if (!userAge) {
+                    const ageInput = prompt('あなたの現在の年齢を半角数字で入力してください。人生の残り時間を表示します。');
+                    if (ageInput && !isNaN(ageInput) && parseInt(ageInput) > 0) {
+                        userAge = parseInt(ageInput);
+                        localStorage.setItem('userAge', userAge);
+                    } else {
+                        alert('無効な値です。ページをリロードして再入力してください。');
+                        return;
+                    }
+                }
+                startCountdown(parseInt(userAge));
+                startSite();
+            }
+
+            // --- カウントダウン機能 ---
+            const countdownMessages = [
+                "この時間の何時間を遊びに使うのでしょうか？",
+                "残り時間は、わずかです。",
+                "時は金なり。有効に使おう。",
+                "今日という日は、残りの人生の最初の一日。"
+            ];
+
+            function startCountdown(age) {
+                const countdownTimerEl = document.getElementById('countdown-timer');
+                const countdownMessageEl = document.getElementById('countdown-message');
+                const now = new Date();
+                const targetDate = new Date(now.getFullYear() + (90 - age), now.getMonth(), now.getDate());
+
+                function updateCountdown() {
+                    const remaining = targetDate - new Date();
+                    if (remaining < 0) {
+                        countdownTimerEl.textContent = "人生の目標達成、おめでとうございます！";
+                        clearInterval(countdownInterval);
+                        return;
+                    }
+                    const seconds = Math.floor((remaining / 1000) % 60);
+                    const minutes = Math.floor((remaining / 1000 / 60) % 60);
+                    const hours = Math.floor((remaining / (1000 * 60 * 60)) % 24);
+                    const days = Math.floor(remaining / (1000 * 60 * 60 * 24));
+                    const weeks = Math.floor(days / 7);
+                    
+                    countdownTimerEl.innerHTML = `${weeks}<span>週</span> ${days % 7}<span>日</span> ${hours}<span>時間</span> ${minutes}<span>分</span> ${seconds}<span>秒</span>`;
+                }
+
+                updateCountdown();
+                countdownInterval = setInterval(updateCountdown, 1000);
+                countdownMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)];
+                setInterval(() => {
+                    countdownMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)];
+                }, 10000); // 10秒ごとにメッセージを更新
+            }
+
+
+            // --- スタッフロールとサイト表示 ---
             function startSite() {
                 if (document.body.dataset.siteStarted) return;
                 document.body.dataset.siteStarted = true;
@@ -682,8 +838,8 @@ PR .............................. 底原永和
                     oldCredits.remove();
                     container.appendChild(newCredits);
                 }
+                document.body.classList.add('no-scroll');
                 loader.classList.remove('fade-out');
-                document.body.style.overflow = 'hidden';
                 siteWrapper.classList.remove('visible');
                 clearTimeout(staffRollTimer);
                 staffRollTimer = setTimeout(showMainContent, 20000);
@@ -692,30 +848,33 @@ PR .............................. 底原永和
             function showMainContent() {
                 if (!loader.classList.contains('fade-out')) {
                     loader.classList.add('fade-out');
-                    document.body.style.overflow = 'auto';
+                    document.body.classList.remove('no-scroll');
                     siteWrapper.classList.add('visible');
-
-                    // 一言モーダルを表示
+                    
                     const onewordModal = document.getElementById('oneword-modal');
-                    // メインコンテンツ表示と少しタイミングをずらして表示
-                    setTimeout(() => {
-                        onewordModal.classList.add('visible');
-                    }, 500);
+                    setTimeout(() => { onewordModal.classList.add('visible'); }, 500);
                 }
             }
             
             skipBtn.addEventListener('click', () => { clearTimeout(staffRollTimer); showMainContent(); });
             replayStaffRollBtn.addEventListener('click', playStaffRoll);
 
-            // サイトを直接開始
-            startSite();
             
+            // --- キーボードイベント (チートコード & 偽翻訳) ---
             let cheatCodeBuffer = null;
             let cheatTimeout;
             document.addEventListener('keydown', (e) => {
-                if (e.target.closest('input, textarea') || document.querySelector('.modal-overlay.visible') || !fakeTranslator.classList.contains('hidden')) {
+                if (e.target.closest('input, textarea') || document.querySelector('.modal-overlay.visible')) {
                     return;
                 }
+                // Enterキーで偽翻訳サイトをトグル
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    fakeTranslator.classList.toggle('hidden');
+                    cheatCodeBuffer = null;
+                    return;
+                }
+                
                 if (e.key === ' ' || e.code === 'Space') {
                     e.preventDefault();
                     cheatCodeBuffer = '';
@@ -723,24 +882,26 @@ PR .............................. 底原永和
                     cheatTimeout = setTimeout(() => { cheatCodeBuffer = null; }, 3000);
                     return;
                 }
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    fakeTranslator.classList.toggle('hidden');
-                    cheatCodeBuffer = null;
-                    return;
-                }
+
                 if (cheatCodeBuffer !== null) {
                     if (e.key.length === 1) {
                         cheatCodeBuffer += e.key.toLowerCase();
                     }
                     if (cheatCodeBuffer === 'reset') {
-                        alert('リセットコマンドは現在無効です。');
+                        if (confirm('本当に設定（年齢・利用規約同意）をリセットしますか？')) {
+                            localStorage.removeItem('userAge');
+                            localStorage.removeItem('termsAgreed');
+                            localStorage.removeItem('tutorialCompleted');
+                            alert('設定をリセットしました。ページをリロードします。');
+                            window.location.reload();
+                        }
                         cheatCodeBuffer = null;
                         clearTimeout(cheatTimeout);
                     }
                 }
             });
             
+            // --- 偽翻訳の簡易ロジック ---
             translatorInput.addEventListener('input', () => {
                 translatorOutput.value = simpleTranslate(translatorInput.value);
             });
@@ -749,6 +910,7 @@ PR .............................. 底原永和
                 return text.toLowerCase().split('').map(char => map[char] || char).join('');
             }
 
+            // --- ナビゲーションタブ切り替え ---
             const navLinks = document.querySelectorAll('nav a[data-target]');
             const contentSections = document.querySelectorAll('.content-section');
             navLinks.forEach(link => {
@@ -759,6 +921,7 @@ PR .............................. 底原永和
                 });
             });
 
+            // --- 作品カードの動的生成 ---
             const itemListContainer = document.getElementById('item-list');
             items.forEach((item, index) => {
                 const itemElement = document.createElement('div');
@@ -769,14 +932,20 @@ PR .............................. 底原永和
                 itemListContainer.appendChild(itemElement);
             });
 
+            // --- モーダル関連の処理 ---
             const detailsModal = document.getElementById('details-modal');
             const shareModal = document.getElementById('share-modal');
             let currentItemUrl = '';
 
+            // 作品詳細モーダル表示
             itemListContainer.addEventListener('click', function(event) {
                 const clickedCard = event.target.closest('.item-card');
                 if (clickedCard) {
                     const itemData = items[clickedCard.dataset.itemId];
+                    if (itemData.url === '#') {
+                        alert('この作品は現在作成中です。お楽しみに！');
+                        return;
+                    }
                     currentItemUrl = itemData.url;
                     document.getElementById('details-modal-title').textContent = itemData.title;
                     document.getElementById('details-modal-img').src = itemData.thumbnail;
@@ -786,8 +955,9 @@ PR .............................. 底原永和
                 }
             });
             
-            document.getElementById('details-modal-share-btn').addEventListener('click', () => {
-                const url = new URL(currentItemUrl, window.location.href).href;
+            // 共有モーダルを開く汎用関数
+            function openShareModal(title, url) {
+                document.getElementById('share-modal-title').textContent = title;
                 document.getElementById('share-url-input').value = url;
                 const qrcodeContainer = document.getElementById('qrcode');
                 qrcodeContainer.innerHTML = '';
@@ -795,20 +965,50 @@ PR .............................. 底原永和
                     if (err) return console.error(err);
                     qrcodeContainer.appendChild(canvas);
                 });
-                detailsModal.classList.remove('visible');
                 shareModal.classList.add('visible');
+            }
+
+            // 作品の共有ボタン
+            document.getElementById('details-modal-share-btn').addEventListener('click', () => {
+                const url = new URL(currentItemUrl, window.location.href).href;
+                openShareModal('作品を共有', url);
+                detailsModal.classList.remove('visible');
             });
             
+            // サイト自体の共有ボタン
+            document.getElementById('share-site-btn').addEventListener('click', () => {
+                openShareModal('このサイトを共有', window.location.href);
+            });
+            
+            // URLコピーボタン（フォールバック対応）
             document.getElementById('copy-url-btn').addEventListener('click', (e) => {
-                document.getElementById('share-url-input').select();
-                navigator.clipboard.writeText(document.getElementById('share-url-input').value).then(() => {
-                    e.target.textContent = 'コピー完了!';
-                    setTimeout(() => { e.target.textContent = 'コピー'; }, 2000);
-                });
+                const urlInput = document.getElementById('share-url-input');
+                const urlToCopy = urlInput.value;
+                const button = e.target;
+
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(urlToCopy).then(() => {
+                        button.textContent = 'コピー完了!';
+                        setTimeout(() => { button.textContent = 'コピー'; }, 2000);
+                    }).catch(err => console.error('クリップボードへのコピーに失敗:', err));
+                } else {
+                    urlInput.select();
+                    try {
+                        document.execCommand('copy');
+                        button.textContent = 'コピー完了!';
+                        setTimeout(() => { button.textContent = 'コピー'; }, 2000);
+                    } catch (err) {
+                        alert('このブラウザでは自動コピーがサポートされていません。手動でコピーしてください。');
+                    }
+                }
             });
 
+            // モーダルを閉じる処理
             document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal-overlay').classList.remove('visible')));
             document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('visible'); }));
+
+            // --- サイト起動 ---
+            initSiteFlow();
         });
     </script>
 </body>
