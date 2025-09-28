@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Core Pin Training</title>
+<link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+<style>
+  :root{
+    --bg:#000000;
+    --panel:#0a0a0a;
+    --accent:#1a1a1a;
+    --neon-cyan: #00ffff;
+    --neon-yellow: #f0ff00;
+    --neon-magenta: #ff00ff;
+    --text-light: #e0e0e0;
+  }
+  html,body{
+    height:100%;
+    margin:0;
+    font-family: 'Inter', "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    background:var(--bg);
+    color:var(--text-light);
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    user-select:none;
+    overflow: hidden;
+  }
+
+  .container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  /* ローディング画面 */
+  #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .hidden { display: none !important; }
+  #skipBtn { position: absolute; bottom: 20px; right: 20px; z-index: 10000; }
+
+  /* スタッフロール */
+  #staffRollContainer { width: 100%; height: 100%; overflow: hidden; position: relative; }
+  .credits-list { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 90%; max-width: 700px; color: #e0e0e0; text-align: center; font-size: 16px; animation: scroll-up 14s linear forwards; }
+  .credits-list pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 1em; line-height: 1.8; text-align: left; white-space: pre-wrap; margin: 0; }
+  @keyframes scroll-up { 0% { top: 100%; } 100% { top: -100%; } }
+
+  /* ロード完了後 */
+  #loadComplete { text-align: center; color: #fff; opacity: 0; }
+  #loadComplete h1 { font-size: 48px; font-weight: 800; color: #fff; letter-spacing: 0.1em; text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan); margin-bottom: 8px; }
+
+  /* アニメーション */
+  @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+  .fade-in { animation: fade-in 1s ease-out forwards; }
+  .fade-out { animation: fade-out 1s ease-in forwards; }
+
+  .app { width: 100%; max-width: 1100px; margin: 20px auto; padding: 0; display:flex; flex-direction: column; gap:15px; align-items:center; position: relative; }
+  .training-panel { background:var(--panel); border: 1px solid var(--accent); border-radius:12px; padding:15px; box-shadow: 0 0 30px rgba(0, 255, 255, 0.1); position: relative; overflow: hidden; width:100%; box-sizing: border-box; }
+  .header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:10px; }
+  .title { font-size:22px; font-weight:700; letter-spacing:0.4px; color: var(--neon-cyan); text-shadow: 0 0 5px var(--neon-cyan); }
+  .meta { display:flex; gap:10px; align-items:center; }
+  .meta .box { background:var(--accent); border: 1px solid #333; padding:8px 16px; border-radius:8px; font-weight:600; font-size:16px; min-width: 100px; text-align: center; }
+  .meta .box#phaseBox { cursor: pointer; } /* 巻き戻し機能のためにカーソルを変更 */
+
+  #canvas-wrapper { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+  #trainingCanvas { display: block; background-color: #000; cursor: pointer; }
+  
+  /* コース選択画面 */
+  #difficulty-selector { text-align: center; color: var(--text-light); padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; position: absolute; inset: 0; z-index: 100; }
+  #difficulty-selector h2 { font-size: 3rem; color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 40px; letter-spacing: 2px; }
+  .difficulty-buttons { display: flex; gap: 30px; }
+  .btn.difficulty-btn { font-size: 1.5rem; padding: 20px 50px; min-width: 200px; }
+  .btn#hard-btn { color: var(--neon-magenta); border-color: var(--neon-magenta); }
+  .btn#hard-btn:hover { box-shadow: 0 0 15px var(--neon-magenta); }
+
+  /* モーダル共通 */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .modal-content { background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+  .modal-content h2 { margin-top: 0; font-size: 20px; border-bottom: 1px solid var(--accent); padding-bottom: 8px; margin-bottom: 16px; color: var(--neon-cyan); }
+  .modal-footer { text-align: right; margin-top: 24px; }
+  .cheat-input { width: 100%; padding: 10px; border-radius: 6px; background: var(--accent); border: 1px solid #333; color: var(--text-light); font-size: 16px; margin-top: 8px; box-sizing: border-box; }
+  
+  /* ハンバーガーメニュー */
+  #hamburger-icon { position: fixed; top: 20px; right: 20px; width: 30px; height: 22px; cursor: pointer; z-index: 1002; display: flex; flex-direction: column; justify-content: space-between; }
+  #hamburger-icon span { display: block; height: 3px; width: 100%; background: var(--text-light); border-radius: 3px; transition: all 0.3s ease-in-out; }
+  #menu-panel { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--panel); box-shadow: -5px 0 25px rgba(0,0,0,0.5); z-index: 1001; transition: right 0.4s ease-in-out; padding: 80px 20px 20px; box-sizing: border-box; border-left: 1px solid var(--accent); }
+  #menu-panel.open { right: 0; }
+  .menu-item { padding: 15px 10px; border-bottom: 1px solid var(--accent); color: var(--text-light); cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+  .menu-item:hover { background: var(--accent); color: var(--neon-cyan); }
+  .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { position: absolute; cursor: pointer; inset: 0; background-color: #333; transition: .4s; border-radius: 28px; }
+  .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+  input:checked + .slider { background-color: var(--neon-cyan); }
+  input:checked + .slider:before { transform: translateX(22px); }
+
+  /* 共有モーダル */
+  #qrcode { display: flex; justify-content: center; margin: 20px 0; background: white; padding: 10px; border-radius: 8px; }
+  .url-container { display: flex; gap: 8px; }
+  .url-input { flex-grow: 1; padding: 8px; background: var(--accent); border: 1px solid #333; color: var(--text-light); border-radius: 6px; }
+
+  .btn { padding:8px 12px; border-radius:8px; background:linear-gradient(180deg,#2a2a2a, #1a1a1a); color:var(--text-light); border:1px solid #444; cursor:pointer; font-weight:700; transition: all 0.2s ease; }
+  .btn:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); box-shadow: 0 0 10px var(--neon-cyan); }
+  .btn.ghost { background:transparent; }
+  
+  /* 偽翻訳サイト */
+  #fake-translator { position: fixed; inset: 0; background: #fff; z-index: 10000; color: #202124; font-family: 'Roboto', 'Noto Sans JP', sans-serif; display: flex; flex-direction: column; }
+  .translator-header { display: flex; justify-content: flex-start; align-items: center; padding: 12px 24px; border-bottom: 1px solid #e0e0e0; }
+  .translator-header .logo { font-size: 22px; font-weight: 500; color: #5f6368; display: flex; align-items: center; gap: 8px; }
+  .translator-body { display: grid; grid-template-columns: 1fr auto 1fr; gap: 24px; flex-grow: 1; padding: 24px; }
+  .translator-panel { border: 1px solid #dadce0; border-radius: 8px; display: flex; flex-direction: column; }
+  .translator-textarea { flex-grow: 1; resize: none; border: none; padding: 16px; font-size: 18px; box-sizing: border-box; background: none; color: #202124; }
+  .translator-textarea:focus { outline: none; }
+  .translator-controls { display: flex; align-items: center; }
+  #translate-btn { padding: 10px; background: none; border: 1px solid #dadce0; border-radius: 50%; cursor: pointer; width: 40px; height: 40px; }
+
+  .note { font-size:13px; color: #999; }
+  .center { text-align:center; }
+  @media (max-width:980px){ .app{ padding: 12px; margin: 0; } }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div id="loader">
+      <button id="skipBtn" class="btn">スキップ</button>
+      <div id="staffRollContainer"><div class="credits-list"><pre>PRODUCER ................. 底原永和
+DIRECTOR ................... 底原永和
+EXECUTIVE PRODUCER ..... 底原永和
+LEAD PROGRAMMER .......... 底原永和
+DESIGNER ................... 底原永和
+SPECIAL THANKS ........... 底原永和</pre></div></div>
+      <div id="loadComplete" class="hidden"><h1>Core Pin</h1></div>
+    </div>
+
+    <div id="difficulty-selector" class="hidden">
+        <h2>SELECT COURSE</h2>
+        <div class="difficulty-buttons">
+            <button class="btn difficulty-btn" id="easy-btn">EASY</button>
+            <button class="btn difficulty-btn" id="hard-btn">HARD</button>
+        </div>
+    </div>
+    
+    <div id="hamburger-icon" class="hidden"><span></span><span></span><span></span></div>
+    <div id="menu-panel">
+      <div class="menu-item" id="menu-change-mode-btn"><span>コース選択に戻る</span><span>&#x1F504;</span></div>
+      <div class="menu-item" id="menu-restart-btn"><span>最初からやり直す</span><span>&#x21BB;</span></div>
+      <div class="menu-item"><span>サウンド</span><label class="switch"><input type="checkbox" id="sound-toggle" checked><span class="slider"></span></label></div>
+      <div class="menu-item" id="menu-share-btn"><span>共有する</span><span>&#x2197;</span></div>
+      <div class="menu-item" id="menu-cheat-btn"><span>裏コード</span><span>&#x1F511;</span></div>
+    </div>
+
+    <div class="app hidden" id="appContainer">
+      <div class="training-panel" id="trainingPanel">
+        <div class="header">
+          <div class="title">CORE PIN TRAINING</div>
+          <div class="meta">
+            <div class="box" id="phaseBox">Phase: 1</div>
+            <div class="box" id="maxPhaseBox">Max Phase: 0</div>
+          </div>
+        </div>
+        <div id="canvas-wrapper"><canvas id="trainingCanvas"></canvas></div>
+      </div>
+       <div class="note center">Click or Press [SPACE] to shoot. | [ENTER] for fake screen.</div>
+    </div>
+    
+    <div id="cheatCodeModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>コード入力</h2>
+        <p class="note">コードを入力して指定したフェーズに移動します。</p>
+        <input type="number" id="cheatInput" class="cheat-input" placeholder="フェーズ番号 (1-100)">
+        <div class="modal-footer">
+          <button class="btn" id="submitCheatBtn">実行</button>
+          <button class="btn ghost" id="closeCheatBtn">キャンセル</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="shareModal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <h2>セッションを共有</h2>
+        <div id="qrcode"></div>
+        <p class="note center">QRコードをスキャンするか、以下のURLをコピーしてください。</p>
+        <div class="url-container">
+          <input type="text" id="urlInput" class="url-input" readonly>
+          <button class="btn" id="copyUrlBtn">コピー</button>
+        </div>
+        <div class="modal-footer"><button class="btn" id="closeShareBtn">閉じる</button></div>
+      </div>
+    </div>
+    
+    <div id="fake-translator" class="hidden">
+      <div class="translator-header"><div class="logo"><svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg><span>翻訳</span></div></div>
+      <div class="translator-body">
+        <div class="translator-panel"><div class="lang-selector-bar"><select class="lang-selector"><option>日本語</option></select></div><textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea></div>
+        <div class="translator-controls"><button id="translate-btn" title="翻訳する">→</button></div>
+        <div class="translator-panel"><div class="lang-selector-bar"><select class="lang-selector"><option>英語</option></select></div><textarea id="translator-output" class="translator-textarea" readonly></textarea></div>
+      </div>
+    </div>
+  </div>
+
+  <audio id="stickAudio" src="https://assets.codepen.io/217233/hit.mp3" preload="auto"></audio>
+  <audio id="collideAudio" src="https://assets.codepen.io/217233/fail.mp3" preload="auto"></audio>
+  <audio id="levelUpAudio" src="https://assets.codepen.io/217233/levelup.mp3" preload="auto"></audio>
+
+<script>
+window.addEventListener('DOMContentLoaded', () => {
+    // --- ローダーとスタッフロールの制御 ---
+    const loader = document.getElementById('loader');
+    const skipBtn = document.getElementById('skipBtn');
+    const staffRollDuration = 14000;
+    const logoDuration = 2000;
+    let startTimer;
+
+    const showDifficultySelector = () => {
+        const difficultySelector = document.getElementById('difficulty-selector');
+        if (loader.parentNode) {
+            loader.classList.add('fade-out');
+            loader.addEventListener('animationend', () => loader.remove());
+        }
+        difficultySelector.classList.remove('hidden');
+        difficultySelector.classList.add('fade-in');
+    };
+
+    const skipLoading = () => { clearTimeout(startTimer); showDifficultySelector(); };
+    startTimer = setTimeout(showDifficultySelector, staffRollDuration + logoDuration);
+    skipBtn.addEventListener('click', skipLoading);
+
+    // --- コース選択 ---
+    const difficultySelector = document.getElementById('difficulty-selector');
+    const appContainer = document.getElementById('appContainer');
+    const hamburgerIcon = document.getElementById('hamburger-icon');
+    
+    document.getElementById('easy-btn').addEventListener('click', () => {
+        difficultySelector.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        hamburgerIcon.classList.remove('hidden');
+        initTraining('easy');
+    });
+
+    document.getElementById('hard-btn').addEventListener('click', () => {
+        difficultySelector.classList.add('hidden');
+        appContainer.classList.remove('hidden');
+        hamburgerIcon.classList.remove('hidden');
+        initTraining('hard');
+    });
+
+    // --- メニューとモーダルの汎用制御 ---
+    const menuPanel = document.getElementById('menu-panel');
+    const shareModal = document.getElementById('shareModal');
+    const cheatCodeModal = document.getElementById('cheatCodeModal');
+    const fakeTranslator = document.getElementById('fake-translator');
+
+    hamburgerIcon.addEventListener('click', () => menuPanel.classList.toggle('open'));
+    document.addEventListener('click', (e) => { if (!menuPanel.contains(e.target) && !hamburgerIcon.contains(e.target)) menuPanel.classList.remove('open'); });
+    document.getElementById('menu-change-mode-btn').addEventListener('click', () => window.location.reload());
+    
+    // 共有モーダル
+    document.getElementById('menu-share-btn').addEventListener('click', () => {
+        const url = window.location.href;
+        document.getElementById('urlInput').value = url;
+        const qrcodeContainer = document.getElementById('qrcode');
+        qrcodeContainer.innerHTML = '';
+        QRCode.toCanvas(document.createElement('canvas'), url, { width: 200, errorCorrectionLevel: 'H' }, (err, canvas) => {
+            if (err) throw err;
+            qrcodeContainer.appendChild(canvas);
+        });
+        shareModal.classList.remove('hidden');
+        menuPanel.classList.remove('open');
+    });
+    document.getElementById('closeShareBtn').addEventListener('click', () => shareModal.classList.add('hidden'));
+    document.getElementById('copyUrlBtn').addEventListener('click', (e) => {
+        document.getElementById('urlInput').select();
+        navigator.clipboard.writeText(document.getElementById('urlInput').value).then(() => {
+            e.target.textContent = 'コピー完了!';
+            setTimeout(() => { e.target.textContent = 'コピー'; }, 2000);
+        });
+    });
+
+    // 裏コードモーダル
+    document.getElementById('menu-cheat-btn').addEventListener('click', () => {
+        cheatCodeModal.classList.remove('hidden');
+        menuPanel.classList.remove('open');
+    });
+    document.getElementById('closeCheatBtn').addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
+    document.getElementById('submitCheatBtn').addEventListener('click', () => {
+        const cheatInput = document.getElementById('cheatInput');
+        const phase = parseInt(cheatInput.value, 10);
+        if (phase >= 1 && phase <= 100 && window.corePinTraining) {
+            window.corePinTraining.goToPhase(phase);
+        }
+        cheatInput.value = '';
+        cheatCodeModal.classList.add('hidden');
+    });
+
+    // --- グローバルキーボードイベント ---
+    window.addEventListener('keydown', (e) => {
+        const isModalOpen = !!document.querySelector('.modal-overlay:not(.hidden)');
+        if (e.key === 'Enter' && !isModalOpen) {
+            e.preventDefault();
+            fakeTranslator.classList.toggle('hidden');
+        }
+        if (e.code === 'Space' && !isModalOpen && fakeTranslator.classList.contains('hidden') && window.corePinTraining) { 
+            e.preventDefault(); 
+            window.corePinTraining.shoot();
+        }
+    });
+});
+
+function initTraining(trainingMode) {
+    const canvas = document.getElementById('trainingCanvas'), ctx = canvas.getContext('2d'), wrapper = document.getElementById('canvas-wrapper'), phaseBox = document.getElementById('phaseBox'), maxPhaseBox = document.getElementById('maxPhaseBox');
+    const stickAudio = document.getElementById('stickAudio'), collideAudio = document.getElementById('collideAudio'), levelUpAudio = document.getElementById('levelUpAudio');
+
+    let isSoundEnabled = true, animationFrameId, sessionState = 'playing';
+    let currentPhase = 1, highestPhaseCompleted = 0;
+    const storageKey = `corepin_maxphase_${trainingMode}`;
+    
+    let core = { x: 0, y: 0, radius: 0, originalRadius: 0, angle: 0, speed: 0.01, dir: 1, dirChangeTimer: null };
+    let pin = { headRadius: 0, length: 0 };
+    let player = { pins: [] }, stuckPins = [], launchingPin = null;
+
+    const PHASE_CONFIG = Array.from({ length: 100 }, (_, i) => {
+        const phase = i + 1;
+        if (trainingMode === 'hard') {
+            return {
+                speed: 0.015 + phase * 0.0022,
+                initialPins: Math.min(5 + Math.floor(phase / 2.5), 40),
+                playerPins: Math.min(7 + Math.floor(phase / 8), 16),
+                changeDir: phase > 5,
+                changeDirInterval: Math.max(6000 - phase * 70, 1200),
+                pulsate: true,
+                pulsateAmplitude: 0.08,
+                randomPlacement: true,
+                intermittentRotation: phase > 40,
+            };
+        } else { // EASY
+            return {
+                speed: 0.008 + phase * 0.0011,
+                initialPins: Math.min(3 + Math.floor(phase / 3.0), 30),
+                playerPins: Math.min(8 + Math.floor(phase / 6), 18),
+                changeDir: phase > 15,
+                changeDirInterval: Math.max(7500 - phase * 50, 2500),
+                pulsate: phase > 50,
+                pulsateAmplitude: 0.05,
+                randomPlacement: false,
+                intermittentRotation: false,
+            };
+        }
+    });
+    
+    function playSound(audio) { if (isSoundEnabled) { audio.currentTime = 0; audio.play().catch(e => {}); } }
+
+    function resizeCanvas() {
+        const { width, height } = wrapper.getBoundingClientRect();
+        canvas.width = width; canvas.height = height;
+        core.x = canvas.width / 2; core.y = canvas.height / 2;
+        core.originalRadius = Math.min(canvas.width, canvas.height) * 0.22;
+        core.radius = core.originalRadius;
+        pin.headRadius = core.originalRadius * 0.08;
+        pin.length = core.originalRadius * 0.8;
+    }
+
+    function setupPhase(phase) {
+        sessionState = 'playing';
+        if (phase > 100) { sessionState = 'courseComplete'; return; }
+
+        const config = PHASE_CONFIG[phase - 1];
+        core.angle = 0; core.speed = config.speed; core.dir = Math.random() > 0.5 ? 1 : -1;
+        stuckPins = [];
+        const baseAngle = Math.PI * 2 / config.initialPins;
+        for (let i = 0; i < config.initialPins; i++) {
+            let angle = baseAngle * i;
+            if (config.randomPlacement) angle += (Math.random() - 0.5) * baseAngle * 0.6;
+            stuckPins.push({ angle });
+        }
+        player.pins = Array(config.playerPins).fill(true);
+        launchingPin = null;
+        phaseBox.textContent = `Phase: ${phase}`;
+        
+        if(core.dirChangeTimer) clearInterval(core.dirChangeTimer);
+        if (config.changeDir) {
+            core.dirChangeTimer = setInterval(() => { if(sessionState === 'playing') core.dir *= -1; }, config.changeDirInterval + Math.random() * 500);
+        }
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.shadowColor = '#00ffff'; ctx.shadowBlur = 25;
+        ctx.fillStyle = '#00ffff';
+        ctx.beginPath(); ctx.arc(core.x, core.y, core.radius, 0, Math.PI * 2); ctx.fill();
+        ctx.shadowBlur = 0;
+        
+        ctx.fillStyle = '#000'; ctx.font = `bold ${core.radius * 0.7}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(currentPhase <= 100 ? currentPhase : '★', core.x, core.y);
+
+        stuckPins.forEach(p => {
+            const angle = core.angle + p.angle;
+            const startX = core.x + Math.cos(angle) * core.radius;
+            const startY = core.y + Math.sin(angle) * core.radius;
+            const endX = core.x + Math.cos(angle) * (core.radius + pin.length);
+            const endY = core.y + Math.sin(angle) * (core.radius + pin.length);
+            ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke();
+            ctx.fillStyle = '#e0e0e0'; ctx.beginPath(); ctx.arc(endX, endY, pin.headRadius, 0, Math.PI * 2); ctx.fill();
+        });
+
+        const queueStartY = canvas.height * 0.9;
+        ctx.fillStyle = '#f0ff00'; ctx.font = `bold ${pin.headRadius * 3}px Inter`;
+        ctx.shadowColor = '#f0ff00'; ctx.shadowBlur = 15;
+        ctx.fillText(player.pins.length, core.x, queueStartY);
+        ctx.shadowBlur = 0;
+        
+        if (launchingPin) {
+             ctx.shadowColor = '#f0ff00'; ctx.shadowBlur = 15; ctx.strokeStyle = '#f0ff00'; ctx.lineWidth = 3; ctx.beginPath();
+             ctx.moveTo(launchingPin.x, launchingPin.y + pin.length); ctx.lineTo(launchingPin.x, launchingPin.y); ctx.stroke();
+             ctx.fillStyle = '#f0ff00'; ctx.beginPath(); ctx.arc(launchingPin.x, launchingPin.y, pin.headRadius, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0;
+        }
+        if (sessionState !== 'playing') {
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.8)'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.font = `bold ${core.originalRadius * 0.4}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            if (sessionState === 'sessionFailed') { ctx.fillStyle = '#ff0055'; ctx.fillText('TRY AGAIN', core.x, core.y - 30); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.2}px Inter`; ctx.fillText('Click or Space to retry', core.x, core.y + 40); }
+            else if (sessionState === 'sessionComplete') { ctx.fillStyle = '#00ffaa'; ctx.fillText('SESSION COMPLETE', core.x, core.y - 30); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.2}px Inter`; ctx.fillText('Click or Space to continue', core.x, core.y + 40); }
+            else if (sessionState === 'courseComplete') { ctx.fillStyle = '#f0ff00'; ctx.fillText('COURSE COMPLETE!', core.x, core.y - 40); ctx.fillStyle = '#fff'; ctx.font = `normal ${core.originalRadius * 0.25}px Inter`; ctx.fillText('Congratulations!', core.x, core.y + 20); ctx.font = `normal ${core.originalRadius * 0.18}px Inter`; ctx.fillText('Click or Space to start over.', core.x, core.y + 60); }
+        }
+    }
+
+    function update() {
+        if (sessionState === 'playing') {
+             const config = PHASE_CONFIG[currentPhase - 1];
+             let speedModifier = 1;
+             if(config.intermittentRotation) {
+                 const intermittentFactor = Math.sin(Date.now() / 350);
+                 if (intermittentFactor > 0.9) speedModifier = 0.05;
+                 else if (intermittentFactor > 0.7) speedModifier = 0.5;
+             }
+             core.angle += core.speed * core.dir * speedModifier;
+             
+             if (config.pulsate) {
+                 const pulseFactor = Math.sin(Date.now() / 280) * (core.originalRadius * config.pulsateAmplitude);
+                 core.radius = core.originalRadius + pulseFactor;
+                 pin.length = core.originalRadius * 0.8 - pulseFactor;
+             }
+        }
+        
+        if (launchingPin) {
+            const speed = 35, subSteps = 4, stepSpeed = speed / subSteps, COLLISION_THRESHOLD = 1.95;
+            for (let i = 0; i < subSteps; i++) {
+                if (!launchingPin) break;
+                launchingPin.y -= stepSpeed;
+                if (Math.hypot(launchingPin.x - core.x, launchingPin.y - core.y) <= core.radius + pin.length) {
+                    let hasCollided = false; const newAngle = Math.atan2(launchingPin.y - core.y, launchingPin.x - core.x);
+                    const newPinTipX = core.x + Math.cos(newAngle) * (core.radius + pin.length), newPinTipY = core.y + Math.sin(newAngle) * (core.radius + pin.length);
+                    for (const p of stuckPins) {
+                        const existingAngle = core.angle + p.angle, existingPinTipX = core.x + Math.cos(existingAngle) * (core.radius + pin.length), existingPinTipY = core.y + Math.sin(existingAngle) * (core.radius + pin.length);
+                        if (Math.hypot(newPinTipX - existingPinTipX, newPinTipY - existingPinTipY) < pin.headRadius * COLLISION_THRESHOLD) { hasCollided = true; break; }
+                    }
+                    if (hasCollided) { playSound(collideAudio); sessionState = 'sessionFailed'; launchingPin.y = core.y + Math.sin(newAngle) * (core.radius + pin.length); return; }
+                    else {
+                        playSound(stickAudio); stuckPins.push({ angle: newAngle - core.angle }); launchingPin = null;
+                        if (player.pins.length === 0) {
+                            sessionState = 'sessionComplete'; playSound(levelUpAudio);
+                            setTimeout(() => {
+                                if (currentPhase > highestPhaseCompleted) { highestPhaseCompleted = currentPhase; localStorage.setItem(storageKey, highestPhaseCompleted); maxPhaseBox.textContent = `Max Phase: ${highestPhaseCompleted}`; }
+                                currentPhase++; setupPhase(currentPhase);
+                            }, 800);
+                        }
+                    }
+                }
+            }
+            if (launchingPin && launchingPin.y < -pin.length) launchingPin = null;
+        }
+    }
+
+    function gameLoop() {
+        update(); draw();
+        animationFrameId = requestAnimationFrame(gameLoop);
+    }
+    
+    function handleAction() {
+        if (sessionState === 'playing') {
+            if (launchingPin || player.pins.length === 0) return;
+            player.pins.pop(); launchingPin = { x: canvas.width / 2, y: canvas.height * 0.9 - pin.length };
+        } else if (sessionState === 'sessionFailed') {
+            setupPhase(currentPhase);
+        } else if (sessionState === 'courseComplete') {
+            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `Max Phase: 0`;
+            currentPhase = 1; setupPhase(currentPhase);
+        }
+    }
+    
+    // --- 巻き戻し機能 ---
+    phaseBox.onclick = () => {
+        if (highestPhaseCompleted > 0) {
+            const targetPhase = prompt(`挑戦したいフェーズを入力してください (1～${highestPhaseCompleted+1})`, currentPhase);
+            if (targetPhase) {
+                const phaseNum = parseInt(targetPhase, 10);
+                if (!isNaN(phaseNum) && phaseNum >= 1 && phaseNum <= highestPhaseCompleted + 1) {
+                    window.corePinTraining.goToPhase(phaseNum);
+                } else {
+                    alert('無効な数値です。');
+                }
+            }
+        }
+    };
+
+    document.getElementById('menu-restart-btn').onclick = () => { window.corePinTraining.restart(); document.getElementById('menu-panel').classList.remove('open'); };
+    document.getElementById('sound-toggle').onchange = (e) => window.corePinTraining.setSound(e.target.checked);
+
+    window.corePinTraining = {
+        restart: () => { 
+            if (core.dirChangeTimer) clearInterval(core.dirChangeTimer);
+            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `Max Phase: 0`;
+            currentPhase = 1; setupPhase(currentPhase); 
+        },
+        goToPhase: (phase) => { 
+            if (phase > 0 && phase <= 100) { currentPhase = phase; if(core.dirChangeTimer) clearInterval(core.dirChangeTimer); setupPhase(currentPhase); } 
+        },
+        setSound: (enabled) => { isSoundEnabled = enabled; localStorage.setItem('corepin_sound', enabled); },
+        shoot: handleAction 
+    };
+    
+    try {
+        highestPhaseCompleted = parseInt(localStorage.getItem(storageKey)) || 0;
+        const soundSetting = localStorage.getItem('corepin_sound');
+        isSoundEnabled = soundSetting === null ? true : soundSetting === 'true';
+        document.getElementById('sound-toggle').checked = isSoundEnabled;
+    } catch(e) {}
+    
+    currentPhase = highestPhaseCompleted + 1;
+    maxPhaseBox.textContent = `Max Phase: ${highestPhaseCompleted}`;
+    
+    window.addEventListener('resize', resizeCanvas);
+    canvas.addEventListener('click', handleAction);
+    resizeCanvas(); setupPhase(currentPhase);
+    if (animationFrameId) cancelAnimationFrame(animationFrameId);
+    gameLoop();
+}
+</script>
+</body>
+</html>
