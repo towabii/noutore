@@ -1,3 +1,42 @@
+// ===============================================
+// 簡単更新エリア
+// ここの情報を書き換えるだけでサイトに反映されます
+// ===============================================
+
+// 「今日の一言」の内容
+const oneWordData = {
+    image: "hitokoto.jpeg", // 画像ファイル名
+    text: "ゲーム達を開発している環境はこちらです。一人悲しく開発してます(この文を書いてる時間は2:45 はよ寝よう)" // 表示する文章
+};
+
+// 「アップデート情報」の内容
+const updateInfoData = {
+    title: "ブロック落としにCPU(人工知能)が追加！",
+    title: "中間テストまでの日にち、とわの誕生日までの日にちが追加！",
+    title: "とわの仕事(8件)が終わるまでアプデはありません。",// メインのアップデートタイトル
+    video: "cpu.mp4", // 表示する動画ファイル名
+    futureUpdates: [
+        "ブロックトレーニングにCPUを追加予定",
+        "果物集めにもCPUを追加予定"
+        "リンゴクリッカーを追加予定"
+    ] // 今後のアップデート予定 (必要なだけ追加・削除できます)
+};
+
+// 「実装予定日一覧」の内容
+const scheduleData = [
+    { name: "ジオメタリートレーニング", date: "10月23日" },
+    { name: "3Dトレーニング", date: "11月7日" },
+    { name: "ちょっとGPT", date: "11月30日" },
+    { name: "7番出口", date: "12月25日" }
+    { name: "リンゴクリッカー", date: "10月11日" }
+    { name: "時計", date: "明日" }
+]; // { name: "ゲーム名", date: "日付" } の形式で追加・削除できます
+
+// ===============================================
+// 簡単更新エリアここまで
+// ===============================================
+
+
 const items = [
   {
     title: "ブロック落とし",
@@ -9,7 +48,7 @@ const items = [
   {
     title: "ブロック落としCPUモード",
     description: "CPU(人工知能)と対戦できるブロック落とし！あなたは勝てるか！？",
-    thumbnail: "./apps/app10/thumbnail.gif",
+    thumbnail: "./apps/app10/thumbnail.png",
     url: "./apps/app10/index.html",
     recommend: "早期アクセスバージョン"
   },
@@ -19,6 +58,13 @@ const items = [
     thumbnail: "./apps/app2/thumbnail.png",
     url: "./apps/app2/index.html",
     recommend: "今までの人気！"
+  },
+    {
+    title: "ブロックトレーニングCPUモード",
+    description: "同じ色のブロックをそろえて消そう！CPUに勝てるのか！！",
+    thumbnail: "./apps/app2/thumbnail.png",
+    url: "#",
+    recommend: "作成中"
   },
   {
     title: "果物集め",
@@ -84,6 +130,42 @@ document.addEventListener('DOMContentLoaded', function() {
     // --- 変数定義 ---
     let staffRollTimer;
     let countdownInterval;
+
+    // --- 動的コンテンツの読み込み ---
+    function populateDynamicContent() {
+        // 今日の一言
+        const oneWordImg = document.getElementById('oneword-img');
+        const oneWordText = document.getElementById('oneword-text');
+        if (oneWordImg) oneWordImg.src = oneWordData.image;
+        if (oneWordText) oneWordText.textContent = oneWordData.text;
+
+        // アップデート情報
+        const updateInfoTitle = document.getElementById('update-info-title');
+        const updateInfoVideo = document.getElementById('update-info-video');
+        const updateInfoFutureList = document.getElementById('update-info-future-list');
+        if (updateInfoTitle) updateInfoTitle.textContent = updateInfoData.title;
+        if (updateInfoVideo) updateInfoVideo.src = updateInfoData.video;
+        if (updateInfoFutureList) {
+            updateInfoFutureList.innerHTML = ''; // リストを初期化
+            updateInfoData.futureUpdates.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item;
+                updateInfoFutureList.appendChild(li);
+            });
+        }
+        
+        // 実装予定日一覧
+        const scheduleList = document.getElementById('schedule-list');
+        if (scheduleList) {
+            scheduleList.innerHTML = ''; // リストを初期化
+            scheduleData.forEach(item => {
+                const li = document.createElement('li');
+                li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);";
+                li.innerHTML = `<span>${item.name}</span> <span>${item.date}</span>`;
+                scheduleList.appendChild(li);
+            });
+        }
+    }
     
     // --- サイト初期化フロー ---
     function initSiteFlow() {
@@ -208,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
         function updateDaysCountdown() {
             const now = new Date();
             const currentYear = now.getFullYear();
-
+    
             // 中間テスト (11月18日)
             const testDate = new Date(currentYear, 10, 18); // 月は0-11
             if (now > testDate) {
@@ -217,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const testDiff = Math.ceil((testDate - now) / (1000 * 60 * 60 * 24));
                 testCountdownEl.textContent = `${testDiff} 日`;
             }
-
+    
             // 誕生日 (4月6日)
             let birthdayDate = new Date(currentYear, 3, 6); // 月は0-11
             if (now > birthdayDate) {
@@ -448,5 +530,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('visible'); }));
 
     // --- サイト起動 ---
+    populateDynamicContent(); // サイトの動的コンテンツを読み込む
     initSiteFlow();
 });
