@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新しくないタブ</title>
+
+    <!-- QRコード生成ライブラリ -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+
+    <!-- 外部CSSファイル -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- スタッフロール -->
+    <div id="loader">
+        <button id="skipBtn">スキップ</button>
+        <div id="staffRollContainer">
+            <div class="credits-list">
+<pre>
+プロデューサー .................. 底原永和
+ディレクター .................... 底原永和
+エグゼクティブプロデューサー .... 底原永和
+アシスタントプロデューサー ...... 底原永和
+デザイン ........................ 底原永和
+シナリオ ........................ 底原永和
+レベルデザイン .................. 底原永和
+バランス調整 .................... 底原永和
+UI/UXデザイン ................... 底原永和
+プログラムリード ................ 底原永和
+エンジンプログラマー ............ 底原永和
+ネットワークプログラマー ........ 底原永和
+AIプログラマー .................. 底原永和
+ツールプログラマー .............. 底原永和
+サウンドプログラマー ............ 底原永和
+グラフィックプログラマー ........ 底原永和
+アートディレクター .............. 底原永和
+キャラクターデザイナー .......... 底原永和
+モンスターデザイナー ............ 底原永和
+背景デザイナー .................. 底原永和
+UIデザイナー .................... 底原永和
+2Dアーティスト .................. 底原永和
+3Dモデラー ...................... 底原永和
+リガー .......................... 底原永和
+アニメーター .................... 底原永和
+モーションキャプチャー .......... 底原永和
+VFXアーティスト ................ 底原永和
+ライティングアーティスト ........ 底原永和
+テクスチャーアーティスト ........ 底原永和
+サウンドディレクター ............ 底原永和
+作曲 ............................ 底原永和
+効果音制作 ...................... 底原永和
+ボイス収録 ...................... 底原永和
+ミキシング ...................... 底原永和
+QAマネージャー .................. 底原永和
+QAリーダー ...................... 底原永和
+QAテスター ...................... 底原永和
+ローカライズディレクター ........ 底原永和
+翻訳 ............................ 底原永和
+ローカライズテスター ............ 底原永和
+マーケティングマネージャー ...... 底原永和
+PR .............................. 底原永和
+コミュニティマネージャー ........ 底原永和
+公式サイト運営 .................. 底原永和
+スペシャルサンクス .............. 底原永和
+</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="site-wrapper" id="site-wrapper">
+        <header class="site-header">
+            <div class="site-title">底原永和の作った楽しいやつ</div>
+            <nav>
+                <ul>
+                    <li><a data-target="home">ホーム</a></li>
+                    <li><a data-target="faq">よくある質問</a></li>
+                    <li><a data-target="author">作成者情報</a></li>
+                    <li><a id="share-site-btn">共有</a></li>
+                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSdUZqH-vSXeZr6nbuqrmJgiaLfytVIOxdlo4ylDFp-koLPT0g/viewform" target="_blank" rel="noopener noreferrer">フィードバック</a></li>
+                    <li><a id="replay-staffroll">スタッフロール</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <div id="countdown-container">
+            <div>
+                <h3>人生が終わるまでの時間</h3>
+                <div id="countdown-timer"></div>
+                <div id="countdown-message"></div>
+            </div>
+            <div>
+                <h3>中間テストまで</h3>
+                <div id="test-countdown-timer" class="countdown-extra"></div>
+            </div>
+            <div>
+                <h3>底原永和の誕生日まで</h3>
+                <div id="birthday-countdown-timer" class="countdown-extra"></div>
+            </div>
+        </div>
+
+        <main>
+            <!-- ホーム（作品一覧） -->
+            <div id="content-home" class="content-section active">
+
+                <div class="main-actions-container" style="text-align: center; margin-bottom: 2.5rem; display: flex; justify-content: center; gap: 1rem;">
+                    <button id="show-update-info-btn" class="btn">アップデート情報を表示する</button>
+                    <button id="show-schedule-btn" class="btn">追加予定日を表示する</button>
+                </div>
+
+                <div id="item-list" class="item-grid">
+                    <!-- JSで作品カードが自動的に追加されます -->
+                </div>
+                
+            </div>
+
+            <!-- よくある質問 -->
+            <div id="content-faq" class="content-section">
+                <div class="info-container">
+                    <h2>よくある質問</h2>
+                    <dl>
+                        <dt>Q. なぜ、アイフィルターにブロックされないのですか？</dt>
+                        <dd>A. アイフィルターは特定の文字列を含むサイトをブロックする仕組みになっています。文字列を工夫して含めないようにしているためブロックされません。また、タブの名前を変えてあるので先生にも気づかれにくく、エンターキーを押すとすべてのサイトで偽の翻訳サイトが表示されるようになっています。後ろから先生が来ても安心です。</dd>
+                        <dt>Q. アップデートの頻度はどれくらいですか？</dt>
+                        <dd>A. 基本的に毎日です。毎日のアップデートで細かな不具合を修正しています。特に土日には新しいゲームが追加されるので、ぜひフィードバックから「追加してほしいゲーム」を教えてください。</dd>
+                        <dt>Q. 本当に底原永和が作ったんですか？</dt>
+                        <dd>A. もちろんです。当たり前だろ、なめんな。</dd>
+                        <dt>Q. 万が一ブロックされたらどうしますか？</dt>
+                        <dd>A. 必ずプレイできるように修正します。</dd>
+                        <dt>Q. セキュリティは大丈夫ですか？</dt>
+                        <dd>A. ご安心ください。あの「伝説の底原永和」が作ったので大丈夫です。</dd>
+                        <dt>Q. 実装されたと書かれているのに、されていない機能があります。</dt>
+                        <dd>A. それは申し訳ありません。</dd>
+                        <dt>Q. くそゲーですね。</dt>
+                        <dd>A. BANです。</dd>
+                        <dt>Q. なぜ本名を入力しないといけないのですか？</dt>
+                        <dd>A. 管理をしやすくするためです。</dd>
+                        <dt>Q. スマホでもできますか？</dt>
+                        <dd>A. スマホには対応していません。推奨環境はPCです。</dd>
+                        <dt>Q. 有料ですか？</dt>
+                        <dd>A. 無料で遊べます。</dd>
+                        <dt>Q. 広告は入っていますか？</dt>
+                        <dd>A. 広告は一切ありません。</dd>
+                        <dt>Q. 不具合を見つけた場合はどうすればいいですか？</dt>
+                        <dd>A. フィードバックから送ってください。</dd>
+                        <dt>Q. フィードバックはどこから送れますか？</dt>
+                        <dd>A. 上のメニューから入力できます。</dd>
+                        <dt>Q. データは保存されますか？</dt>
+                        <dd>A. ハイスコアなどはローカルで保存されます。</dd>
+                    </dl>
+                </div>
+            </div>
+
+            <!-- 作成者情報 -->
+            <div id="content-author" class="content-section">
+                <div class="info-container">
+                    <h2>作成者情報</h2>
+                    <div class="author-profile">
+                        <img src="kao.png" alt="作成者の顔写真" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2E3YjNkOSI+PHBhdGggZD0iTTEyIDJhMTAgMTAgMCAwIDAgMCAyMCAxMCAxMCAwIDAgMCAwLTIwem0wIDE4YTEuNSAxLjUgMCAxIDEgMS41LTEuNUExLjUgMS41IDAgMCAxIDEyIDIwWm0yLjA3LTExLjI1bC0uOS45MkM١٢LjUgOS45OCAxMiA١٠LjUgMTIgMTJINDBhMyAzIDAgMCAxIDMtM2MuMDItMS40Ny0xLjI5LTIuNjYtMi44My0yLjQ5LS4yNS4wMy0uNS4xLS43Mi4yWiIvPjwvc3ZnPg=='; this.style.border='none';">
+                        <div class="author-details">
+                            <p class="name">底原 永和</p>
+                            <p>しがない中学2年生</p>
+                            <p>誕生日: 4月6日</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- チュートリアルモーダル -->
+    <div id="tutorial-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div id="tutorial-step-1" class="tutorial-step active">
+                <h2>ようこそ！</h2>
+                <p>このサイトの便利な機能を紹介します！<br>いくつかのステップで簡単に説明します。</p>
+            </div>
+            <div id="tutorial-step-2" class="tutorial-step">
+                <h2>緊急回避！偽装サイトモード</h2>
+                <p>先生が近くに来た時など、すぐに画面を切り替えたい時はキーボードの <strong style="color:var(--accent-color)">Enterキー</strong> を押してください。</p>
+                <p>一瞬で翻訳サイトの画面に切り替わります。もう一度押すと元の画面に戻ります。</p>
+            </div>
+            <div id="tutorial-step-3" class="tutorial-step">
+                <h2>人生の残り時間</h2>
+                <p>画面上部には、あなたが90歳になるまでの残り時間が表示されています。<br>限りある時間を大切に、そして楽しんで使いましょう！</p>
+            </div>
+             <div id="tutorial-step-4" class="tutorial-step">
+                <h2>準備完了！</h2>
+                <p>これでチュートリアルは終わりです。<br>このサイトを存分にお楽しみください！</p>
+            </div>
+            <div class="modal-footer tutorial-nav">
+                <button id="tutorial-skip-btn" class="btn ghost">スキップ</button>
+                <span id="tutorial-step-indicator" class="step-indicator">1 / 4</span>
+                <div>
+                    <button id="tutorial-prev-btn" class="btn ghost">戻る</button>
+                    <button id="tutorial-next-btn" class="btn">次へ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 利用規約モーダル -->
+    <div id="terms-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>利用規約</h2>
+            <div id="terms-text">
+                <p>本サイトをご利用になる前に、以下の利用規約をよくお読みください。本サイトの利用を開始した時点で、本規約に同意したものとみなします。</p>
+                <p><strong>第1条 (自己責任)</strong></p>
+                <p>本サイトの利用は、利用者自身の責任において行うものとします。学校のネットワーク内で本サイトを利用し、それによって発生したいかなる問題（先生からの指導、PCの没収、成績への影響など）についても、サイト作成者は一切の責任を負いません。</p>
+                <p><strong>第2条 (コンテンツの利用)</strong></p>
+                <p>本サイトで提供されるすべてのコンテンツ（ゲーム、テキスト、画像など）の著作権は、サイト作成者「底原 永和」に帰属します。無断での複製、転載、配布を固く禁じます。</p>
+                <p><strong>第3条 (禁止事項)</strong></p>
+                <p>利用者は、本サイトの利用にあたり、以下の行為を行ってはなりません。</p>
+                <ul>
+                    <li>法令または公序良俗に違反する行為</li>
+                    <li>本サイトのサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li>
+                    <li>他の利用者に関する個人情報等を収集または蓄積する行為</li>
+                    <li>他の利用者に成りすます行為</li>
+                    <li>その他、作成者が不適切と判断する行為</li>
+                </ul>
+                <p><strong>第4条 (免責事項)</strong></p>
+                <p>サイト作成者は、本サイトのコンテンツの正確性、完全性、安全性等について、いかなる保証も行いません。また、本サイトの利用によって利用者に生じたいかなる損害についても、一切の責任を負いません。</p>
+                <p><strong>第5条 (規約の変更)</strong></p>
+                <p>サイト作成者は、必要と判断した場合には、利用者に通知することなくいつでも本規約を変更することができるものとします。</p>
+            </div>
+            <div class="modal-footer">
+                <button id="terms-agree-btn" class="btn">同意して利用する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 作品詳細モーダル -->
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="details-modal-title"></h2>
+            <img id="details-modal-img" src="" alt="作品のサムネイル">
+            <p id="details-modal-desc"></p>
+            <div class="modal-footer">
+                <a id="details-modal-launch-btn" href="#" target="_blank" class="btn">起動する</a>
+                <button id="details-modal-share-btn" class="btn ghost">共有</button>
+                <button data-close-modal class="btn ghost">閉じる</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 共有モーダル -->
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="share-modal-title">作品を共有</h2>
+            <div id="qrcode"></div>
+            <p style="font-size: 14px; text-align: center; color: var(--text-secondary);">QRコードをスキャンするか、URLをコピー</p>
+            <div class="url-container">
+                <input type="text" id="share-url-input" class="url-input" readonly>
+                <button class="btn" id="copy-url-btn">コピー</button>
+            </div>
+            <div class="modal-footer">
+                <button data-close-modal class="btn ghost">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 一言モーダル -->
+    <div id="oneword-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>底原永和の今日のひとこと</h2>
+            <img src="hitokoto.jpeg" alt="今日の一言に関連する画像" onerror="this.style.display='none';">
+            <p style="line-height: 1.7; font-size: 16px;">ゲーム達を開発している環境はこちらです。一人悲しく開発してます</p>
+            <div class="modal-footer">
+                <button data-close-modal class="btn">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- アップデート情報モーダル -->
+    <div id="update-info-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>アップデート情報</h2>
+            <p style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color);">ブロック落としにCPU(人工知能)が追加！</p>
+            <video src="cpu.mp4" autoplay muted loop playsinline style="width: 100%; border-radius: 8px; margin-top: 1rem;" onerror="this.style.display='none';"></video>
+            <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--panel-border); padding-bottom: 0.5rem;">今後のアップデート予定</h3>
+            <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px;">
+                <li>ブロックトレーニングにCPUを追加予定</li>
+                <li>果物集めにもCPUを追加予定</li>
+            </ul>
+            <div class="modal-footer">
+                <button data-close-modal class="btn ghost">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 実装予定日一覧モーダル -->
+    <div id="schedule-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>実装予定日一覧</h2>
+            <ul style="list-style: none; padding: 0;">
+              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>ジオメタリートレーニング</span> <span>10月23日</span></li>
+              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>3Dトレーニング</span> <span>11月7日</span></li>
+              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>ちょっとGPT</span> <span>11月30日</span></li>
+              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>7番出口</span> <span>12月25日</span></li>
+            </ul>
+            <div class="modal-footer">
+                <button data-close-modal class="btn ghost">閉じる</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 偽翻訳サイト -->
+    <div id="fake-translator" class="hidden">
+        <header class="translator-header">
+            <div class="translator-logo">
+                <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
+                <span>翻訳</span>
+            </div>
+        </header>
+        <main class="translator-main">
+            <div class="translator-lang-bar">
+                <button class="lang-btn active">日本語</button>
+                <button class="lang-btn">英語</button>
+            </div>
+            <div class="translator-body">
+                <div class="translator-panel">
+                    <textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea>
+                </div>
+                <div class="translator-divider"></div>
+                <div class="translator-panel">
+                    <textarea id="translator-output" class="translator-textarea" readonly></textarea>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- 外部JavaScriptファイル -->
+    <script src="script.js"></script>
+
+</body>
+</html>
