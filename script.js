@@ -6,18 +6,21 @@
 // 「今日の一言」の内容
 const oneWordData = {
     image: "hitokoto.jpeg", // 画像ファイル名
-    text: "ゲーム達を開発している環境はこちらです。一人悲しく開発してます(この文を書いてる時間は2:45 はよ寝よう)" // 表示する文章
+    text: "ゲーム達を開発している環境はこちらです。一人悲しく開発してます(この文を書いてる時間は2:45 早く寝よう)" // 表示する文章
 };
 
 // 「アップデート情報」の内容
 const updateInfoData = {
-    title: "ブロック落としにCPU(人工知能)が追加！",
-    title: "中間テストまでの日にち、とわの誕生日までの日にちが追加！",
-    title: "とわの仕事(8件)が終わるまでアプデはありません。",// メインのアップデートタイトル
+    // 複数のアップデートタイトルを配列で管理します
+    titles: [
+        "ブロック落としにCPU(人工知能)が追加！",
+        "中間テストまでの日にち、とわの誕生日までの日にちが追加！",
+        "とわの仕事(8件)が終わるまでアプデはありません。"
+    ],
     video: "cpu.mp4", // 表示する動画ファイル名
     futureUpdates: [
         "ブロックトレーニングにCPUを追加予定",
-        "果物集めにもCPUを追加予定"
+        "果物集めにもCPUを追加予定", // カンマを修正
         "リンゴクリッカーを追加予定"
     ] // 今後のアップデート予定 (必要なだけ追加・削除できます)
 };
@@ -27,8 +30,8 @@ const scheduleData = [
     { name: "ジオメタリートレーニング", date: "10月23日" },
     { name: "3Dトレーニング", date: "11月7日" },
     { name: "ちょっとGPT", date: "11月30日" },
-    { name: "7番出口", date: "12月25日" }
-    { name: "リンゴクリッカー", date: "10月11日" }
+    { name: "7番出口", date: "12月25日" }, // カンマを修正
+    { name: "リンゴクリッカー", date: "10月11日" }, // カンマを修正
     { name: "時計", date: "明日" }
 ]; // { name: "ゲーム名", date: "日付" } の形式で追加・削除できます
 
@@ -59,7 +62,7 @@ const items = [
     url: "./apps/app2/index.html",
     recommend: "今までの人気！"
   },
-    {
+  {
     title: "ブロックトレーニングCPUモード",
     description: "同じ色のブロックをそろえて消そう！CPUに勝てるのか！！",
     thumbnail: "./apps/app2/thumbnail.png",
@@ -143,7 +146,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const updateInfoTitle = document.getElementById('update-info-title');
         const updateInfoVideo = document.getElementById('update-info-video');
         const updateInfoFutureList = document.getElementById('update-info-future-list');
-        if (updateInfoTitle) updateInfoTitle.textContent = updateInfoData.title;
+        if (updateInfoTitle) {
+            // titles配列の各要素を<br>タグで連結して、改行して表示する
+            updateInfoTitle.innerHTML = updateInfoData.titles.join('<br>');
+        }
         if (updateInfoVideo) updateInfoVideo.src = updateInfoData.video;
         if (updateInfoFutureList) {
             updateInfoFutureList.innerHTML = ''; // リストを初期化
