@@ -264,8 +264,8 @@ PR .............................. 底原永和
     <div id="oneword-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>底原永和の今日のひとこと</h2>
-            <img src="hitokoto.jpeg" alt="今日の一言に関連する画像" onerror="this.style.display='none';">
-            <p style="line-height: 1.7; font-size: 16px;">ゲーム達を開発している環境はこちらです。一人悲しく開発してます</p>
+            <img id="oneword-img" src="" alt="今日の一言に関連する画像" onerror="this.style.display='none';">
+            <p id="oneword-text" style="line-height: 1.7; font-size: 16px;"></p>
             <div class="modal-footer">
                 <button data-close-modal class="btn">閉じる</button>
             </div>
@@ -276,12 +276,11 @@ PR .............................. 底原永和
     <div id="update-info-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>アップデート情報</h2>
-            <p style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color);">ブロック落としにCPU(人工知能)が追加！</p>
-            <video src="cpu.mp4" autoplay muted loop playsinline style="width: 100%; border-radius: 8px; margin-top: 1rem;" onerror="this.style.display='none';"></video>
+            <p id="update-info-title" style="font-size: 1.2rem; font-weight: bold; color: var(--accent-color);"></p>
+            <video id="update-info-video" src="" autoplay muted loop playsinline style="width: 100%; border-radius: 8px; margin-top: 1rem;" onerror="this.style.display='none';"></video>
             <h3 style="margin-top: 2rem; border-bottom: 1px solid var(--panel-border); padding-bottom: 0.5rem;">今後のアップデート予定</h3>
-            <ul style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px;">
-                <li>ブロックトレーニングにCPUを追加予定</li>
-                <li>果物集めにもCPUを追加予定</li>
+            <ul id="update-info-future-list" style="color: var(--text-secondary); line-height: 1.8; padding-left: 20px;">
+                <!-- JS will populate this list -->
             </ul>
             <div class="modal-footer">
                 <button data-close-modal class="btn ghost">閉じる</button>
@@ -293,11 +292,8 @@ PR .............................. 底原永和
     <div id="schedule-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>実装予定日一覧</h2>
-            <ul style="list-style: none; padding: 0;">
-              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>ジオメタリートレーニング</span> <span>10月23日</span></li>
-              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>3Dトレーニング</span> <span>11月7日</span></li>
-              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>ちょっとGPT</span> <span>11月30日</span></li>
-              <li style="display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);"><span>7番出口</span> <span>12月25日</span></li>
+            <ul id="schedule-list" style="list-style: none; padding: 0;">
+                <!-- JS will populate this list -->
             </ul>
             <div class="modal-footer">
                 <button data-close-modal class="btn ghost">閉じる</button>
