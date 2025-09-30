@@ -17,8 +17,8 @@
                 --text-secondary: #a7b3d9;
                 --cell-bg: rgba(0, 0, 0, 0.25);
                 --board-border: #8a2be2;
-                --tile-size: clamp(28px, 4.2vh, 48px);
-                --preview-tile-size: 20px;
+                --tile-size: clamp(24px, 4vh, 48px);
+                --preview-tile-size: clamp(16px, 2.5vh, 22px);
             }
 
             html,body {
@@ -45,14 +45,33 @@
 
             .app {
                 width: 100%;
-                max-width: 1800px;
                 display: grid;
-                grid-template-columns: 240px min-content 240px;
-                gap: 24px;
+                gap: clamp(12px, 2vw, 24px);
                 align-items: start;
                 justify-content: center;
                 position: relative;
+                transition: grid-template-columns 0.4s ease;
             }
+
+            .app.single-player-mode {
+                grid-template-columns: clamp(180px, 15vw, 240px) min-content clamp(180px, 15vw, 240px);
+            }
+
+            .app.single-player-mode .side-panel.left { order: 1; }
+            .app.single-player-mode .game-container { order: 2; }
+            .app.single-player-mode .side-panel.right { order: 3; }
+
+            .app.vs-cpu-mode {
+                grid-template-columns: clamp(180px, 15vw, 240px) min-content clamp(100px, 10vw, 150px) min-content clamp(100px, 10vw, 150px);
+            }
+
+            .app.vs-cpu-mode .side-panel.left { order: 1; }
+            .app.vs-cpu-mode .game-container#player-game-container { order: 2; }
+            .app.vs-cpu-mode .side-panel.player-next-panel { order: 3; }
+            .app.vs-cpu-mode #cpu-container { order: 4; }
+            .app.vs-cpu-mode .side-panel.cpu-info-panel { order: 5; }
+            .app.vs-cpu-mode .side-panel.right { display: none; }
+
 
             .app.game-inactive-blur::before {
                 content: '';
@@ -93,6 +112,7 @@
                 flex-direction: column;
                 align-items: center;
                 gap: 16px;
+                transition: transform 0.1s ease-out;
             }
 
             .game-header {
@@ -103,12 +123,13 @@
             }
 
             .title {
-                font-size: 28px;
+                font-size: clamp(20px, 2.5vw, 24px);
                 font-weight: 900;
                 color: #fff;
                 letter-spacing: 2px;
                 text-transform: uppercase;
                 text-shadow: 0 0 8px var(--accent-color);
+                white-space: nowrap;
             }
 
             .meta-box {
@@ -158,8 +179,22 @@
                 box-sizing: border-box;
             }
 
-            .overlay-content {
+            #start-screen, #gameover-screen, #pause-screen, #animation-mode-screen {
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                height: 100%;
                 width: 100%;
+            }
+            
+            #start-screen.hidden, #gameover-screen.hidden, #pause-screen.hidden, #animation-mode-screen.hidden {
+                display: none;
+            }
+
+            .overlay-content { 
+                width: 100%; 
+                text-align: center;
             }
 
             .overlay-content h2 {
@@ -170,19 +205,23 @@
                 margin: 0;
                 white-space: nowrap;
             }
-
-            .overlay-content p {
-                font-size: 20px;
-                margin-top: 8px;
-                margin-bottom: 24px;
+            #gameover-screen .overlay-content h2 {
+                transform: scale(0.5);
+                opacity: 0;
+                animation: gameover-text-zoom 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
             }
 
-            #start-screen .overlay-footer, #animation-mode-screen .overlay-footer {
-                justify-content: center;
+            @keyframes gameover-text-zoom { to { transform: scale(1); opacity: 1; } }
+
+            .overlay-content p { font-size: 20px; margin-top: 8px; margin-bottom: 24px; }
+            #start-screen .overlay-footer, #animation-mode-screen .overlay-footer { flex-direction: column; }
+            .overlay-footer {
+                width: 100%;
                 display: flex;
-                flex-direction: column;
+                flex-wrap: wrap;
+                justify-content: center;
                 gap: 12px;
-                align-items: center;
+                margin-top: auto;
             }
 
             #start-screen .overlay-footer .btn, #animation-mode-screen .overlay-footer .btn {
@@ -190,12 +229,26 @@
                 max-width: 280px;
             }
 
-            .overlay-footer {
-                width: 100%;
-                display: flex;
-                justify-content: flex-end;
-                margin-top: auto;
+            .cpu-select-container {
+                position: relative;
+                width: 90%;
+                max-width: 280px;
             }
+
+            .cpu-level-dropdown {
+                max-height: 0;
+                overflow: hidden;
+                transition: max-height 0.3s ease-in-out;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                background: rgba(0,0,0,0.2);
+                padding: 0 10px;
+                border-radius: 8px;
+            }
+
+            .cpu-level-dropdown.open { max-height: 200px; padding: 10px; }
+            .cpu-level-dropdown .btn { flex: 1 1 50px; min-width: 50px; font-size: 12px; padding: 8px; }
 
             #countdown {
                 font-size: 120px;
@@ -209,15 +262,8 @@
                 z-index: 31;
             }
 
-            .cell {
-                background: var(--cell-bg);
-                position: relative;
-                transition: background-color 0.2s ease;
-            }
-            
-            .cell.dead {
-                background-color: #334155;
-            }
+            .cell { background: var(--cell-bg); position: relative; transition: background-color 0.2s ease; }
+            .cell.dead { background-color: #334155; }
 
             .tile {
                 width: 100%;
@@ -229,7 +275,7 @@
                 background-color: currentColor;
                 box-shadow: inset 0 0 5px rgba(255,255,255,0.4), 0 0 10px currentColor;
             }
-
+            .tile.garbage { background-color: #64748b; box-shadow: inset 0 0 4px rgba(0,0,0,0.5); }
             .ghost-tile {
                 width: 100%;
                 height: 100%;
@@ -242,348 +288,79 @@
                 box-sizing: border-box;
             }
 
-            .preview-box {
-                width: 100%;
-                height: calc(var(--preview-tile-size) * 5);
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: rgba(0,0,0,0.2);
-                border-radius: 8px;
-            }
+            .preview-box { width: 100%; height: calc(var(--preview-tile-size) * 6); display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); border-radius: 8px; }
+            .piece-grid { display: grid; grid-template-columns: repeat(4, var(--preview-tile-size)); grid-template-rows: repeat(4, var(--preview-tile-size)); }
+            .mini-cell { width: var(--preview-tile-size); height: var(--preview-tile-size); position: relative; }
+            .mini-cell .tile { box-shadow: inset 0 0 3px rgba(255,255,255,0.4), 0 0 5px currentColor; }
+            .score-grid { display: flex; flex-direction: column; gap: 8px; }
+            .scorebox { display: flex; justify-content: space-between; font-size: 14px; color: var(--text-secondary); }
+            .scorebox span:last-child { font-weight: 700; color: var(--text-primary); min-width: 60px; text-align: right; display: inline-block; }
+            .controls-panel { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 
-            .piece-grid {
-                display: grid;
-                grid-template-columns: repeat(4, var(--preview-tile-size));
-                grid-template-rows: repeat(4, var(--preview-tile-size));
+            .btn { padding: 10px 12px; border-radius: 8px; background: linear-gradient(145deg, #4f23a6, #3b1a7d); color: var(--text-primary); border: 1px solid var(--panel-border); cursor: pointer; font-weight: 700; text-transform: uppercase; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+            .btn:hover { background: linear-gradient(145deg, #6a34d9, #4f23a6); box-shadow: 0 0 15px var(--accent-color); }
+            .btn.ghost { background: transparent; border-style: dashed; }
+            .note { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
+            
+            /* --- ANIMATION CHANGE START --- */
+            .tile.clearing {
+                animation: block-clear-animation 0.5s ease-out forwards;
             }
-
-            .mini-cell {
-                width: var(--preview-tile-size);
-                height: var(--preview-tile-size);
-                position: relative;
-            }
-
-            .mini-cell .tile {
-                box-shadow: inset 0 0 3px rgba(255,255,255,0.4), 0 0 5px currentColor;
-            }
-
-            .score-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .scorebox {
-                display: flex;
-                justify-content: space-between;
-                font-size: 14px;
-                color: var(--text-secondary);
-            }
-
-            .scorebox span:last-child {
-                font-weight: 700;
-                color: var(--text-primary);
-                min-width: 60px;
-                text-align: right;
-                display: inline-block;
-            }
-
-            .controls-panel {
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                margin-top: 16px;
-            }
-
-            .btn {
-                padding: 10px 12px;
-                border-radius: 8px;
-                background: linear-gradient(145deg, #4f23a6, #3b1a7d);
-                color: var(--text-primary);
-                border: 1px solid var(--panel-border);
-                cursor: pointer;
-                font-weight: 700;
-                text-transform: uppercase;
-                transition: all 0.2s ease;
-                box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            }
-
-            .btn:hover {
-                background: linear-gradient(145deg, #6a34d9, #4f23a6);
-                box-shadow: 0 0 15px var(--accent-color);
-            }
-
-            .btn.ghost {
-                background: transparent;
-                border-style: dashed;
-            }
-
-            .note {
-                font-size: 12px;
-                color: var(--text-secondary);
-                line-height: 1.6;
-            }
-
-            @keyframes line-clear-animation {
-                0% {
-                    transform: scale(1.1);
-                    opacity: 1;
-                    background: #fff;
-                    box-shadow: 0 0 25px #fff;
+            @keyframes block-clear-animation {
+                0% { 
+                    transform: scale(1.05);
+                    filter: brightness(2.5);
+                    box-shadow: 0 0 15px 5px rgba(255, 255, 255, 0.7);
                 }
-                50% {
-                    opacity: 0.8;
+                50% { 
+                    transform: scale(1.2) rotateZ(15deg);
+                    opacity: 1; 
+                    filter: brightness(1.5);
                 }
-                100% {
-                    transform: scale(0);
+                100% { 
+                    transform: scale(0.1) rotateZ(-30deg) translateY(50px);
                     opacity: 0;
-                    background: var(--accent-color);
+                    filter: brightness(5);
                 }
             }
+            /* --- ANIMATION CHANGE END --- */
+            
+            @keyframes piece-lock-animation { 0% { transform: translateY(-5%); background: rgba(255, 255, 255, 0.6); opacity: 1; } 50% { transform: translateY(0) scale(1.05, 0.95); background: rgba(255, 255, 255, 0.2); } 100% { transform: translateY(0) scale(1, 1); background: transparent; opacity: 1; } }
+            .lock-flash-effect { position: absolute; inset: 0; border-radius: 3px; animation: piece-lock-animation 0.2s ease-out; pointer-events: none; }
+            .particle { position: absolute; width: 8px; height: 8px; background: #fff; border-radius: 50%; pointer-events: none; z-index: 50; box-shadow: 0 0 10px #fff; animation: particle-anim 0.6s ease-out forwards; }
+            @keyframes particle-anim { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; } }
+            .hidden { display: none !important; }
 
-            .line-clearing .tile {
-                background: #fff !important;
-                animation: line-clear-animation 0.4s ease-out forwards;
-            }
+            /* New Animations */
+            @keyframes shake-hard-drop { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-2px); } 40%, 80% { transform: translateX(2px); } }
+            .shake-hard-drop { animation: shake-hard-drop 0.15s linear; }
+            .board.combo-1 { box-shadow: 0 0 25px #ffab00, inset 0 0 10px #ffab0080; }
+            .board.combo-2 { box-shadow: 0 0 30px #ff6d00, inset 0 0 12px #ff6d0080; }
+            .board.combo-3 { box-shadow: 0 0 35px #dd2c00, inset 0 0 15px #dd2c0080; }
+            .board.combo-4 { box-shadow: 0 0 40px #aa00ff, inset 0 0 20px #aa00ff80; }
 
-            .board.line-clearing-effect {
-                border-color: #fff;
-                box-shadow: 0 0 40px #fff, 0 0 70px var(--accent-color), inset 0 0 20px rgba(255, 255, 255, 0.5);
-            }
-
-            @keyframes piece-lock-animation {
-                0% {
-                    transform: translateY(-5%);
-                    background: rgba(255, 255, 255, 0.6);
-                    opacity: 1;
-                }
-                50% {
-                    transform: translateY(0) scale(1.05, 0.95);
-                    background: rgba(255, 255, 255, 0.2);
-                }
-                100% {
-                    transform: translateY(0) scale(1, 1);
-                    background: transparent;
-                    opacity: 1;
-                }
-            }
-
-            .lock-flash-effect {
-                position: absolute;
-                inset: 0;
-                border-radius: 3px;
-                animation: piece-lock-animation 0.2s ease-out;
-                pointer-events: none;
-            }
-
-            .particle {
-                position: absolute;
-                width: 8px;
-                height: 8px;
-                background: #fff;
-                border-radius: 50%;
-                pointer-events: none;
-                z-index: 50;
-                box-shadow: 0 0 10px #fff;
-                animation: particle-anim 0.6s ease-out forwards;
-            }
-
-            @keyframes particle-anim {
-                0% {
-                    transform: translate(0, 0) scale(1);
-                    opacity: 1;
-                }
-                100% {
-                    transform: translate(var(--x), var(--y)) scale(0);
-                    opacity: 0;
-                }
-            }
-
-            .hidden {
-                display: none !important;
-            }
-
-            #loader {
-                position: fixed;
-                inset: 0;
-                background: #000;
-                z-index: 9999;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: hidden;
-            }
-
-            #skipBtn {
-                position: absolute;
-                bottom: 20px;
-                right: 20px;
-                padding: 8px 16px;
-                background: rgba(255,255,255,0.1);
-                border: 1px solid rgba(255,255,255,0.2);
-                color: #fff;
-                border-radius: 6px;
-                cursor: pointer;
-                z-index: 10000;
-                font-weight: bold;
-            }
-
-            #staffRollContainer {
-                width: 100%;
-                height: 100%;
-                overflow: hidden;
-                position: relative;
-            }
-
-            .credits-list {
-                position: absolute;
-                top: 100%;
-                left: 50%;
-                transform: translateX(-50%);
-                width: 90%;
-                max-width: 700px;
-                color: #e0e0e0;
-                text-align: center;
-                font-size: 16px;
-                animation: scroll-up 14s linear forwards;
-            }
-
-            .credits-list pre {
-                font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace;
-                font-size: 1em;
-                line-height: 1.8;
-                text-align: left;
-                white-space: pre-wrap;
-                margin: 0;
-            }
-
-            @keyframes scroll-up {
-                0% { top: 100%; }
-                100% { top: -100%; }
-            }
-
-            .modal-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(0,0,0,0.7);
-                backdrop-filter: blur(8px);
-                z-index: 1000;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                padding: 16px;
-            }
-
-            .modal-content {
-                background: var(--panel-bg);
-                border: 1px solid var(--panel-border);
-                border-radius: 12px;
-                padding: 24px;
-                width: 100%;
-                max-width: 500px;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-            }
-
-            .modal-content h2 {
-                margin-top: 0;
-                font-size: 20px;
-                border-bottom: 1px solid var(--accent-color);
-                padding-bottom: 8px;
-                margin-bottom: 16px;
-            }
-
-            #hamburger-icon {
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 30px;
-                height: 22px;
-                cursor: pointer;
-                z-index: 1002;
-                display: flex;
-                flex-direction: column;
-                justify-content: space-between;
-            }
-
-            #hamburger-icon span {
-                display: block;
-                height: 3px;
-                width: 100%;
-                background: #e6eef8;
-                border-radius: 3px;
-                transition: all 0.3s ease-in-out;
-            }
-
-            #menu-panel {
-                position: fixed;
-                top: 0;
-                right: -300px;
-                width: 280px;
-                height: 100%;
-                background: var(--panel-bg);
-                box-shadow: -5px 0 25px rgba(0,0,0,0.5);
-                z-index: 1001;
-                transition: right 0.4s ease-in-out;
-                padding: 80px 20px 20px;
-                box-sizing: border-box;
-            }
-
+            /* Loader and initial screens... */
+            #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+            #skipBtn { position: absolute; bottom: 20px; right: 20px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer; z-index: 10000; font-weight: bold; }
+            #staffRollContainer { width: 100%; height: 100%; overflow: hidden; position: relative; }
+            .credits-list { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 90%; max-width: 700px; color: #e0e0e0; text-align: center; font-size: 16px; animation: scroll-up 14s linear forwards; }
+            .credits-list pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 1em; line-height: 1.8; text-align: left; white-space: pre-wrap; margin: 0; }
+            @keyframes scroll-up { 0% { top: 100%; } 100% { top: -100%; } }
+            .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+            .modal-content { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 24px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+            .modal-content h2 { margin-top: 0; font-size: 20px; border-bottom: 1px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 16px; }
+            #hamburger-icon { position: fixed; top: 20px; right: 20px; width: 30px; height: 22px; cursor: pointer; z-index: 1002; display: flex; flex-direction: column; justify-content: space-between; }
+            #hamburger-icon span { display: block; height: 3px; width: 100%; background: #e6eef8; border-radius: 3px; transition: all 0.3s ease-in-out; }
+            #menu-panel { position: fixed; top: 0; right: -300px; width: 280px; height: 100%; background: var(--panel-bg); box-shadow: -5px 0 25px rgba(0,0,0,0.5); z-index: 1001; transition: right 0.4s ease-in-out; padding: 80px 20px 20px; box-sizing: border-box; }
             #menu-panel.open { right: 0; }
-
-            .menu-item {
-                padding: 15px 10px;
-                border-bottom: 1px solid var(--panel-border);
-                color: #e6eef8;
-                cursor: pointer;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-            }
-
-            .feedback-popup {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                font-size: 48px;
-                font-weight: 900;
-                color: #fff;
-                text-shadow: 0 0 10px #FFD166, 0 0 20px #FF6B6B, 0 0 30px #06D6A0;
-                pointer-events: none;
-                z-index: 100;
-                white-space: nowrap;
-                animation: feedback-popup-animation 1.2s ease-out forwards;
-            }
-
-            @keyframes feedback-popup-animation {
-                0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); }
-                20% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
-                100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
-            }
-
-            #loadComplete h1 {
-                font-size: 48px;
-                font-weight: 800;
-                color: #fff;
-                letter-spacing: 0.1em;
-                text-shadow: 0 0 10px #4D96FF, 0 0 20px #4D96FF;
-                margin-bottom: 8px;
-            }
-
-            @keyframes fade-in {
-                from { opacity: 0; transform: scale(0.95); }
-                to { opacity: 1; transform: scale(1); }
-            }
-
-            @keyframes fade-out {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
-
+            .menu-item { padding: 15px 10px; border-bottom: 1px solid var(--panel-border); color: #e6eef8; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+            .feedback-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: clamp(32px, 5vw, 48px); font-weight: 900; color: #fff; text-shadow: 0 0 10px #FFD166, 0 0 20px #FF6B6B, 0 0 30px #06D6A0; pointer-events: none; z-index: 100; white-space: nowrap; animation: feedback-popup-animation 1.2s ease-out forwards; }
+            @keyframes feedback-popup-animation { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); } }
+            #loadComplete h1 { font-size: 48px; font-weight: 800; color: #fff; letter-spacing: 0.1em; text-shadow: 0 0 10px #4D96FF, 0 0 20px #4D96FF; margin-bottom: 8px; }
             .fade-in { animation: fade-in 1s ease-out forwards; }
+            @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
             .fade-out { animation: fade-out 1s ease-in forwards; }
-
+            @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
             .modal-content ul { padding-left: 20px; line-height: 1.7; }
             .modal-content .sub-header { font-weight: bold; margin-top: 16px; margin-bottom: 4px; color: #a0b0d0; }
             .modal-footer { text-align: right; margin-top: 24px; }
@@ -616,8 +393,6 @@
             .translator-textarea { flex-grow: 1; resize: none; border: none; padding: 0; font-size: 24px; font-family: 'Roboto', 'Noto Sans JP', sans-serif; box-sizing: border-box; background: none; color: #202124; }
             .translator-textarea:focus { outline: none; }
             .translator-divider { width: 1px; background: #dadce0; }
-
-            /* ========== 開発者モードHUDここから ========== */
             #dev-hud { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: limegreen; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 12px; padding: 10px; border-radius: 8px; z-index: 9999; pointer-events: none; white-space: pre; line-height: 1.4; display: flex; gap: 20px; }
             .fps-good { color: #86efac; } .fps-warn { color: #fde047; } .fps-bad { color: #f87171; }
             .dev-controls-panel { display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
@@ -625,23 +400,20 @@
             .dev-controls-panel button:hover { background: rgba(120, 255, 120, 0.4); }
             #dev-console { position: fixed; bottom: 10px; right: 10px; left: auto; width: calc(100% - 20px); max-width: 600px; height: 100px; background: rgba(10,10,20,0.8); border: 1px solid var(--panel-border); border-radius: 8px; z-index: 9998; overflow-y: auto; padding: 8px; font-family: monospace; font-size: 11px; color: #ccc; pointer-events: none; }
             #dev-console .log-error { color: #ff8080; } #dev-console .log-warn { color: #fde047; }
-            /* ========== 開発者モードHUDここまで ========== */
-
-            /* ========== Sokohara Record ここから ========== */
             #sokohara-record { position: fixed; top: 20px; left: 50%; background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 12px 24px; border-radius: 10px; font-size: 18px; font-weight: bold; z-index: 1005; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px rgba(255,255,255,0.3); }
-            @keyframes fade-in-then-out {
-                0% { opacity: 0; transform: translate(-50%, -80px); }
-                15% { opacity: 1; transform: translate(-50%, 0); }
-                85% { opacity: 1; transform: translate(-50%, 0); }
-                100% { opacity: 0; transform: translate(-50%, -80px); }
+            @keyframes fade-in-then-out { 0% { opacity: 0; transform: translate(-50%, -80px); } 15% { opacity: 1; transform: translate(-50%, 0); } 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -80px); } }
+            
+            @media (max-width: 1200px) {
+                .app.vs-cpu-mode { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
+                .app.vs-cpu-mode #cpu-container, .app.vs-cpu-mode .side-panel.player-next-panel, .app.vs-cpu-mode .side-panel.cpu-info-panel { display: none; }
+                .app.vs-cpu-mode .side-panel { flex-direction: row; justify-content: space-around; }
             }
-            /* ========== Sokohara Record ここまで ========== */
-
             @media (max-width: 980px) {
-                .app { grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: 16px; }
+                .app, .app.vs-cpu-mode, .app.single-player-mode { grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: 16px; }
                 .side-panel.left { order: 2; }
                 .game-container { order: 1; }
                 .side-panel.right { order: 3; }
+                #cpu-container, .side-panel.player-next-panel, .side-panel.cpu-info-panel { display: none !important; }
                 .side-panel { flex-direction: row; justify-content: space-around; }
                 .panel-card { flex: 1; }
                 .title { font-size: 20px; }
@@ -651,12 +423,9 @@
         </style>
     </head>
     <body>
-        <!-- 開発者モードHUD -->
         <div id="dev-hud" class="hidden"></div>
         <div id="dev-console" class="hidden"></div>
-        <!-- Sokohara Record -->
         <div id="sokohara-record" class="hidden">底原永和の最高記録: レベル21 98400点</div>
-
         <div class="container">
             <div id="loader">
                 <button id="skipBtn">スキップ</button>
@@ -714,11 +483,9 @@ PR .............................. 底原永和
                     <h1>楽しいね</h1>
                 </div>
             </div>
-
-            <!-- このコンテナは初期状態で表示し、アニメーション選択後に非表示にする -->
             <div id="initial-setup-container">
                 <div id="animation-mode-screen" class="hidden">
-                     <div class="overlay-content">
+                    <div class="overlay-content">
                         <h2>アニメーション設定</h2>
                         <p>体験を選択してください</p>
                     </div>
@@ -728,7 +495,6 @@ PR .............................. 底原永和
                     </div>
                 </div>
             </div>
-
             <div id="hamburger-icon" class="hidden">
                 <span></span>
                 <span></span>
@@ -758,8 +524,7 @@ PR .............................. 底原永和
                     <span>開発者モード</span>
                 </div>
             </div>
-
-            <div class="app hidden" id="appContainer">
+            <div class="app hidden single-player-mode" id="appContainer">
                 <aside class="side-panel left">
                     <div class="panel-card">
                         <h3>HOLD</h3>
@@ -795,7 +560,7 @@ PR .............................. 底原永和
                         <div class="score-grid" id="modeInfoContent"></div>
                     </div>
                 </aside>
-                <main class="game-container">
+                <main class="game-container" id="player-game-container">
                     <div class="game-header">
                         <div class="title">ブロック落とし</div>
                         <div class="meta-box" id="scoreBox">Score: 0</div>
@@ -812,6 +577,34 @@ PR .............................. 底原永和
                                     <button class="btn" data-mode="TRAINING">トレーニング</button>
                                     <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
                                     <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
+                                    <div class="cpu-select-container">
+                                        <button class="btn" id="vs-cpu-btn">VS CPU ▼</button>
+                                        <div class="cpu-level-dropdown" id="vs-cpu-select">
+                                            <button class="btn" data-mode="VS_CPU_1">LV.1</button>
+                                            <button class="btn" data-mode="VS_CPU_2">LV.2</button>
+                                            <button class="btn" data-mode="VS_CPU_3">LV.3</button>
+                                            <button class="btn" data-mode="VS_CPU_4">LV.4</button>
+                                            <button class="btn" data-mode="VS_CPU_5">LV.5</button>
+                                            <button class="btn" data-mode="VS_CPU_6">LV.6</button>
+                                            <button class="btn" data-mode="VS_CPU_7">LV.7</button>
+                                            <button class="btn" data-mode="VS_CPU_8">LV.8</button>
+                                            <button class="btn" data-mode="VS_CPU_9">LV.9</button>
+                                        </div>
+                                    </div>
+                                    <div class="cpu-select-container">
+                                        <button class="btn" id="ultra-vs-cpu-btn">ウルトラ VS CPU ▼</button>
+                                        <div class="cpu-level-dropdown" id="ultra-vs-cpu-select">
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_1">LV.1</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_2">LV.2</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_3">LV.3</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_4">LV.4</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_5">LV.5</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_6">LV.6</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_7">LV.7</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_8">LV.8</button>
+                                            <button class="btn" data-mode="ULTRA_VS_CPU_9">LV.9</button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <div id="gameover-screen" class="hidden">
@@ -829,15 +622,47 @@ PR .............................. 底原永和
                                     <p>一時停止...</p>
                                 </div>
                                 <div class="overlay-footer">
-                                    <button class="btn" id="resumeButton">トレーニングに戻る</button>
+                                    <button class="btn" id="resumeButton">ゲームに戻る</button>
+                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
                                 </div>
                             </div>
                         </div>
                         <div class="board" id="board"></div>
                     </div>
                 </main>
-                <aside class="side-panel right">
+
+                <!-- Player's NEXT panel for VS modes -->
+                <aside class="side-panel player-next-panel hidden">
                     <div class="panel-card">
+                        <h3>NEXT</h3>
+                        <div class="preview-box" id="playerNextContainerVS"></div>
+                    </div>
+                </aside>
+                
+                <main id="cpu-container" class="game-container hidden" style="transform: scale(0.85); transform-origin: top center;">
+                    <div class="game-header">
+                        <div class="title">CPU</div>
+                        <div class="meta-box" id="cpu-level-box">AI</div>
+                    </div>
+                    <div class="board-wrap">
+                        <div class="board" id="cpu-board"></div>
+                    </div>
+                </main>
+                
+                <!-- CPU's info panel for VS modes -->
+                <aside class="side-panel cpu-info-panel hidden">
+                    <div class="panel-card">
+                        <h3>NEXT</h3>
+                        <div class="preview-box" id="cpuNextContainer"></div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>HOLD</h3>
+                        <div class="preview-box" id="cpuHoldContainer"></div>
+                    </div>
+                </aside>
+                
+                <aside class="side-panel right">
+                    <div class="panel-card" id="sp-next-panel">
                         <h3>NEXT</h3>
                         <div class="preview-box" id="nextContainer"></div>
                     </div>
@@ -849,7 +674,8 @@ PR .............................. 底原永和
                             ↑ : ハードドロップ<br>
                             ↓ : ソフトドロップ<br>
                             Z : 左回転<br>
-                            X : 右回転<br>C : ホールド<br>Esc : 停止
+                            X : 右回転<br>
+                            C : ホールド<br>Esc : 停止
                         </div>
                     </div>
                     <div class="panel-card">
@@ -860,7 +686,6 @@ PR .............................. 底原永和
                     </div>
                 </aside>
             </div>
-
             <div id="noticeModal" class="modal-overlay hidden">
                 <div class="modal-content">
                     <h2>アップデート情報</h2>
@@ -875,7 +700,6 @@ PR .............................. 底原永和
                     </div>
                 </div>
             </div>
-
             <div id="keyConfigModal" class="modal-overlay hidden">
                 <div class="modal-content">
                     <h2>キー設定</h2>
@@ -886,7 +710,6 @@ PR .............................. 底原永和
                     </div>
                 </div>
             </div>
-
             <div id="cheatCodeModal" class="modal-overlay hidden">
                 <div class="modal-content">
                     <h2>コード入力</h2>
@@ -898,19 +721,17 @@ PR .............................. 底原永和
                     </div>
                 </div>
             </div>
-            
             <div id="devPasswordModal" class="modal-overlay hidden">
-              <div class="modal-content">
-                <h2>開発者モード</h2>
-                <p class="note">パスワードを入力してください。</p>
-                <input type="password" id="devPasswordInput" class="password-input">
-                <div class="modal-footer">
-                  <button class="btn" id="submitDevPasswordBtn">認証</button>
-                  <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
+                <div class="modal-content">
+                    <h2>開発者モード</h2>
+                    <p class="note">パスワードを入力してください。</p>
+                    <input type="password" id="devPasswordInput" class="password-input">
+                    <div class="modal-footer">
+                        <button class="btn" id="submitDevPasswordBtn">認証</button>
+                        <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
+                    </div>
                 </div>
-              </div>
             </div>
-
             <div id="shareModal" class="modal-overlay hidden">
                 <div class="modal-content">
                     <h2>共有</h2>
@@ -925,7 +746,6 @@ PR .............................. 底原永和
                     </div>
                 </div>
             </div>
-
             <div id="fake-translator" class="hidden">
                 <header class="translator-header">
                     <div class="translator-logo">
@@ -990,7 +810,7 @@ PR .............................. 底原永和
                     showAnimationChoice();
                 };
 
-                let startTimer = setTimeout(showAnimationChoice, 14000); // 14秒後に選択画面へ
+                let startTimer = setTimeout(showAnimationChoice, 14000);
                 skipBtn.addEventListener('click', skipLoading);
             });
 
@@ -1024,7 +844,6 @@ PR .............................. 底原永和
                 initGame();
             }
 
-            // ========== 開発者モードHUDここから ==========
             const devHUD = {
                 enabled: false,
                 elements: { hud: document.getElementById('dev-hud'), console: document.getElementById('dev-console'), },
@@ -1055,59 +874,13 @@ PR .............................. 底原永和
                 devHUD.perf.memory = performance.memory ? `${(performance.memory.usedJSHeapSize / 1048576).toFixed(2)} MB` : 'N/A';
                 devHUD.progress.playTime = (now - devHUD.progress.startTime) / 1000;
                 const fpsClass = devHUD.perf.fps >= 55 ? 'fps-good' : devHUD.perf.fps >= 30 ? 'fps-warn' : 'fps-bad';
-                const hudText = `
-<div>
---[ 📊 PERFORMANCE ]---------
-FPS        : <span class="${fpsClass}">${devHUD.perf.fps}</span>
-Frame Time : ${devHUD.perf.frameTime.toFixed(2)} ms
-CPU Usage  : ${devHUD.perf.cpuUsage.toFixed(1)} %
-Memory     : ${devHUD.perf.memory}
-Draw Calls : ${devHUD.perf.drawCalls}
-
---[ 🚀 PROGRESS ]------------
-Mode       : ${devHUD.progress.mode}
-Score      : ${devHUD.progress.score}
-Level      : ${devHUD.progress.level}
-Lines      : ${devHUD.progress.lines}
-Time       : ${devHUD.progress.playTime.toFixed(1)} s
-Finished   : ${devHUD.progress.isOver}
-
---[ 🧩 PIECE DATA ]----------
-Current    : ${devHUD.data.currentPiece}
-Next       : ${devHUD.data.nextPiece}
-Hold       : ${devHUD.data.heldPiece}
-</div>
-<div>
---[ 🖥 GRAPHICS ]------------
-Sprites    : ${devHUD.graphics.spriteCount}
-Canvas     : ${devHUD.graphics.canvasSize}
-DPR        : ${devHUD.graphics.devicePixelRatio.toFixed(2)}
-
---[ 🔍 INPUT ]----------------
-Last Key   : ${devHUD.input.lastKey}
-History    : [${devHUD.input.history.join(', ')}]
-Mouse/Touch: ${devHUD.input.mouse.x}, ${devHUD.input.mouse.y}
-Clicks     : ${devHUD.input.clicks}
-
---[ ⚙️ SYSTEM ]--------------
-User Agent : ${devHUD.system.userAgent}
-Window Size: ${devHUD.system.windowSize}
-
---[ 🐞 DEBUG ]----------------
-Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
-<div class="dev-controls-panel">
-  Score Controls:
-  <button data-action="set-score">Set Score</button>
-</div>
-</div>`;
-                devHUD.elements.hud.innerHTML = hudText.trim();
+                devHUD.elements.hud.innerHTML = `<div>--[ 📊 PERFORMANCE ]---------<br>FPS : <span class="${fpsClass}">${devHUD.perf.fps}</span><br>Frame Time : ${devHUD.perf.frameTime.toFixed(2)} ms<br>CPU Usage : ${devHUD.perf.cpuUsage.toFixed(1)} %<br>Memory : ${devHUD.perf.memory}<br>Draw Calls : ${devHUD.perf.drawCalls}<br><br>--[ 🚀 PROGRESS ]------------<br>Mode : ${devHUD.progress.mode}<br>Score : ${devHUD.progress.score}<br>Level : ${devHUD.progress.level}<br>Lines : ${devHUD.progress.lines}<br>Time : ${devHUD.progress.playTime.toFixed(1)} s<br>Finished : ${devHUD.progress.isOver}<br><br>--[ 🧩 PIECE DATA ]----------<br>Current : ${devHUD.data.currentPiece}<br>Next : ${devHUD.data.nextPiece}<br>Hold : ${devHUD.data.heldPiece}</div><div>--[ 🖥 GRAPHICS ]------------<br>Sprites : ${devHUD.graphics.spriteCount}<br>Canvas : ${devHUD.graphics.canvasSize}<br>DPR : ${devHUD.graphics.devicePixelRatio.toFixed(2)}<br><br>--[ 🔍 INPUT ]----------------<br>Last Key : ${devHUD.input.lastKey}<br>History : [${devHUD.input.history.join(', ')}]<br>Mouse/Touch: ${devHUD.input.mouse.x}, ${devHUD.input.mouse.y}<br>Clicks : ${devHUD.input.clicks}<br><br>--[ ⚙️ SYSTEM ]--------------<br>User Agent : ${devHUD.system.userAgent}<br>Window Size: ${devHUD.system.windowSize}<br><br>--[ 🐞 DEBUG ]----------------<br>Low Anim : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}<br><div class="dev-controls-panel"><button data-action="set-score">Set Score</button></div></div>`;
                 devHUD.perf.drawCalls = 0;
                 requestAnimationFrame(updateDevHUD);
             }
             function logToDevConsole(message, type = 'log') { if (!devHUD.enabled) return; const p = document.createElement('p'); p.className = `log-${type}`; p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`; devHUD.elements.console.appendChild(p); devHUD.elements.console.scrollTop = devHUD.elements.console.scrollHeight; }
             window.addEventListener('keydown', e => { devHUD.input.lastKey = e.key; devHUD.input.history.unshift(e.key); if (devHUD.input.history.length > 5) devHUD.input.history.pop(); });
             requestAnimationFrame(updateDevHUD);
-            // ========== 開発者モードHUDここまで ==========
 
             function initGame() {
                 const COLS = 10, ROWS = 20;
@@ -1121,30 +894,76 @@ Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
                     'L': { shape: [[0, 0, 1], [1, 1, 1], [0, 0, 0]], color: '#f08a5d', name: 'L' }
                 };
                 const POINTS = { 1: 100, 2: 300, 3: 500, 4: 800 };
-                const WALL_KICK_DATA = { /* (省略) 元のコードのデータをそのまま使用 */
-                    'J': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
-                    'L': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
-                    'S': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
-                    'Z': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
-                    'T': [[[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]], [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]], [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]], [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]]],
-                    'I': [[[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]], [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]], [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]], [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]]]
+                const COMMON_KICKS = {
+                    '0-1': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+                    '1-0': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+                    '1-2': [[0, 0], [1, 0], [1, -1], [0, 2], [1, 2]],
+                    '2-1': [[0, 0], [-1, 0], [-1, 1], [0, -2], [-1, -2]],
+                    '2-3': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
+                    '3-2': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+                    '3-0': [[0, 0], [-1, 0], [-1, -1], [0, 2], [-1, 2]],
+                    '0-3': [[0, 0], [1, 0], [1, 1], [0, -2], [1, -2]],
                 };
+                const I_KICKS = {
+                    '0-1': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+                    '1-0': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+                    '1-2': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+                    '2-1': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+                    '2-3': [[0, 0], [2, 0], [-1, 0], [2, 1], [-1, -2]],
+                    '3-2': [[0, 0], [-2, 0], [1, 0], [-2, -1], [1, 2]],
+                    '3-0': [[0, 0], [1, 0], [-2, 0], [1, -2], [-2, 1]],
+                    '0-3': [[0, 0], [-1, 0], [2, 0], [-1, 2], [2, -1]],
+                };
+                const WALL_KICK_DATA = { 'I': I_KICKS, 'J': COMMON_KICKS, 'L': COMMON_KICKS, 'S': COMMON_KICKS, 'Z': COMMON_KICKS, 'T': COMMON_KICKS };
 
-                const appContainer = document.getElementById('appContainer'), boardEl = document.getElementById('board'), scoreBox = document.getElementById('scoreBox'), highScoreEl = document.getElementById('highScore'), currentScoreEl = document.getElementById('currentScore'), forceRestartBtn = document.getElementById('forceRestartBtn'), linesEl = document.getElementById('lines'), levelEl = document.getElementById('level'), nextContainer = document.getElementById('nextContainer'), holdContainer = document.getElementById('holdContainer'), gameOverlay = document.getElementById('game-overlay'), startScreen = document.getElementById('start-screen'), gameoverScreen = document.getElementById('gameover-screen'), gameoverTitle = document.getElementById('gameover-title'), gameoverResult = document.getElementById('gameover-result'), restartButton = document.getElementById('restartButton'), pauseScreen = document.getElementById('pause-screen'), resumeButton = document.getElementById('resumeButton'), pauseButton = document.getElementById('pauseButton'), modeInfoPanel = document.getElementById('modeInfoPanel'), modeInfoTitle = document.getElementById('modeInfoTitle'), modeInfoContent = document.getElementById('modeInfoContent');
-                const hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle');
-                const countdownEl = document.getElementById('countdown');
-                const menuCheatBtn = document.getElementById('menu-cheat-btn'), menuKeyConfigBtn = document.getElementById('menu-key-config-btn'), menuDevModeBtn = document.getElementById('menu-dev-mode-btn');
+                const ATTACK_LINES = { 1: 1, 2: 2, 3: 3, 4: 5 };
+                const COMBO_ATTACK = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6];
+                const CPU_LEVELS = { 1: { thinkTime: 700, actionInterval: 150, mistakeChance: 0.5, weights: { AGG_H: -0.4, COMP_L: 0.6, HOLES: -0.3, BUMP: -0.1, WELLS: -0.2 } }, 2: { thinkTime: 600, actionInterval: 130, mistakeChance: 0.4, weights: { AGG_H: -0.45, COMP_L: 0.7, HOLES: -0.4, BUMP: -0.15, WELLS: -0.25 } }, 3: { thinkTime: 500, actionInterval: 110, mistakeChance: 0.3, weights: { AGG_H: -0.5, COMP_L: 0.8, HOLES: -0.5, BUMP: -0.2, WELLS: -0.3 } }, 4: { thinkTime: 400, actionInterval: 100, mistakeChance: 0.2, weights: { AGG_H: -0.5, COMP_L: 0.9, HOLES: -0.6, BUMP: -0.2, WELLS: -0.3 } }, 5: { thinkTime: 300, actionInterval: 90, mistakeChance: 0.1, weights: { AGG_H: -0.55, COMP_L: 1.0, HOLES: -0.7, BUMP: -0.25, WELLS: -0.35 } }, 6: { thinkTime: 200, actionInterval: 80, mistakeChance: 0.05, weights: { AGG_H: -0.55, COMP_L: 1.1, HOLES: -0.8, BUMP: -0.25, WELLS: -0.35 } }, 7: { thinkTime: 150, actionInterval: 70, mistakeChance: 0.02, weights: { AGG_H: -0.6, COMP_L: 1.2, HOLES: -0.9, BUMP: -0.3, WELLS: -0.4 } }, 8: { thinkTime: 100, actionInterval: 60, mistakeChance: 0.01, weights: { AGG_H: -0.6, COMP_L: 1.2, HOLES: -0.9, BUMP: -0.3, WELLS: -0.4 } }, 9: { thinkTime: 50, actionInterval: 50, mistakeChance: 0, weights: { AGG_H: -0.6, COMP_L: 1.2, HOLES: -0.9, BUMP: -0.3, WELLS: -0.4 } } };
+                
+                const appContainer = document.getElementById('appContainer'), playerGameContainer = document.getElementById('player-game-container'), boardEl = document.getElementById('board'), scoreBox = document.getElementById('scoreBox'), highScoreEl = document.getElementById('highScore'), currentScoreEl = document.getElementById('currentScore'), forceRestartBtn = document.getElementById('forceRestartBtn'), linesEl = document.getElementById('lines'), levelEl = document.getElementById('level'), holdContainer = document.getElementById('holdContainer'), gameOverlay = document.getElementById('game-overlay'), startScreen = document.getElementById('start-screen'), gameoverScreen = document.getElementById('gameover-screen'), gameoverTitle = document.getElementById('gameover-title'), gameoverResult = document.getElementById('gameover-result'), restartButton = document.getElementById('restartButton'), pauseScreen = document.getElementById('pause-screen'), resumeButton = document.getElementById('resumeButton'), pauseButton = document.getElementById('pauseButton'), modeInfoPanel = document.getElementById('modeInfoPanel'), modeInfoTitle = document.getElementById('modeInfoTitle'), modeInfoContent = document.getElementById('modeInfoContent'), countdownEl = document.getElementById('countdown');
+                const cpuContainer = document.getElementById('cpu-container'), cpuBoardEl = document.getElementById('cpu-board'), cpuLevelBox = document.getElementById('cpu-level-box');
+                const vsCpuBtn = document.getElementById('vs-cpu-btn'), vsCpuSelect = document.getElementById('vs-cpu-select');
+                const ultraVsCpuBtn = document.getElementById('ultra-vs-cpu-btn'), ultraVsCpuSelect = document.getElementById('ultra-vs-cpu-select');
+                const hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle'), menuCheatBtn = document.getElementById('menu-cheat-btn');
+                const spNextPanel = document.getElementById('sp-next-panel'), nextContainer = document.getElementById('nextContainer');
+                const playerNextPanelVS = document.querySelector('.side-panel.player-next-panel'), playerNextContainerVS = document.getElementById('playerNextContainerVS');
+                const cpuInfoPanel = document.querySelector('.side-panel.cpu-info-panel'), cpuNextContainer = document.getElementById('cpuNextContainer'), cpuHoldContainer = document.getElementById('cpuHoldContainer');
+                const pauseRestartButton = document.getElementById('pauseRestartButton');
 
-                let board, currentPiece, nextPiece, heldPiece, score, lines, level, isOver, canHold, isPaused;
-                let bestScores = {};
-                let pieceBag, keys = {}, lastTime = 0, dropCounter = 0, dropInterval = 1000, animationFrameId, countdownInterval;
-                let lockDelayTimer, isLanded, landingResets, dasTimer, arrTimer, softDropTimer;
-                let gameMode = 'TRAINING';
-                let gameTimer, gameInterval;
-                let keyMap, actionToChange = null;
+                let player = {};
+                let cpu = null;
+                
+                let isPaused, isOver, gameMode, cpuLevel, bestScores = {}, keys = {};
+                let lastTime = 0, animationFrameId, countdownInterval, cpuActionInterval, gameTimer, gameInterval;
+                let dasTimer, arrTimer, softDropTimer, keyMap, actionToChange = null;
+
                 const defaultKeyMap = { moveLeft: 'ArrowLeft', moveRight: 'ArrowRight', softDrop: 'ArrowDown', hardDrop: 'ArrowUp', rotateLeft: 'z', rotateRight: 'x', hold: 'c' };
                 const actionLabels = { moveLeft: '左移動', moveRight: '右移動', softDrop: 'ソフトドロップ', hardDrop: 'ハードドロップ', rotateLeft: '左回転', rotateRight: '右回転', hold: 'ホールド' };
                 const LOCK_DELAY = 500, LANDING_RESET_LIMIT = 15, DAS_DELAY = 160, ARR_DELAY = 30, SOFT_DROP_DELAY = 50;
+
+                const createPlayerState = (isCPU = false) => ({
+                    board: Array(ROWS).fill(0).map(() => Array(COLS).fill(null)),
+                    currentPiece: null,
+                    nextPiece: null,
+                    heldPiece: null,
+                    pieceBag: [],
+                    canHold: true,
+                    score: 0,
+                    lines: 0,
+                    level: 1,
+                    combo: 0,
+                    isOver: false,
+                    isLanded: false,
+                    landingResets: 0,
+                    lockDelayTimer: null,
+                    isCPU,
+                    pendingGarbage: 0,
+                    dropInterval: 1000,
+                    dropCounter: 0,
+                    clearingRows: [],
+                    ai: { actionQueue: [], isThinking: false }
+                });
+
 
                 function init() {
                     bestScores = loadBestScores();
@@ -1152,14 +971,20 @@ Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
                     isPaused = true;
                     isOver = true;
                     setupUI();
-                    createEmptyBoard();
-                    document.querySelectorAll('#start-screen .btn').forEach(button => { button.addEventListener('click', (e) => { startGame(e.target.dataset.mode); }); });
+                    createEmptyBoard(boardEl);
+                    if(cpuBoardEl) createEmptyBoard(cpuBoardEl);
+
+                    document.querySelectorAll('#start-screen .btn[data-mode]').forEach(btn => btn.addEventListener('click', (e) => startGame(e.target.dataset.mode)));
+                    vsCpuBtn.addEventListener('click', () => { ultraVsCpuSelect.classList.remove('open'); vsCpuSelect.classList.toggle('open'); });
+                    ultraVsCpuBtn.addEventListener('click', () => { vsCpuSelect.classList.remove('open'); ultraVsCpuSelect.classList.toggle('open'); });
+
                     restartButton.addEventListener('click', showStartScreen);
                     pauseButton.addEventListener('click', togglePause);
                     resumeButton.addEventListener('click', togglePause);
-                    forceRestartBtn.addEventListener('click', () => { if (!isOver && confirm('本当に現在のトレーニングを終了し、モード選択に戻りますか？')) { showStartScreen(); } else if (isOver) { showStartScreen(); } });
-                    menuRestartBtn.addEventListener('click', () => { if (isOver || isPaused || confirm('本当に現在のトレーニングを終了し、モード選択に戻りますか？')) { showStartScreen(); } menuPanel.classList.remove('open'); });
-                    menuCheatBtn.addEventListener('click', () => { document.getElementById('cheatCodeModal')?.classList.remove('hidden'); menuPanel.classList.remove('open'); });
+                    forceRestartBtn.addEventListener('click', () => { if (!isOver && confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) { showStartScreen(); } else if (isOver) { showStartScreen(); } });
+                    menuRestartBtn.addEventListener('click', () => { if (isOver || isPaused || confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) { showStartScreen(); } menuPanel.classList.remove('open'); });
+                    pauseRestartButton.addEventListener('click', () => { if (confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) { showStartScreen(); } });
+                    
                     setupKeyHandlers();
                     setupExtraFeatures();
                     setupKeyConfigModal();
@@ -1168,345 +993,704 @@ Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
 
                 function startGame(mode) {
                     gameMode = mode;
+                    cpuLevel = 0;
+                    if (gameMode.startsWith('VS_CPU') || gameMode.startsWith('ULTRA_VS_CPU')) {
+                        cpuLevel = parseInt(mode.split('_').pop(), 10);
+                        gameMode = gameMode.startsWith('ULTRA_VS_CPU') ? 'ULTRA_VS_CPU' : 'VS_CPU';
+                        cpuLevelBox.textContent = `LV.${cpuLevel}`;
+                    }
+
+                    if (gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') {
+                        appContainer.className = 'app vs-cpu-mode';
+                        cpuContainer.classList.remove('hidden');
+                        playerNextPanelVS.classList.remove('hidden');
+                        cpuInfoPanel.classList.remove('hidden');
+                        spNextPanel.classList.add('hidden');
+                        document.querySelector('.side-panel.right').classList.add('hidden');
+                    } else {
+                        appContainer.className = 'app single-player-mode';
+                        cpuContainer.classList.add('hidden');
+                        playerNextPanelVS.classList.add('hidden');
+                        cpuInfoPanel.classList.add('hidden');
+                        spNextPanel.classList.remove('hidden');
+                        document.querySelector('.side-panel.right').classList.remove('hidden');
+                    }
+
                     startScreen.classList.add('hidden');
                     gameoverScreen.classList.add('hidden');
                     pauseScreen.classList.add('hidden');
                     appContainer.classList.remove('game-inactive-blur');
+
                     let count = 3;
                     countdownEl.textContent = count;
                     countdownEl.classList.remove('hidden');
                     if (countdownInterval) clearInterval(countdownInterval);
                     countdownInterval = setInterval(() => {
                         count--;
-                        if (count > 0) { countdownEl.textContent = count; } else { clearInterval(countdownInterval); countdownEl.classList.add('hidden'); startActualGame(); }
+                        if (count > 0) { countdownEl.textContent = count; } 
+                        else { clearInterval(countdownInterval); countdownEl.classList.add('hidden'); startActualGame(); }
                     }, 1000);
                 }
+
                 function startActualGame() {
                     gameOverlay.classList.add('hidden');
                     isPaused = false;
                     isOver = false;
                     pauseButton.textContent = "停止";
-                    board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
-                    score = 0; lines = 0; level = 1; canHold = true; heldPiece = null; pieceBag = [];
-                    spawnPiece(); spawnPiece();
+
+                    player = createPlayerState();
+                    fillPieceBag(player);
+                    player.nextPiece = getNextPieceFromBag(player);
+                    spawnPiece(player);
+
+                    cpu = (gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') ? createPlayerState(true) : null;
+                    if (cpu) {
+                        fillPieceBag(cpu);
+                        cpu.nextPiece = getNextPieceFromBag(cpu);
+                        spawnPiece(cpu);
+                    }
+                    
                     if (gameInterval) clearInterval(gameInterval);
-                    if (gameMode === 'SPRINT') { gameTimer = 0; } else if (gameMode === 'ULTRA') { gameTimer = 180; }
+                    if (cpuActionInterval) clearInterval(cpuActionInterval);
+
+                    if (gameMode === 'SPRINT') gameTimer = 0;
+                    else if (gameMode === 'ULTRA' || gameMode === 'ULTRA_VS_CPU') gameTimer = 180;
+                    
                     gameInterval = setInterval(() => {
                         if (isPaused || isOver) return;
-                        if (gameMode === 'SPRINT') { gameTimer++; } else if (gameMode === 'ULTRA') { gameTimer--; if (gameTimer <= 0) { gameTimer = 0; gameOver(); } }
+                        if (gameMode === 'SPRINT') gameTimer++;
+                        else if (gameMode === 'ULTRA' || gameMode === 'ULTRA_VS_CPU') {
+                            gameTimer--;
+                            if (gameTimer <= 0) { 
+                                gameTimer = 0;
+                                gameOver(gameMode === 'ULTRA_VS_CPU' ? (player.score > cpu.score ? cpu : player) : player);
+                            }
+                        }
                         updateUI();
                     }, 1000);
+
+                    if(cpu) {
+                        cpuActionInterval = setInterval(cpuGameLoop, CPU_LEVELS[cpuLevel].actionInterval);
+                    }
+
                     updateUI();
-                    dropInterval = 1000;
                     lastTime = 0;
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
                     if(devHUD.enabled) devHUD.progress.startTime = performance.now();
                     gameLoop();
-                    draw();
                 }
+
                 function gameLoop(time = 0) {
-                    if (isOver || isPaused) { animationFrameId = requestAnimationFrame(gameLoop); return; }
+                    if (isOver) return;
+                    animationFrameId = requestAnimationFrame(gameLoop);
+                    if (isPaused) { lastTime = time; return; }
+
                     const deltaTime = time - lastTime;
                     lastTime = time;
-                    dropCounter += deltaTime;
-                    if (dropCounter > dropInterval) { drop(); }
-                    animationFrameId = requestAnimationFrame(gameLoop);
+
+                    if (!player.isOver) {
+                        player.dropCounter += deltaTime;
+                        if (player.dropCounter > player.dropInterval) {
+                            drop(player);
+                        }
+                    }
+
+                    if (cpu && !cpu.isOver) {
+                        cpu.dropCounter += deltaTime;
+                        if (cpu.dropCounter > cpu.dropInterval) {
+                            drop(cpu);
+                        }
+                    }
+
+                    draw(player, boardEl);
+                    if (cpu) draw(cpu, cpuBoardEl);
                 }
+                
+                function cpuGameLoop() {
+                    if (isOver || !cpu || cpu.isOver || isPaused) return;
+                    if (cpu.ai.actionQueue.length > 0) {
+                        executeCpuAction();
+                    } else if (!cpu.ai.isThinking) {
+                        runCpuTurn(cpu);
+                    }
+                }
+
                 function togglePause() {
                     if (isOver) return;
                     isPaused = !isPaused;
-                    if (isPaused) { gameOverlay.classList.remove('hidden'); pauseScreen.classList.remove('hidden'); startScreen.classList.add('hidden'); gameoverScreen.classList.add('hidden'); pauseButton.textContent = "再開"; appContainer.classList.add('game-inactive-blur');
-                    } else { gameOverlay.classList.add('hidden'); pauseScreen.classList.add('hidden'); pauseButton.textContent = "停止"; lastTime = performance.now(); appContainer.classList.remove('game-inactive-blur'); }
-                }
-                function fillPieceBag() {
-                    const pieces = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-                    for (let i = pieces.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pieces[i], pieces[j]] = [pieces[j], pieces[i]]; }
-                    pieceBag.push(...pieces);
-                }
-                function getNextPieceFromBag() {
-                    if (pieceBag.length === 0) { fillPieceBag(); }
-                    const name = pieceBag.shift();
-                    const piece = TETROMINOS[name];
-                    return { name: name, shape: JSON.parse(JSON.stringify(piece.shape)), color: piece.color, x: Math.floor(COLS / 2) - Math.floor(piece.shape[0].length / 2) + (name === 'O' ? 1 : 0), y: name === 'I' ? -1 : 0, rotation: 0 };
-                }
-                function spawnPiece() {
-                    currentPiece = nextPiece || getNextPieceFromBag();
-                    nextPiece = getNextPieceFromBag();
-                    resetLandingStatus();
-                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) { gameOver(); }
-                }
-                function move(dir) {
-                    if (!isValidMove(currentPiece.shape, currentPiece.x + dir, currentPiece.y)) return;
-                    currentPiece.x += dir;
-                    resetLandingTimerOnMove();
-                    draw();
-                }
-                function drop() {
-                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) {
-                        if (!isLanded) { isLanded = true; startLockDelayTimer(); }
-                    } else { currentPiece.y++; clearLockDelayTimer(); isLanded = false; }
-                    dropCounter = 0;
-                    draw();
-                }
-                function hardDrop() {
-                    let dropDist = 0;
-                    while (isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y + 1)) { currentPiece.y++; dropDist++; }
-                    if (dropDist > 0 && !lowAnimationMode) playHardDropAnimation();
-                    lockPiece();
-                    draw();
-                }
-                function rotate(dir) {
-                    const p = currentPiece;
-                    const newRotation = (p.rotation + dir + 4) % 4;
-                    let newShape = JSON.parse(JSON.stringify(p.shape));
-                    if (dir === 1) { newShape = newShape[0].map((_, col) => newShape.map(row => row[col]).reverse());
-                    } else { newShape = newShape[0].map((_, col) => newShape.map(row => row[row.length - 1 - col])); }
-                    if (p.name === 'O') return;
-                    const kickData = WALL_KICK_DATA[p.name][p.rotation];
-                    for (let i = 0; i < kickData.length; i++) {
-                        const offset = kickData[i];
-                        const newX = p.x + offset[0];
-                        const newY = p.y - offset[1];
-                        if (isValidMove(newShape, newX, newY)) { p.x = newX; p.y = newY; p.shape = newShape; p.rotation = newRotation; resetLandingTimerOnMove(); draw(); return; }
+                    if (isPaused) {
+                        gameOverlay.classList.remove('hidden');
+                        pauseScreen.classList.remove('hidden');
+                        pauseButton.textContent = "再開";
+                        appContainer.classList.add('game-inactive-blur');
+                        clearAllInputTimers();
+                    } else {
+                        gameOverlay.classList.add('hidden');
+                        pauseButton.textContent = "停止";
+                        lastTime = performance.now();
+                        appContainer.classList.remove('game-inactive-blur');
                     }
                 }
-                function hold() {
-                    if (!canHold) return;
-                    canHold = false;
-                    clearLockDelayTimer();
-                    if (heldPiece) { [currentPiece, heldPiece] = [heldPiece, currentPiece]; currentPiece.x = Math.floor(COLS / 2) - Math.floor(currentPiece.shape[0].length / 2) + (currentPiece.name === 'O' ? 1 : 0); currentPiece.y = currentPiece.name === 'I' ? -1 : 0; currentPiece.rotation = 0; resetLandingStatus();
-                    } else { heldPiece = currentPiece; spawnPiece(); }
-                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) { gameOver(); }
-                    updateUI();
-                    draw();
+
+                function fillPieceBag(target) {
+                    const p = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
+                    for (let i = p.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+                    target.pieceBag.push(...p);
                 }
-                function startLockDelayTimer() { clearLockDelayTimer(); lockDelayTimer = setTimeout(lockPiece, LOCK_DELAY); }
-                function clearLockDelayTimer() { if (lockDelayTimer) clearTimeout(lockDelayTimer); lockDelayTimer = null; }
-                function resetLandingStatus() { isLanded = false; landingResets = 0; clearLockDelayTimer(); }
-                function resetLandingTimerOnMove() { if (isLanded && landingResets < LANDING_RESET_LIMIT) { startLockDelayTimer(); landingResets++; } }
-                function lockPiece() {
-                    clearLockDelayTimer();
-                    if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) { currentPiece.y--; }
-                    currentPiece.shape.forEach((row, dy) => {
-                        row.forEach((val, dx) => {
-                            if (val) {
-                                const bX = currentPiece.x + dx;
-                                const bY = currentPiece.y + dy;
-                                if (bY >= 0 && bY < ROWS && bX >= 0 && bX < COLS) {
-                                    board[bY][bX] = currentPiece.color;
-                                    if (!lowAnimationMode) {
-                                        const cell = boardEl.children[bY * COLS + bX];
-                                        const flash = document.createElement('div');
-                                        flash.className = 'lock-flash-effect';
-                                        cell.appendChild(flash);
-                                        setTimeout(() => flash.remove(), 200);
+
+                function getNextPieceFromBag(target) {
+                    if (target.pieceBag.length < 7) fillPieceBag(target);
+                    const name = target.pieceBag.shift();
+                    const piece = TETROMINOS[name];
+                    return { ...piece, shape: JSON.parse(JSON.stringify(piece.shape)), x: Math.floor(COLS / 2) - Math.floor(piece.shape[0].length / 2) + (name === 'O' ? 1 : 0), y: name === 'I' ? -1 : 0, rotation: 0 };
+                }
+                
+                function spawnPiece(target) {
+                    if(isOver || target.isOver) return;
+                    target.currentPiece = target.nextPiece;
+                    target.nextPiece = getNextPieceFromBag(target);
+                    resetLandingStatus(target);
+                    if (!isValidMove(target.currentPiece, target.board)) {
+                        gameOver(target);
+                        return;
+                    }
+                    if (target.isCPU && !target.ai.isThinking) {
+                        runCpuTurn(target);
+                    }
+                }
+                
+                function move(target, dir) {
+                    if (!target.currentPiece || target.isOver) return;
+                    const piece = { ...target.currentPiece, x: target.currentPiece.x + dir };
+                    if (isValidMove(piece, target.board)) {
+                        target.currentPiece.x += dir;
+                        if(!target.isCPU) resetLandingTimerOnMove(target);
+                    }
+                }
+
+                function drop(target) {
+                    if (!target.currentPiece || target.isOver) return;
+                    const piece = { ...target.currentPiece, y: target.currentPiece.y + 1 };
+                    if (isValidMove(piece, target.board)) {
+                        target.currentPiece.y++;
+                        if(!target.isCPU) clearLockDelayTimer(target);
+                        target.isLanded = false;
+                    } else {
+                        if (!target.isLanded) {
+                            target.isLanded = true;
+                            startLockDelayTimer(target);
+                        }
+                    }
+                    target.dropCounter = 0;
+                }
+
+                function hardDrop(target) {
+                    if (!target.currentPiece || target.isOver) return;
+                    let y = target.currentPiece.y;
+                    while (isValidMove({ ...target.currentPiece, y: y + 1 }, target.board)) {
+                        y++;
+                    }
+                    if (y > target.currentPiece.y) {
+                       target.currentPiece.y = y;
+                       if(!target.isCPU) playHardDropAnimation(target);
+                    }
+                    lockPiece(target);
+                }
+
+                function rotate(target, dir) {
+                    if (!target.currentPiece || target.currentPiece.name === 'O' || target.isOver) return;
+
+                    const p = target.currentPiece;
+                    let newShape = JSON.parse(JSON.stringify(p.shape));
+
+                    if (dir === 1) { // Clockwise
+                        newShape = newShape[0].map((_, colIndex) => newShape.map(row => row[colIndex]).reverse());
+                    } else { // Counter-clockwise
+                        newShape = newShape.map(row => row.reverse());
+                        newShape = newShape[0].map((_, colIndex) => newShape.map(row => row[colIndex]));
+                    }
+
+                    const newRotation = (p.rotation + dir + 4) % 4;
+                    const kickTableId = dir === 1 ? `${p.rotation}-${newRotation}` : `${(p.rotation - 1 + 4)%4}-${(newRotation - 1 + 4)%4}`; // This needs to be checked
+                    const effectiveKickId = `${p.rotation}-${newRotation}`;
+
+                    const kickTable = WALL_KICK_DATA[p.name][effectiveKickId];
+                    if (!kickTable) return;
+
+                    for (const kick of kickTable) {
+                        const dx = kick[0];
+                        const dy = kick[1];
+                        
+                        const newPiece = { ...p, shape: newShape, x: p.x + dx, y: p.y - dy };
+
+                        if (isValidMove(newPiece, target.board)) {
+                            p.x += dx;
+                            p.y -= dy;
+                            p.shape = newShape;
+                            p.rotation = newRotation;
+                            if (!target.isCPU) resetLandingTimerOnMove(target);
+                            return;
+                        }
+                    }
+                }
+
+                function hold(target) {
+                    if (!target.canHold || target.isOver) return;
+                    target.canHold = false;
+                    clearLockDelayTimer(target);
+                    if (target.heldPiece) {
+                        [target.currentPiece, target.heldPiece] = [target.heldPiece, target.currentPiece];
+                        target.currentPiece.x = Math.floor(COLS / 2) - Math.floor(target.currentPiece.shape[0].length / 2) + (target.currentPiece.name === 'O' ? 1 : 0);
+                        target.currentPiece.y = target.currentPiece.name === 'I' ? -1 : 0;
+                        target.currentPiece.rotation = 0;
+                        target.currentPiece.shape = JSON.parse(JSON.stringify(TETROMINOS[target.currentPiece.name].shape));
+                        resetLandingStatus(target);
+                    } else {
+                        target.heldPiece = target.currentPiece;
+                        spawnPiece(target);
+                    }
+                    if (!isValidMove(target.currentPiece, target.board)) {
+                        gameOver(target);
+                    }
+                    if (target.isCPU) runCpuTurn(target);
+                    updateUI();
+                }
+
+                function startLockDelayTimer(target) { clearLockDelayTimer(target); target.lockDelayTimer = setTimeout(() => lockPiece(target), LOCK_DELAY); }
+                function clearLockDelayTimer(target) { if(target.lockDelayTimer) clearTimeout(target.lockDelayTimer); target.lockDelayTimer = null; }
+                function resetLandingStatus(target) { target.isLanded = false; target.landingResets = 0; clearLockDelayTimer(target); }
+                function resetLandingTimerOnMove(target) { if (target.isLanded && target.landingResets < LANDING_RESET_LIMIT) { startLockDelayTimer(target); target.landingResets++; } }
+
+                async function lockPiece(target) {
+                    if (!target.currentPiece || target.isOver) return;
+                    
+                    if(!target.isCPU) clearAllInputTimers();
+                    
+                    const piece = target.currentPiece;
+                    clearLockDelayTimer(target);
+                    
+                    if (!isValidMove(piece, target.board)) {
+                        piece.y--;
+                        if (!isValidMove(piece, target.board)) { gameOver(target); return; }
+                    }
+                    
+                    const element = target.isCPU ? cpuBoardEl : boardEl;
+                    if (!lowAnimationMode) {
+                      piece.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                        if (val) {
+                          const bY = piece.y + dy, bX = piece.x + dx;
+                          if (bY >= 0 && element.children[bY * COLS + bX]) {
+                            const flash = document.createElement('div');
+                            flash.className = 'lock-flash-effect';
+                            element.children[bY * COLS + bX].appendChild(flash);
+                            setTimeout(() => flash.remove(), 200);
+                          }
+                        }
+                      }));
+                    }
+
+                    piece.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                        if (val) {
+                            const bX = piece.x + dx, bY = piece.y + dy;
+                            if (bY >= 0) target.board[bY][bX] = piece.color;
+                        }
+                    }));
+
+                    target.currentPiece = null;
+                    if(!target.isCPU) playSound('pushAudio');
+
+                    const clearedLineCount = await clearLines(target);
+                    let sentAttack = 0;
+                    if (clearedLineCount > 0) {
+                        target.combo++;
+                        sentAttack = (ATTACK_LINES[clearedLineCount] || 0) + (COMBO_ATTACK[target.combo] || Math.max(...COMBO_ATTACK));
+                    } else {
+                        target.combo = 0;
+                    }
+
+                    if (gameMode === 'VS_CPU') {
+                        const opponent = target.isCPU ? player : cpu;
+                        let netAttack = sentAttack - target.pendingGarbage;
+                        
+                        if (netAttack < 0) {
+                            target.pendingGarbage = Math.abs(netAttack);
+                            const garbageToReceive = 1;
+                            setTimeout(() => addGarbageLines(target, garbageToReceive), 500);
+                            target.pendingGarbage -= garbageToReceive;
+                        } else {
+                            target.pendingGarbage = 0;
+                            if (netAttack > 0) {
+                                opponent.pendingGarbage += netAttack;
+                            }
+                        }
+                    }
+
+                    updateScoreAndLevel(target, clearedLineCount);
+                    
+                    if (!isOver) {
+                        spawnPiece(target);
+                        target.canHold = true;
+                    }
+                    updateUI();
+                }
+                
+                function clearLines(target) {
+                    return new Promise(resolve => {
+                        let fullRows = [];
+                        for (let y = 0; y < ROWS; y++) {
+                            if (target.board[y].every(cell => cell)) fullRows.push(y);
+                        }
+                        if (fullRows.length === 0) return resolve(0);
+
+                        if (!target.isCPU) playSound('delAudio');
+                        const element = target.isCPU ? cpuBoardEl : boardEl;
+                        
+                        target.clearingRows = fullRows;
+
+                        if (!lowAnimationMode) {
+                            fullRows.forEach(y => {
+                                for (let x = 0; x < COLS; x++) {
+                                    const cell = element.children[y * COLS + x];
+                                    const tile = cell.querySelector('.tile:not(.garbage)');
+                                    if (tile) {
+                                        tile.classList.add('clearing');
                                     }
                                 }
-                            }
-                        });
-                    });
-                    playSound('pushAudio');
-                    const clearedLineCount = clearLines();
-                    if (clearedLineCount > 0) {
-                        setTimeout(() => {
-                            updateScoreAndLevel(clearedLineCount);
-                            spawnPiece();
-                            canHold = true;
-                            updateUI();
-                            draw();
-                        }, lowAnimationMode ? 50 : 400);
-                    } else { spawnPiece(); canHold = true; updateUI(); draw(); }
-                }
-                function clearLines() {
-                    let rowsToClear = [];
-                    for (let y = ROWS - 1; y >= 0; y--) { if (board[y].every(cell => cell !== null)) { rowsToClear.push(y); } }
-                    if (rowsToClear.length > 0) {
-                        if (!lowAnimationMode) {
-                            boardEl.classList.add('line-clearing-effect');
-                            setTimeout(() => boardEl.classList.remove('line-clearing-effect'), 400);
-                            rowsToClear.forEach(y => { for (let x = 0; x < COLS; x++) { const cell = boardEl.children[y * COLS + x]; if (cell.firstChild) cell.classList.add('line-clearing'); } });
+                            });
                         }
+
                         setTimeout(() => {
-                            rowsToClear.sort((a, b) => a - b).forEach(y => { board.splice(y, 1); board.unshift(Array(COLS).fill(null)); });
-                            draw();
-                        }, lowAnimationMode ? 0 : 350);
-                    }
-                    return rowsToClear.length;
+                            let newBoard = target.board.filter((_, y) => !fullRows.includes(y));
+                            for (let i = 0; i < fullRows.length; i++) newBoard.unshift(Array(COLS).fill(null));
+                            target.board = newBoard;
+                            target.clearingRows = [];
+                            resolve(fullRows.length);
+                        }, lowAnimationMode ? 20 : 500);
+                    });
                 }
-                function updateScoreAndLevel(clearedCount) {
-                    playSound('delAudio');
-                    if (gameMode !== 'SPRINT') { score += POINTS[clearedCount] * level; }
-                    lines += clearedCount;
-                    if (gameMode === 'SPRINT' && lines >= 40) { lines = 40; gameOver(); }
-                    if (clearedCount >= 4) showFeedbackPopup("PERFECT!");
-                    if (gameMode === 'TRAINING') {
-                        const newLevel = Math.floor(lines / 10) + 1;
-                        if (newLevel > level) { level = newLevel; showFeedbackPopup(`Level ${level}`); dropInterval = Math.max(100, 1000 - (level - 1) * 50); }
+                
+                function addGarbageLines(target, lines) {
+                    if (target.isOver) return;
+                    const holeX = Math.floor(Math.random() * COLS);
+                    for (let i = 0; i < lines; i++) {
+                        target.board.shift();
+                        const newRow = Array(COLS).fill('garbage');
+                        newRow[holeX] = null;
+                        target.board.push(newRow);
+                    }
+                    if (target.currentPiece && !isValidMove(target.currentPiece, target.board)) {
+                        gameOver(target);
                     }
                 }
-                function isValidMove(shape, x, y) {
-                    for (let dy = 0; dy < shape.length; dy++) {
-                        for (let dx = 0; dx < shape[dy].length; dx++) {
-                            if (shape[dy][dx]) {
-                                const bX = x + dx; const bY = y + dy;
-                                if (bX < 0 || bX >= COLS || bY >= ROWS || (bY >= 0 && board[bY] && board[bY][bX])) { return false; }
+
+                function updateScoreAndLevel(target, count) {
+                    if (count === 0) return;
+                    if (gameMode !== 'SPRINT') target.score += (POINTS[count] || 0) * target.level;
+                    target.lines += count;
+                    if (gameMode === 'SPRINT' && target.lines >= 40) { target.lines = 40; gameOver(target); }
+                    if (count >= 4 && !target.isCPU) showFeedbackPopup(`PERFECT!`);
+                    if (target.combo > 1 && !target.isCPU) {
+                        showFeedbackPopup(`${target.combo} COMBO!`);
+                        if (!lowAnimationMode) {
+                            const boardWrap = target.isCPU ? cpuContainer.querySelector('.board') : boardEl;
+                            const comboClass = `combo-${Math.min(4, Math.floor(target.combo / 2))}`;
+                            boardWrap.classList.add(comboClass);
+                            setTimeout(() => boardWrap.classList.remove(comboClass), 300);
+                        }
+                    }
+                    if (gameMode === 'TRAINING' || gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') {
+                        const newLevel = Math.floor(target.lines / 10) + 1;
+                        if (newLevel > target.level) {
+                            target.level = newLevel;
+                            if (!target.isCPU) showFeedbackPopup(`Level ${target.level}`);
+                            target.dropInterval = Math.max(100, 1000 - (target.level - 1) * 50);
+                        }
+                    }
+                }
+
+                function isValidMove(piece, board) {
+                    for (let dy = 0; dy < piece.shape.length; dy++) {
+                        for (let dx = 0; dx < piece.shape[dy].length; dx++) {
+                            if (piece.shape[dy][dx]) {
+                                const bX = piece.x + dx, bY = piece.y + dy;
+                                if (bX < 0 || bX >= COLS || bY >= ROWS || (bY >= 0 && board[bY]?.[bX])) return false;
                             }
                         }
                     }
                     return true;
                 }
-                function createEmptyBoard() { boardEl.innerHTML = Array.from({ length: ROWS * COLS }).map(() => `<div class="cell"></div>`).join(''); }
-                function draw() {
-                    if (isOver && !gameoverScreen.classList.contains('hidden')) return;
-                    const cells = Array.from(boardEl.children);
-                    for (const cell of cells) { cell.innerHTML = ''; cell.classList.remove('line-clearing'); }
-                    board.forEach((row, y) => row.forEach((color, x) => { if (color) { const tile = document.createElement('div'); tile.className = 'tile'; tile.style.color = color; cells[y * COLS + x].appendChild(tile); } }));
-                    if (currentPiece && !isOver) {
-                        let ghostY = currentPiece.y;
-                        while (isValidMove(currentPiece.shape, currentPiece.x, ghostY + 1)) { ghostY++; }
-                        currentPiece.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                
+                function createEmptyBoard(element) { element.innerHTML = Array.from({ length: ROWS * COLS }).map(() => `<div class="cell"></div>`).join(''); }
+
+                function draw(target, element) {
+                    if (!target || !element || target.isOver) return;
+                    const cells = Array.from(element.children);
+                    const clearingRows = target.clearingRows || [];
+                    
+                    cells.forEach((c, i) => {
+                        const y = Math.floor(i / COLS);
+                        if (!clearingRows.includes(y)) {
+                            c.innerHTML = '';
+                        }
+                    });
+                    
+                    target.board.forEach((row, y) => {
+                        if (clearingRows.includes(y)) return;
+                        row.forEach((color, x) => {
+                            if (color) {
+                                const tile = document.createElement('div');
+                                tile.className = 'tile' + (color === 'garbage' ? ' garbage' : '');
+                                if (color !== 'garbage') tile.style.color = color;
+                                cells[y * COLS + x].appendChild(tile);
+                            }
+                        });
+                    });
+
+                    if (target.currentPiece) {
+                        let ghostY = target.currentPiece.y;
+                        while (isValidMove({ ...target.currentPiece, y: ghostY + 1 }, target.board)) ghostY++;
+                        
+                        target.currentPiece.shape.forEach((row, dy) => row.forEach((val, dx) => {
                             if (val) {
-                                const x = currentPiece.x + dx; const gy = ghostY + dy;
-                                if (gy >= 0) { const ghostTile = document.createElement('div'); ghostTile.className = 'ghost-tile'; cells[gy * COLS + x].appendChild(ghostTile); }
+                                const x = target.currentPiece.x + dx;
+                                const gy = ghostY + dy;
+                                if(ghostY > target.currentPiece.y) {
+                                    const ghostCellIndex = (ghostY + dy) * COLS + x;
+                                    if (gy >= 0 && ghostCellIndex < cells.length && cells[ghostCellIndex]) {
+                                        const ghost = document.createElement('div');
+                                        ghost.className = 'ghost-tile';
+                                        cells[ghostCellIndex].appendChild(ghost);
+                                    }
+                                }
                             }
                         }));
-                        currentPiece.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                        
+                        target.currentPiece.shape.forEach((row, dy) => row.forEach((val, dx) => {
                             if (val) {
-                                const x = currentPiece.x + dx; const y = currentPiece.y + dy;
+                                const x = target.currentPiece.x + dx;
+                                const y = target.currentPiece.y + dy;
                                 if (y >= 0) {
-                                    const tile = document.createElement('div'); tile.className = 'tile'; tile.style.color = currentPiece.color;
-                                    const cell = cells[y * COLS + x];
-                                    while (cell.firstChild) { cell.removeChild(cell.firstChild); }
-                                    cell.appendChild(tile);
+                                    const cellIndex = y * COLS + x;
+                                    if(cellIndex >=0 && cellIndex < cells.length && cells[cellIndex]) {
+                                        const tile = document.createElement('div');
+                                        tile.className = 'tile';
+                                        tile.style.color = target.currentPiece.color;
+                                        cells[cellIndex].appendChild(tile);
+                                    }
                                 }
                             }
                         }));
                     }
                     if(devHUD.enabled) devHUD.perf.drawCalls++;
                 }
+
                 function drawPreview(container, piece) {
                     container.innerHTML = ''; if (!piece) return;
                     const grid = document.createElement('div'); grid.className = 'piece-grid';
                     const shape = TETROMINOS[piece.name].shape;
-                    let minRow = shape.length, maxRow = -1, minCol = shape[0].length, maxCol = -1;
-                    for (let r = 0; r < shape.length; r++) { for (let c = 0; c < shape[r].length; c++) { if (shape[r][c]) { minRow = Math.min(minRow, r); maxRow = Math.max(maxRow, r); minCol = Math.min(minCol, c); maxCol = Math.max(maxCol, c); } } }
-                    const trimmedShape = (maxRow === -1) ? [] : shape.slice(minRow, maxRow + 1).map(row => row.slice(minCol, maxCol + 1));
-                    const h = trimmedShape.length; const w = trimmedShape[0] ? trimmedShape[0].length : 0;
-                    const gridCells = Array.from({ length: 16 }, () => document.createElement('div'));
-                    gridCells.forEach(c => c.className = 'mini-cell');
-                    const startRow = (piece.name === 'I') ? 1 : Math.floor((4 - h) / 2);
-                    const startCol = Math.floor((4 - w) / 2);
-                    for (let r = 0; r < h; r++) { for (let c = 0; c < w; c++) { if (trimmedShape[r][c]) { const index = (startRow + r) * 4 + (startCol + c); if (gridCells[index]) { const tile = document.createElement('div'); tile.className = 'tile'; tile.style.color = piece.color; gridCells[index].appendChild(tile); } } } }
-                    gridCells.forEach(c => grid.appendChild(c));
+                    let minR = 4, maxR = -1, minC = 4, maxC = -1;
+                    shape.forEach((r, y) => r.forEach((v, x) => { if (v) { minR = Math.min(minR, y); maxR = Math.max(maxR, y); minC = Math.min(minC, x); maxC = Math.max(maxC, x); } }));
+                    const h = maxR - minR + 1, w = maxC - minC + 1;
+                    grid.innerHTML = Array(16).fill('<div class="mini-cell"></div>').join('');
+                    for (let r = 0; r < h; r++) for (let c = 0; c < w; c++) {
+                        if (shape[minR + r][minC + c]) {
+                            const sr = piece.name === 'I' ? 1 : Math.floor((4 - h) / 2);
+                            const sc = Math.floor((4 - w) / 2);
+                            const i = (sr + r) * 4 + (sc + c);
+                            const t = document.createElement('div'); t.className = 'tile'; t.style.color = piece.color;
+                            if (grid.children[i]) grid.children[i].appendChild(t);
+                        }
+                    }
                     container.appendChild(grid);
                 }
-                function setupUI() { highScoreEl.textContent = bestScores.training || 0; currentScoreEl.textContent = 0; linesEl.textContent = 0; levelEl.textContent = 1; appContainer.classList.add('game-inactive-blur'); updateUI(); }
+
+                function setupUI() {
+                    highScoreEl.textContent = bestScores.training || 0;
+                    currentScoreEl.textContent = 0;
+                    linesEl.textContent = 0;
+                    levelEl.textContent = 1;
+                    appContainer.classList.add('game-inactive-blur');
+                }
+
                 function updateUI() {
-                    scoreBox.textContent = `Score: ${score}`; currentScoreEl.textContent = score; linesEl.textContent = lines; levelEl.textContent = level;
+                    if (!player) return;
+                    scoreBox.textContent = `Score: ${player.score}`;
+                    currentScoreEl.textContent = player.score;
+                    linesEl.textContent = player.lines;
+                    levelEl.textContent = player.level;
                     let infoHtml = '';
                     switch (gameMode) {
                         case 'TRAINING': highScoreEl.textContent = bestScores.training || 0; modeInfoPanel.classList.add('hidden'); break;
-                        case 'SPRINT': modeInfoTitle.textContent = "SPRINT"; infoHtml = `<div class="scorebox"><span>TIME</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>BEST</span><span>${bestScores.sprint === Infinity ? 'N/A' : formatTime(bestScores.sprint)}</span></div><div class="scorebox"><span>LINES LEFT</span><span>${Math.max(0, 40 - lines)}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
-                        case 'ULTRA': modeInfoTitle.textContent = "ULTRA"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>HIGH</span><span>${bestScores.ultra || 0}</span></div><div class="scorebox"><span>SCORE</span><span>${score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
+                        case 'SPRINT': modeInfoTitle.textContent = "SPRINT"; infoHtml = `<div class="scorebox"><span>TIME</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>BEST</span><span>${bestScores.sprint === Infinity ? 'N/A' : formatTime(bestScores.sprint)}</span></div><div class="scorebox"><span>LINES LEFT</span><span>${Math.max(0, 40 - player.lines)}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
+                        case 'ULTRA': modeInfoTitle.textContent = "ULTRA"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>HIGH</span><span>${bestScores.ultra || 0}</span></div><div class="scorebox"><span>SCORE</span><span>${player.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
+                        case 'VS_CPU': modeInfoTitle.textContent = "VS CPU"; infoHtml = `<div class="scorebox"><span>CPU SCORE</span><span>${cpu?.score || 0}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
+                        case 'ULTRA_VS_CPU': modeInfoTitle.textContent = "ULTRA VS CPU"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>CPU SCORE</span><span>${cpu?.score || 0}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                     }
                     modeInfoContent.innerHTML = infoHtml;
-                    drawPreview(nextContainer, nextPiece);
-                    drawPreview(holdContainer, heldPiece);
+                    
+                    if (gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') {
+                        drawPreview(playerNextContainerVS, player.nextPiece);
+                    } else {
+                        drawPreview(nextContainer, player.nextPiece);
+                    }
+                    drawPreview(holdContainer, player.heldPiece);
+                    
+                    if(cpu) {
+                        drawPreview(cpuNextContainer, cpu.nextPiece);
+                        drawPreview(cpuHoldContainer, cpu.heldPiece);
+                    }
+
                     if(devHUD.enabled) {
-                        devHUD.progress.mode = gameMode; devHUD.progress.score = score; devHUD.progress.level = level; devHUD.progress.lines = lines; devHUD.progress.isOver = isOver;
-                        devHUD.data.currentPiece = currentPiece?.name || 'None'; devHUD.data.nextPiece = nextPiece?.name || 'None'; devHUD.data.heldPiece = heldPiece?.name || 'None';
+                      devHUD.progress.mode = gameMode; devHUD.progress.score = player.score; devHUD.progress.level = player.level; devHUD.progress.lines = player.lines; devHUD.progress.isOver = isOver;
+                      devHUD.data.currentPiece = player.currentPiece?.name || 'None'; devHUD.data.nextPiece = player.nextPiece?.name || 'None'; devHUD.data.heldPiece = player.heldPiece?.name || 'None';
                     }
                 }
-                function gameOver() {
+
+                function gameOver(loser) {
                     if (isOver) return;
                     isOver = true;
+                    if (loser) loser.isOver = true;
+                    
+                    clearAllInputTimers();
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
                     if (gameInterval) clearInterval(gameInterval);
+                    if (cpuActionInterval) clearInterval(cpuActionInterval);
+
                     const processResults = () => {
-                        switch (gameMode) {
-                            case 'TRAINING': gameoverTitle.textContent = "TRAINING COMPLETE"; gameoverResult.textContent = `Score: ${score}`; if (score > (bestScores.training || 0)) { bestScores.training = score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
-                            case 'SPRINT': gameoverTitle.textContent = "SPRINT COMPLETE"; gameoverResult.textContent = `Time: ${formatTime(gameTimer)}`; if (gameTimer < (bestScores.sprint || Infinity)) { bestScores.sprint = gameTimer; saveBestScores(); showFeedbackPopup("New Best Time!"); } break;
-                            case 'ULTRA': gameoverTitle.textContent = "TIME UP!"; gameoverResult.textContent = `Score: ${score}`; if (score > (bestScores.ultra || 0)) { bestScores.ultra = score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
+                        const titleEl = gameoverScreen.querySelector('h2');
+                        titleEl.style.animation = 'none';
+                        void titleEl.offsetWidth;
+                        titleEl.style.animation = null; 
+
+                        if (gameMode === 'VS_CPU') {
+                            titleEl.textContent = loser.isCPU ? "YOU WIN!" : "YOU LOSE...";
+                            gameoverResult.textContent = `CPU LV.${cpuLevel} との対戦結果`;
+                        } else if (gameMode === 'ULTRA_VS_CPU') {
+                            titleEl.textContent = "TIME UP!";
+                            gameoverResult.textContent = `You: ${player.score} vs CPU: ${cpu.score}`;
+                             if (player.score > cpu.score) {
+                                showFeedbackPopup("YOU WIN!");
+                            } else if (player.score < cpu.score) {
+                                showFeedbackPopup("YOU LOSE...");
+                            } else {
+                                showFeedbackPopup("DRAW!");
+                            }
+                        }
+                        else {
+                            switch (gameMode) {
+                                case 'TRAINING': titleEl.textContent = "TRAINING COMPLETE"; gameoverResult.textContent = `Score: ${player.score}`; if (player.score > (bestScores.training || 0)) { bestScores.training = player.score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
+                                case 'SPRINT': titleEl.textContent = "SPRINT COMPLETE"; gameoverResult.textContent = `Time: ${formatTime(gameTimer)}`; if (player.lines >= 40 && gameTimer < (bestScores.sprint || Infinity)) { bestScores.sprint = gameTimer; saveBestScores(); showFeedbackPopup("New Best Time!"); } break;
+                                case 'ULTRA': titleEl.textContent = "TIME UP!"; gameoverResult.textContent = `Score: ${player.score}`; if (player.score > (bestScores.ultra || 0)) { bestScores.ultra = player.score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
+                            }
                         }
                         showGameOverScreen();
                     };
-                    if(!lowAnimationMode) { playGameOverAnimation().then(processResults); } else { processResults(); }
+                    playGameOverAnimation(loser).then(processResults);
                 }
+
                 function showStartScreen() {
-                    if (countdownInterval) clearInterval(countdownInterval); if (gameInterval) clearInterval(gameInterval);
-                    countdownEl.classList.add('hidden'); gameOverlay.classList.remove('hidden'); startScreen.classList.remove('hidden'); gameoverScreen.classList.add('hidden'); pauseScreen.classList.add('hidden'); appContainer.classList.add('game-inactive-blur');
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    if (gameInterval) clearInterval(gameInterval);
+                    if (cpuActionInterval) clearInterval(cpuActionInterval);
+                    appContainer.className = 'app single-player-mode';
+                    cpuContainer.classList.add('hidden');
+                    playerNextPanelVS.classList.add('hidden');
+                    cpuInfoPanel.classList.add('hidden');
+                    spNextPanel.classList.remove('hidden');
+                    document.querySelector('.side-panel.right').classList.remove('hidden');
+
+                    countdownEl.classList.add('hidden');
+                    gameOverlay.classList.remove('hidden');
+                    startScreen.classList.remove('hidden');
+                    gameoverScreen.classList.add('hidden');
+                    pauseScreen.classList.add('hidden');
+                    appContainer.classList.add('game-inactive-blur');
                     isOver = true; isPaused = true;
-                    if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                    createEmptyBoard(); setupUI(); pauseButton.textContent = "停止";
+                    createEmptyBoard(boardEl); if(cpuBoardEl) createEmptyBoard(cpuBoardEl);
+                    setupUI();
+                    pauseButton.textContent = "停止";
+                    vsCpuSelect.classList.remove('open');
+                    ultraVsCpuSelect.classList.remove('open');
                 }
+
                 function showGameOverScreen() { gameOverlay.classList.remove('hidden'); startScreen.classList.add('hidden'); gameoverScreen.classList.remove('hidden'); pauseScreen.classList.add('hidden'); appContainer.classList.add('game-inactive-blur'); }
                 function saveBestScores() { try { localStorage.setItem('blockfall_bests', JSON.stringify(bestScores)); } catch (e) { console.error("Failed to save scores:", e); } }
                 function loadBestScores() {
-                    try { const loaded = JSON.parse(localStorage.getItem('blockfall_bests')); return { training: loaded?.training || 0, sprint: loaded?.sprint ?? Infinity, ultra: loaded?.ultra || 0 };
+                    try { const l = JSON.parse(localStorage.getItem('blockfall_bests')); return l ? { training: l.training || 0, sprint: l.sprint ?? Infinity, ultra: l.ultra || 0 } : { training: 0, sprint: Infinity, ultra: 0 };
                     } catch (e) { return { training: 0, sprint: Infinity, ultra: 0 }; }
                 }
-                function formatTime(totalSeconds) { const minutes = Math.floor(totalSeconds / 60); const seconds = totalSeconds % 60; return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`; }
+                function formatTime(s) { const m = Math.floor(s / 60); const sec = s % 60; return `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`; }
+                
+                function clearAllInputTimers() { clearTimeout(dasTimer); clearInterval(arrTimer); clearInterval(softDropTimer); dasTimer = null; arrTimer = null; softDropTimer = null; }
+
                 function setupKeyHandlers() {
                     document.addEventListener('keydown', e => {
                         if (actionToChange) return;
-                        if (e.key === 'Enter' && !e.target.closest('.modal-overlay') && !e.target.closest('.cheat-input')) { document.getElementById('fake-translator').classList.toggle('hidden'); return; }
+                        if (e.key === 'Enter' && !e.target.closest('.modal-overlay')) { document.getElementById('fake-translator').classList.toggle('hidden'); return; }
                         if (e.key === 'Escape' && !isOver && !document.querySelector('.modal-overlay:not(.hidden)')) { e.preventDefault(); togglePause(); return; }
-                        if (isPaused || isOver || document.querySelector('.modal-overlay:not(.hidden)')) return;
-                        if (!keys[e.key]) { const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase()); if (action) handleKeyPress(action); }
+                        if (isPaused || isOver || (player && player.isOver) || document.querySelector('.modal-overlay:not(.hidden)')) return;
+                        if (!keys[e.key]) { 
+                            const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase()); 
+                            if (action) {
+                                e.preventDefault();
+                                handleKeyPress(action); 
+                            }
+                        }
                         keys[e.key] = true;
                     });
                     document.addEventListener('keyup', e => {
-                        keys[e.key] = false;
                         const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase());
-                        if (action === 'moveLeft' || action === 'moveRight') { clearTimeout(dasTimer); clearInterval(arrTimer); dasTimer = null; arrTimer = null; }
-                        if (action === 'softDrop') { clearInterval(softDropTimer); softDropTimer = null; }
+                        if (action === 'moveLeft' || action === 'moveRight') { 
+                            clearTimeout(dasTimer); 
+                            clearInterval(arrTimer); 
+                            dasTimer = null; 
+                            arrTimer = null;
+                        }
+                        if (action === 'softDrop') { 
+                            clearInterval(softDropTimer); 
+                            softDropTimer = null; 
+                        }
+                        keys[e.key] = false;
                     });
+                    window.addEventListener('blur', () => { keys = {}; clearAllInputTimers(); });
                 }
+
                 function handleKeyPress(action) {
-                    if (isOver || isPaused) return;
+                    if (isOver || isPaused || player.isOver) return;
                     switch (action) {
-                        case 'moveLeft': move(-1); dasTimer = setTimeout(() => { arrTimer = setInterval(() => move(-1), ARR_DELAY); }, DAS_DELAY); break;
-                        case 'moveRight': move(1); dasTimer = setTimeout(() => { arrTimer = setInterval(() => move(1), ARR_DELAY); }, DAS_DELAY); break;
-                        case 'softDrop': drop(); softDropTimer = setInterval(drop, SOFT_DROP_DELAY); break;
-                        case 'hardDrop': hardDrop(); break;
-                        case 'rotateLeft': rotate(-1); break;
-                        case 'rotateRight': rotate(1); break;
-                        case 'hold': hold(); break;
+                        case 'moveLeft': if(!dasTimer) { move(player, -1); dasTimer = setTimeout(() => { arrTimer = setInterval(() => move(player, -1), ARR_DELAY); }, DAS_DELAY); } break;
+                        case 'moveRight': if(!dasTimer) { move(player, 1); dasTimer = setTimeout(() => { arrTimer = setInterval(() => move(player, 1), ARR_DELAY); }, DAS_DELAY); } break;
+                        case 'softDrop': if(!softDropTimer) { drop(player); softDropTimer = setInterval(() => drop(player), SOFT_DROP_DELAY); } break;
+                        case 'hardDrop': hardDrop(player); break;
+                        case 'rotateLeft': rotate(player, -1); break;
+                        case 'rotateRight': rotate(player, 1); break;
+                        case 'hold': hold(player); break;
                     }
                 }
-                function playHardDropAnimation() {
-                    const pieceCells = [];
-                    currentPiece.shape.forEach((row, dy) => { row.forEach((val, dx) => { if (val) { pieceCells.push({ x: currentPiece.x + dx, y: currentPiece.y + dy }); } }); });
-                    const landingY = pieceCells.reduce((max, cell) => Math.max(max, cell.y), -1);
-                    if (landingY < 0) return;
-                    const boardRect = boardEl.getBoundingClientRect(); const cellWidth = boardRect.width / COLS; const cellHeight = boardRect.height / ROWS;
-                    for (let i = 0; i < 15; i++) {
-                        const p = document.createElement('div'); p.className = 'particle'; document.body.appendChild(p);
-                        const startX = boardRect.left + (Math.random() * COLS) * cellWidth; const startY = boardRect.top + (landingY + 0.5) * cellHeight;
-                        p.style.left = `${startX}px`; p.style.top = `${startY}px`;
-                        const angle = Math.random() * Math.PI - Math.PI; const velocity = Math.random() * 80 + 40;
-                        const endX = Math.cos(angle) * velocity; const endY = Math.sin(angle) * velocity - 30;
-                        p.style.setProperty('--x', `${endX}px`); p.style.setProperty('--y', `${endY}px`);
-                        setTimeout(() => p.remove(), 600);
-                    }
-                }
-                function playGameOverAnimation() {
+
+                function playHardDropAnimation(target) { if (lowAnimationMode) return; playerGameContainer.classList.add('shake-hard-drop'); setTimeout(()=> playerGameContainer.classList.remove('shake-hard-drop'), 150); for (let i = 0; i < 15; i++) { const p = document.createElement('div'); p.className = 'particle'; document.body.appendChild(p); const rect = boardEl.getBoundingClientRect(), cw = rect.width / COLS, ch = rect.height / ROWS, sx = rect.left + (Math.random() * COLS) * cw, sy = rect.top + (target.currentPiece.y + 0.5) * ch; p.style.left = `${sx}px`; p.style.top = `${sy}px`; const ang = Math.random() * Math.PI - Math.PI, vel = Math.random() * 80 + 40, ex = Math.cos(ang) * vel, ey = Math.sin(ang) * vel - 30; p.style.setProperty('--x', `${ex}px`); p.style.setProperty('--y', `${ey}px`); setTimeout(() => p.remove(), 600); } }
+                function playGameOverAnimation(target) {
                     return new Promise(resolve => {
+                        if (!target || target.isOver === false) {
+                            if(document.querySelector('.overlay-content h2')) document.querySelector('.overlay-content h2').style.animation = 'none';
+                             return resolve();
+                        }
                         let row = ROWS - 1;
-                        const interval = setInterval(() => {
-                            if (row < 0) { clearInterval(interval); setTimeout(resolve, 300); return; }
-                            for (let col = 0; col < COLS; col++) { boardEl.children[row * COLS + col].classList.add('dead'); }
+                        const el = target.isCPU ? cpuBoardEl : boardEl;
+                        const i = setInterval(() => {
+                            if (row < 0) { clearInterval(i); setTimeout(resolve, 300); return; }
+                            for (let c = 0; c < COLS; c++) el.children[row * COLS + c].classList.add('dead');
                             row--;
                         }, 30);
                     });
                 }
                 function playSound(id) { if (!soundToggle.checked) return; const a = document.getElementById(id); if (a) { a.currentTime = 0; a.play().catch(() => {}); } }
                 function showFeedbackPopup(text) { const p = document.createElement('div'); p.textContent = text; p.className = 'feedback-popup'; document.body.appendChild(p); p.addEventListener('animationend', () => p.remove()); }
-                function loadKeyMap() { try { const savedMap = JSON.parse(localStorage.getItem('blockfall_keymap')); if (savedMap) { keyMap = { ...defaultKeyMap, ...savedMap }; } else { keyMap = { ...defaultKeyMap }; } } catch (e) { keyMap = { ...defaultKeyMap }; } }
+                function loadKeyMap() { try { const s = JSON.parse(localStorage.getItem('blockfall_keymap')); keyMap = s ? { ...defaultKeyMap, ...s } : { ...defaultKeyMap }; } catch (e) { keyMap = { ...defaultKeyMap }; } }
                 function saveKeyMap() { try { localStorage.setItem('blockfall_keymap', JSON.stringify(keyMap)); } catch (e) { alert('設定の保存に失敗しました。'); } }
                 function setupKeyConfigModal() {
                     const modal = document.getElementById('keyConfigModal'), keyConfigList = document.getElementById('key-config-list'), saveBtn = document.getElementById('saveKeysBtn'), resetBtn = document.getElementById('resetKeysBtn');
-                    menuKeyConfigBtn.addEventListener('click', () => { populateKeyConfigList(); modal.classList.remove('hidden'); });
+                    document.getElementById('menu-key-config-btn').addEventListener('click', () => { populateKeyConfigList(); modal.classList.remove('hidden'); });
                     saveBtn.addEventListener('click', () => { saveKeyMap(); modal.classList.add('hidden'); showFeedbackPopup('キー設定を保存しました'); });
                     resetBtn.addEventListener('click', () => { if (confirm('キー設定を初期状態に戻しますか？')) { keyMap = { ...defaultKeyMap }; populateKeyConfigList(); } });
                     modal.addEventListener('click', (e) => { if (e.target === modal) { modal.classList.add('hidden'); } });
@@ -1515,13 +1699,7 @@ Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
                         for (const action in actionLabels) { const item = document.createElement('div'); item.className = 'key-config-item'; item.innerHTML = `<span class="action-label">${actionLabels[action]}</span><span class="key-display" data-action="${action}">${keyMap[action]}</span>`; keyConfigList.appendChild(item); }
                         document.querySelectorAll('.key-display').forEach(el => { el.addEventListener('click', startKeyChange); });
                     }
-                    function startKeyChange(e) {
-                        if (actionToChange) return;
-                        const targetEl = e.target; actionToChange = targetEl.dataset.action;
-                        targetEl.textContent = 'キーを押して下さい'; targetEl.classList.add('listening');
-                        document.addEventListener('keydown', captureKey, { capture: true, once: true });
-                        document.addEventListener('click', cancelKeyChange, { once: true });
-                    }
+                    function startKeyChange(e) { if (actionToChange) return; const targetEl = e.target; actionToChange = targetEl.dataset.action; targetEl.textContent = 'キーを押して下さい'; targetEl.classList.add('listening'); document.addEventListener('keydown', captureKey, { capture: true, once: true }); document.addEventListener('click', cancelKeyChange, { once: true }); }
                     function captureKey(e) {
                         e.preventDefault(); e.stopPropagation();
                         const newKey = e.key; const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`);
@@ -1535,56 +1713,57 @@ Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
                         document.removeEventListener('click', cancelKeyChange);
                         actionToChange = null;
                     }
-                    function cancelKeyChange(e) {
-                        if (e.target.dataset.action !== actionToChange) {
-                            const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`);
-                            if (currentEl) { currentEl.textContent = keyMap[actionToChange]; currentEl.classList.remove('listening'); }
-                            document.removeEventListener('keydown', captureKey, { capture: true });
-                            actionToChange = null;
-                        }
-                    }
+                    function cancelKeyChange(e) { if (e.target.dataset.action !== actionToChange) { const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`); if (currentEl) { currentEl.textContent = keyMap[actionToChange]; currentEl.classList.remove('listening'); } document.removeEventListener('keydown', captureKey, { capture: true }); actionToChange = null; } }
                 }
+
                 function setupExtraFeatures() {
-                    const cheatCodeModal = document.getElementById('cheatCodeModal'), cheatInput = document.getElementById('cheatInput'), submitCheatBtn = document.getElementById('submitCheatBtn'), closeCheatBtn = document.getElementById('closeCheatBtn'), menuShareBtn = document.getElementById('menu-share-btn'), shareModal = document.getElementById('shareModal'), qrcodeContainer = document.getElementById('qrcode'), urlInput = document.getElementById('urlInput'), copyUrlBtn = document.getElementById('copyUrlBtn'), closeShareBtn = document.getElementById('closeShareBtn'), bgmAudio = document.getElementById('bgmAudio'), translatorInput = document.getElementById('translator-input'), translatorOutput = document.getElementById('translator-output');
+                    const cheatCodeModal = document.getElementById('cheatCodeModal'), cheatInput = document.getElementById('cheatInput'), submitCheatBtn = document.getElementById('submitCheatBtn'), closeCheatBtn = document.getElementById('closeCheatBtn');
+                    menuCheatBtn.addEventListener('click', () => { cheatCodeModal?.classList.remove('hidden'); menuPanel.classList.remove('open'); });
                     if (closeCheatBtn) closeCheatBtn.addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
                     if (submitCheatBtn) submitCheatBtn.addEventListener('click', handleCheatCode);
                     if (cheatInput) cheatInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') handleCheatCode(); });
-                    document.addEventListener('keydown', (e) => { if (e.code === 'Space' && !e.target.closest('.modal-overlay')) { e.preventDefault(); if (cheatCodeModal) cheatCodeModal.classList.remove('hidden'); if (cheatInput) cheatInput.focus(); } });
+                    
+                    const menuShareBtn = document.getElementById('menu-share-btn'), shareModal = document.getElementById('shareModal'), qrcodeContainer = document.getElementById('qrcode'), urlInput = document.getElementById('urlInput'), copyUrlBtn = document.getElementById('copyUrlBtn'), closeShareBtn = document.getElementById('closeShareBtn'), bgmAudio = document.getElementById('bgmAudio'), translatorInput = document.getElementById('translator-input'), translatorOutput = document.getElementById('translator-output');
                     hamburgerIcon.addEventListener('click', () => menuPanel.classList.toggle('open'));
-                    const savedSoundSetting = localStorage.getItem('blockblast_sound');
+                    const savedSoundSetting = localStorage.getItem('blockfall_sound');
                     if (savedSoundSetting !== null) soundToggle.checked = savedSoundSetting === 'true';
                     const playBGM = () => { if (soundToggle.checked && bgmAudio) bgmAudio.play().catch(() => {}); };
                     document.body.addEventListener('click', playBGM, { once: true });
-                    soundToggle.addEventListener('change', (e) => { try { localStorage.setItem('blockblast_sound', e.target.checked); } catch (err) {} if (e.target.checked && bgmAudio) bgmAudio.play().catch(() => {}); else if (bgmAudio) bgmAudio.pause(); });
-                    if (menuShareBtn) menuShareBtn.addEventListener('click', () => { if (!shareModal) return; const url = `${window.location.origin}${window.location.pathname}`; if (urlInput) urlInput.value = url; if (qrcodeContainer) qrcodeContainer.innerHTML = ''; if (typeof QRCode !== 'undefined') { QRCode.toCanvas(url, { width: 200, errorCorrectionLevel: 'H' }, (err, canvas) => { if (err) { console.error(err); return; } if (qrcodeContainer) qrcodeContainer.appendChild(canvas); }); } shareModal.classList.remove('hidden'); menuPanel.classList.remove('open'); });
+                    soundToggle.addEventListener('change', (e) => { try { localStorage.setItem('blockfall_sound', e.target.checked); } catch (err) {} if (e.target.checked && bgmAudio) bgmAudio.play().catch(() => {}); else if (bgmAudio) bgmAudio.pause(); });
+                    if (menuShareBtn) menuShareBtn.addEventListener('click', () => { if (!shareModal) return; const url = window.location.href; if (urlInput) urlInput.value = url; if (qrcodeContainer) qrcodeContainer.innerHTML = ''; if (typeof QRCode !== 'undefined') { QRCode.toCanvas(url, { width: 200, errorCorrectionLevel: 'H' }, (err, canvas) => { if (err) { console.error(err); return; } if (qrcodeContainer) qrcodeContainer.appendChild(canvas); }); } shareModal.classList.remove('hidden'); menuPanel.classList.remove('open'); });
                     if (closeShareBtn) closeShareBtn.addEventListener('click', () => shareModal.classList.add('hidden'));
                     if (copyUrlBtn) copyUrlBtn.addEventListener('click', () => { if (urlInput) { urlInput.select(); navigator.clipboard.writeText(urlInput.value).then(() => { copyUrlBtn.textContent = 'コピー完了!'; setTimeout(() => { copyUrlBtn.textContent = 'コピー'; }, 2000); }); } });
                     const originalTitle = document.title, favicon = document.getElementById('favicon'), originalFavicon = favicon ? favicon.href : '', fakeTitle = '翻訳', fakeFavicon = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>';
                     window.addEventListener('blur', () => { document.title = fakeTitle; if (favicon) favicon.href = fakeFavicon; });
                     window.addEventListener('focus', () => { document.title = originalTitle; if (favicon) favicon.href = originalFavicon; });
-                    if (translatorInput) { translatorInput.addEventListener('keyup', () => { if (translatorOutput) translatorOutput.value = simpleTranslate(translatorInput.value); }); }
-                    function simpleTranslate(text) { const map = { 'a': 'b', 'あ': 'い', 'i': 'j' }; return text.toLowerCase().split('').map(char => map[char] || char).join(''); }
+                    if (translatorInput) { translatorInput.addEventListener('keyup', () => { if (translatorOutput) translatorOutput.value = translatorInput.value.toLowerCase().split('').map(char => ({ 'a': 'b', 'あ': 'い', 'i': 'j' })[char] || char).join(''); }); }
                 }
+
                 function handleCheatCode() {
                     const cheatInput = document.getElementById('cheatInput'), cheatCodeModal = document.getElementById('cheatCodeModal');
                     const code = cheatInput.value.trim().toLowerCase();
-                    if (code === 'towa.soko0406') { const newScoreStr = prompt('新しいスコアを入力:', score); const newScore = parseInt(newScoreStr, 10); if (!isNaN(newScore)) { score = newScore; updateUI(); } else { alert('無効な数値'); }
-                    } else if (code === 'deletadata' || code === 'reset') { try { localStorage.removeItem('blockfall_bests'); localStorage.removeItem('blockfall_keymap'); alert('全モードのハイスコアとキー設定を削除しました'); location.reload(); } catch (e) { alert('削除失敗'); }
+                    if (code === 'towa.soko0406') {
+                        const newScoreStr = prompt('新しいスコアを入力:', player.score);
+                        const newScore = parseInt(newScoreStr, 10);
+                        if (!isNaN(newScore)) { player.score = newScore; updateUI(); } else { alert('無効な数値'); }
+                    } else if (code === 'deletadata' || code === 'reset') {
+                        try { localStorage.removeItem('blockfall_bests'); localStorage.removeItem('blockfall_keymap'); localStorage.removeItem('blockfall_sound'); alert('全モードのハイスコアとキー設定を削除しました'); location.reload(); } catch (e) { alert('削除失敗'); }
                     } else { alert('コードが違います'); }
                     if (cheatInput) cheatInput.value = '';
                     if (cheatCodeModal) cheatCodeModal.classList.add('hidden');
                 }
+
                 function setupDevMode() {
                     const devPasswordModal = document.getElementById('devPasswordModal'), devPasswordInput = document.getElementById('devPasswordInput'), submitDevPasswordBtn = document.getElementById('submitDevPasswordBtn'), closeDevPasswordBtn = document.getElementById('closeDevPasswordBtn');
-                    menuDevModeBtn.addEventListener('click', () => { devPasswordModal.classList.remove('hidden'); devPasswordInput.focus(); menuPanel.classList.remove('open'); });
+                    document.getElementById('menu-dev-mode-btn').addEventListener('click', () => { devPasswordModal.classList.remove('hidden'); devPasswordInput.focus(); menuPanel.classList.remove('open'); });
                     closeDevPasswordBtn.addEventListener('click', () => devPasswordModal.classList.add('hidden'));
                     submitDevPasswordBtn.addEventListener('click', handleDevPassword);
                     devPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleDevPassword(); });
                     devHUD.elements.hud.addEventListener('click', (e) => {
                         if (!devHUD.enabled || e.target.dataset.action !== 'set-score') return;
-                        const newScoreStr = prompt('新しいスコアを入力してください:', score);
+                        const newScoreStr = prompt('新しいスコアを入力してください:', player.score);
                         const newScore = parseInt(newScoreStr, 10);
-                        if (!isNaN(newScore) && newScore >= 0) { score = newScore; logToDevConsole(`Score changed to ${score}`); updateUI(); } 
+                        if (!isNaN(newScore) && newScore >= 0) { player.score = newScore; logToDevConsole(`Score changed to ${player.score}`); updateUI(); }
                         else { alert('無効な数値です。'); }
                     });
                 }
@@ -1595,18 +1774,120 @@ Low Anim   : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}
                         devHUD.enabled = !devHUD.enabled;
                         devHUD.debug.flags.devMode = devHUD.enabled;
                         devHUD.debug.flags.lowAnim = lowAnimationMode;
-                        if (devHUD.enabled) { devHUD.elements.hud.classList.remove('hidden'); devHUD.elements.console.classList.remove('hidden'); alert('開発者モードが有効になりました。'); logToDevConsole('Developer mode enabled.'); } 
+                        if (devHUD.enabled) { devHUD.elements.hud.classList.remove('hidden'); devHUD.elements.console.classList.remove('hidden'); alert('開発者モードが有効になりました。'); } 
                         else { devHUD.elements.hud.classList.add('hidden'); devHUD.elements.console.classList.add('hidden'); alert('開発者モードが無効になりました。'); }
                     } else if (password === 'reset') {
                         if (confirm('本当に保存されているデータを全てリセットしますか？')) {
-                            try { localStorage.removeItem('blockfall_bests'); localStorage.removeItem('blockfall_keymap'); localStorage.removeItem('blockblast_sound'); alert('データをリセットしました。ページをリロードします。'); location.reload(); } 
-                            catch (e) { alert('データのリセットに失敗しました。'); logToDevConsole('Failed to reset data.', 'error'); }
+                            try { localStorage.clear(); alert('データをリセットしました。ページをリロードします。'); location.reload(); } 
+                            catch (e) { alert('データのリセットに失敗しました。'); }
                         }
                     } else { alert('パスワードが違います。'); }
                     devPasswordModal.classList.add('hidden');
                     devPasswordInput.value = '';
                 }
 
+                function runCpuTurn(cpu) {
+                    if (isOver || cpu.isOver || !cpu.currentPiece || cpu.ai.isThinking) return;
+                    cpu.ai.isThinking = true;
+                    setTimeout(() => {
+                        const bestMoves = findBestMoves(cpu);
+                        if (!bestMoves || bestMoves.length === 0) { cpu.ai.isThinking = false; return; }
+                        let bestMove;
+                        
+                        if (cpuLevel <= 6 && Math.random() < 0.04) {
+                            bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+                        } else {
+                            bestMove = bestMoves[0];
+                            if (Math.random() < CPU_LEVELS[cpuLevel].mistakeChance && bestMoves.length > 1) {
+                                bestMove = bestMoves[1 + Math.floor(Math.random() * Math.min(2, bestMoves.length - 1))];
+                            }
+                        }
+
+                        cpu.ai.actionQueue = planCpuMoves(cpu, bestMove.move);
+                        cpu.ai.isThinking = false;
+                    }, CPU_LEVELS[cpuLevel].thinkTime + Math.random() * 50);
+                }
+                function planCpuMoves(cpu, bestMove) {
+                    if (!bestMove || !cpu.currentPiece) return [];
+                    const queue = [];
+                    if (bestMove.isHold) { queue.push('hold'); return queue; }
+                    const p = { ...cpu.currentPiece, shape: JSON.parse(JSON.stringify(cpu.currentPiece.shape))};
+                    for(let i = 0; i < bestMove.rotation; i++) { queue.push('rotate'); }
+                    const finalX = bestMove.x;
+                    let startX = p.x;
+                    const moveDiff = finalX - startX;
+                    const moveDir = moveDiff > 0 ? 'moveRight' : 'moveLeft';
+                    for (let i = 0; i < Math.abs(moveDiff); i++) queue.push(moveDir);
+                    queue.push('hardDrop');
+                    return queue;
+                }
+                function executeCpuAction() {
+                    const action = cpu.ai.actionQueue.shift();
+                    if (!action) return;
+                    switch (action) {
+                        case 'rotate': rotate(cpu, 1); break;
+                        case 'moveLeft': move(cpu, -1); break;
+                        case 'moveRight': move(cpu, 1); break;
+                        case 'hardDrop': hardDrop(cpu); break;
+                        case 'hold': hold(cpu); break;
+                    }
+                }
+                function findBestMoves(target) {
+                    let moves = [];
+                    const checkPiece = (piece, isHold) => {
+                        if (!piece) return;
+                        for (let r = 0; r < 4; r++) {
+                            let tempPiece = { ...piece, rotation: 0, shape: JSON.parse(JSON.stringify(TETROMINOS[piece.name].shape)) };
+                            for(let i = 0; i < r; i++) {
+                                tempPiece.shape = tempPiece.shape[0].map((_, c) => tempPiece.shape.map(row => row[c]).reverse());
+                                tempPiece.rotation = (tempPiece.rotation + 1) % 4;
+                            }
+                            
+                            for (let x = -2; x < COLS; x++) {
+                                tempPiece.x = x;
+                                tempPiece.y = 0;
+                                let y = 0;
+                                while (isValidMove({ ...tempPiece, y: y + 1 }, target.board)) y++;
+                                tempPiece.y = y;
+                                if (!isValidMove(tempPiece, target.board)) continue;
+
+                                let tempBoard = target.board.map(row => [...row]);
+                                tempPiece.shape.forEach((row, dy) => row.forEach((v, dx) => { if (v && tempPiece.y + dy >= 0) tempBoard[tempPiece.y + dy][tempPiece.x + dx] = '1'; }));
+                                moves.push({ move: { rotation: r, x: tempPiece.x, isHold }, score: evaluateBoard(tempBoard, CPU_LEVELS[cpuLevel].weights) });
+                            }
+                        }
+                    };
+                    checkPiece(target.currentPiece, false);
+                    if (target.canHold) {
+                        const pieceToConsider = target.heldPiece || target.nextPiece;
+                        checkPiece(pieceToConsider, true);
+                    }
+                    return moves.sort((a, b) => b.score - a.score);
+                }
+                function evaluateBoard(board, weights) {
+                    const {AGG_H, COMP_L, HOLES, BUMP, WELLS} = weights;
+                    const heights = Array(COLS).fill(0);
+                    let aggHeight = 0, holes = 0;
+                    for (let c = 0; c < COLS; c++) {
+                        let blockFound = false;
+                        for (let r = 0; r < ROWS; r++) {
+                            if (board[r][c]) {
+                                if (!blockFound) { heights[c] = ROWS - r; blockFound = true; }
+                            } else if (blockFound) holes++;
+                        }
+                        aggHeight += heights[c];
+                    }
+                    let completedLines = 0;
+                    for (let r = 0; r < ROWS; r++) if (board[r].every(cell => cell)) completedLines++;
+                    let bumpiness = 0, wells = 0;
+                    for (let c = 0; c < COLS; c++) {
+                        if (c > 0) bumpiness += Math.abs(heights[c] - heights[c - 1]);
+                        const left = heights[c - 1] || ROWS, right = heights[c + 1] || ROWS;
+                        if (left > heights[c] && right > heights[c]) wells += Math.min(left - heights[c], right - heights[c]);
+                    }
+                    return AGG_H * aggHeight + COMP_L * (completedLines ** 2) + HOLES * holes + BUMP * bumpiness + WELLS * wells;
+                }
+                
                 init();
             }
         </script>
