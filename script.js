@@ -51,7 +51,7 @@ const items = [
   {
     title: "ブロック落としCPUモード",
     description: "CPU(人工知能)と対戦できるブロック落とし！あなたは勝てるか！？",
-    thumbnail: "./apps/app10/thumbnail.gif",
+    thumbnail: "./apps/app10/thumbnail.jpeg",
     url: "./apps/app10/index.html",
     recommend: "早期アクセスバージョン"
   },
