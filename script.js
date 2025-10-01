@@ -63,11 +63,11 @@ const items = [
     recommend: "今までの人気！"
   },
   {
-    title: "ブロックトレーニングCPUモード",
+    title: "ブロックトレーニング拡張版",
     description: "同じ色のブロックをそろえて消そう！CPUに勝てるのか！！",
     thumbnail: "./apps/app2/thumbnail.png",
     url: "#",
-    recommend: "作成中"
+    recommend: "BETA"
   },
   {
     title: "果物集め",
