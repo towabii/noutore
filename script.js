@@ -6,7 +6,7 @@
 // 「今日の一言」の内容
 const oneWordData = {
     image: "hitokoto.jpeg", // 画像ファイル名
-    text: "なぜ、なんだ？" // 表示する文章
+    text: "ねむ" // 表示する文章
 };
 
 // 「アップデート情報」の内容
@@ -65,9 +65,9 @@ const items = [
   {
     title: "ブロックトレーニング拡張版",
     description: "同じ色のブロックをそろえて消そう！CPUに勝てるのか！！",
-    thumbnail: "./apps/app11/thumbnail.png",
+    thumbnail: "./apps/app11/thumbnail.jpg",
     url: "./apps/app11/index.html",
-    recommend: "BETA"
+    recommend: "早期アクセス"
   },
   {
     title: "果物集め",
