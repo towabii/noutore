@@ -69,7 +69,7 @@ PR .............................. 底原永和
         </div>
     </div>
     
-    <!-- ユーザー情報入力モーダル (新規追加) -->
+    <!-- ユーザー情報入力モーダル -->
     <div id="user-info-modal" class="modal-overlay">
         <div class="modal-content">
             <h2>ようこそ！</h2>
@@ -87,7 +87,10 @@ PR .............................. 底原永和
                     <label for="birth-date">生年月日</label>
                     <input type="date" id="birth-date" class="form-input" required autocomplete="bday">
                 </div>
-                <p id="user-info-error" style="color: #ff5555; display: none; margin-top: 1rem;"></p>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); text-align: center; margin-top: 1.5rem; line-height: 1.6;">
+                    ※本名が確認できない、または不適切な情報と判断された場合、アカウントは予告なく停止されることがあります。
+                </p>
+                <p id="user-info-error" class="error-message" style="display: none;"></p>
                 <div class="modal-footer" style="justify-content: center; margin-top: 1.5rem;">
                     <button type="submit" id="user-info-submit-btn" class="btn">利用を開始する</button>
                 </div>
@@ -103,6 +106,7 @@ PR .............................. 底原永和
                     <li><a data-target="home">ホーム</a></li>
                     <li><a data-target="faq">よくある質問</a></li>
                     <li><a data-target="author">作成者情報</a></li>
+                    <li><a id="settings-btn">設定</a></li> <!-- 設定ボタンを追加 -->
                     <li><a id="share-site-btn">共有</a></li>
                     <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSdUZqH-vSXeZr6nbuqrmJgiaLfytVIOxdlo4ylDFp-koLPT0g/viewform" target="_blank" rel="noopener noreferrer">フィードバック</a></li>
                     <li><a id="replay-staffroll">スタッフロール</a></li>
@@ -257,6 +261,24 @@ PR .............................. 底原永和
             <div class="modal-footer">
                 <button id="terms-agree-btn" class="btn">同意して利用する</button>
             </div>
+        </div>
+    </div>
+
+    <!-- 設定モーダル (新規追加) -->
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>設定</h2>
+            <form id="settings-form" style="margin-top: 1.5rem;">
+                <div class="form-group">
+                    <label for="new-username">新しいユーザーネーム</label>
+                    <input type="text" id="new-username" class="form-input" required>
+                </div>
+                <p id="settings-error" class="error-message" style="display: none;"></p>
+                <div class="modal-footer">
+                    <button type="button" data-close-modal class="btn ghost">キャンセル</button>
+                    <button type="submit" id="settings-submit-btn" class="btn">保存</button>
+                </div>
+            </form>
         </div>
     </div>
 
