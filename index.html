@@ -95,6 +95,10 @@ PR .............................. 底原永和
                 <div id="test-countdown-timer" class="countdown-extra"></div>
             </div>
             <div>
+                <h3>修学旅行まで</h3>
+                <div id="school-trip-countdown-timer" class="countdown-extra"></div>
+            </div>
+            <div>
                 <h3>底原永和の誕生日まで</h3>
                 <div id="birthday-countdown-timer" class="countdown-extra"></div>
             </div>
@@ -260,14 +264,13 @@ PR .............................. 底原永和
         </div>
     </div>
 
-    <!-- 一言モーダル -->
-    <div id="oneword-modal" class="modal-overlay">
+    <!-- お知らせモーダル -->
+    <div id="notification-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>底原永和の今日のひとこと</h2>
-            <img id="oneword-img" src="" alt="今日の一言に関連する画像" onerror="this.style.display='none';">
-            <p id="oneword-text" style="line-height: 1.7; font-size: 16px;"></p>
+            <h2 id="notification-title"></h2>
+            <p id="notification-text" style="line-height: 1.7; font-size: 16px;"></p>
             <div class="modal-footer">
-                <button data-close-modal class="btn">閉じる</button>
+                <button id="notification-close-btn" data-close-modal class="btn" disabled>閉じる</button>
             </div>
         </div>
     </div>
