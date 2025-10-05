@@ -1,7 +1,7 @@
 // ===============================================
 // ▲▲▲ 必ず設定してください ▲▲▲
 // ===============================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYKqMQ0iH_DykpsWNJh3Yj5DIrUc07eUVw0uB-H36tssHOCyDyY6IuAVndQ2iU6LFt/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwABUATpZm2Sv66l61N7a7-B5XWIp8zk999cR2yrMbzl_HOwJ96RbZ5uCkG2OFHMZW3/exec';
 // ===============================================
 
 // ===============================================
@@ -222,10 +222,19 @@ document.addEventListener('DOMContentLoaded', function() {
             const userData = JSON.parse(userInfo);
             callGas('login', { uuid: userData.uuid, token: userData.token })
                 .then(data => {
+                    // リセットコマンドのチェック
+                    if (data.resetRequired) {
+                        alert('管理者によって設定がリセットされました。ページをリロードします。');
+                        localStorage.clear();
+                        window.location.reload();
+                        return; // ここで処理を中断
+                    }
+                    // BANのチェック
                     if (data.status === 'banned') {
-                        document.body.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; font-size:1.5rem; color:red; text-align:center;">あなたのアカウントは利用が制限されています。</div>`;
+                        document.body.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; font-size:1.5rem; color:#ff5555; text-align:center; padding: 1rem; box-sizing: border-box;">あなたのアカウントは利用停止されています。</div>`;
                         return;
                     }
+                    
                     // 新しいトークンを保存
                     userData.token = data.token;
                     localStorage.setItem('userInfo', JSON.stringify(userData));
@@ -238,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 })
                 .catch(err => {
-                    alert(`ログインに失敗しました: ${err.message}\nページをリロードします。`);
+                    alert(`ログインに失敗しました: ${err.message}\n設定をクリアしてリロードします。`);
                     localStorage.clear();
                     window.location.reload();
                 });
@@ -551,7 +560,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.addEventListener('beforeunload', () => {
         const userInfo = JSON.parse(localStorage.getItem('userInfo'));
         if (userInfo && userInfo.token) {
-            callGas('logout', { token: userInfo.token }).catch(() => {});
+            const data = JSON.stringify({ action: 'logout', payload: { token: userInfo.token } });
+            navigator.sendBeacon(GAS_URL, data);
         }
     });
 
@@ -591,11 +601,63 @@ document.addEventListener('DOMContentLoaded', function() {
     const shareModal = document.getElementById('share-modal');
     const updateInfoModal = document.getElementById('update-info-modal');
     const scheduleModal = document.getElementById('schedule-modal');
+    const settingsModal = document.getElementById('settings-modal');
     const showUpdateInfoBtn = document.getElementById('show-update-info-btn');
     const showScheduleBtn = document.getElementById('show-schedule-btn');
+    const settingsBtn = document.getElementById('settings-btn');
+
 
     showUpdateInfoBtn.addEventListener('click', () => updateInfoModal.classList.add('visible'));
     showScheduleBtn.addEventListener('click', () => scheduleModal.classList.add('visible'));
+    
+    // 設定モーダル表示
+    settingsBtn.addEventListener('click', () => {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        document.getElementById('new-username').value = userInfo.userName;
+        document.getElementById('settings-error').style.display = 'none';
+        settingsModal.classList.add('visible');
+    });
+
+    // 設定フォームの送信処理
+    document.getElementById('settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newUsername = document.getElementById('new-username').value.trim();
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        const errorEl = document.getElementById('settings-error');
+        const submitBtn = document.getElementById('settings-submit-btn');
+
+        if (newUsername === userInfo.userName) {
+            errorEl.textContent = '現在のユーザーネームと同じです。';
+            errorEl.style.display = 'block';
+            return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = '保存中...';
+        errorEl.style.display = 'none';
+
+        try {
+            await callGas('updateUsername', { 
+                uuid: userInfo.uuid, 
+                token: userInfo.token,
+                newUsername: newUsername
+            });
+
+            // ローカルストレージも更新
+            userInfo.userName = newUsername;
+            localStorage.setItem('userInfo', JSON.stringify(userInfo));
+
+            settingsModal.classList.remove('visible');
+            alert('ユーザー名を更新しました。');
+
+        } catch (err) {
+            errorEl.textContent = `更新失敗: ${err.message}`;
+            errorEl.style.display = 'block';
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '保存';
+        }
+    });
 
     let currentItemUrl = '';
 
