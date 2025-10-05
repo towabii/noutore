@@ -301,7 +301,7 @@ main {
 .modal-content h2 { margin-top: 0; font-size: 22px; border-bottom: 1px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 16px; }
 .modal-footer { text-align: right; margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; }
 
-/* ユーザー情報入力モーダル用スタイル (新規追加) */
+/* フォーム関連スタイル */
 .form-group {
     margin-bottom: 1.2rem;
     text-align: left;
@@ -328,6 +328,11 @@ main {
     outline: none;
     border-color: var(--accent-color);
     box-shadow: 0 0 10px var(--accent-color);
+}
+.error-message {
+    color: #ff5555;
+    margin-top: 1rem;
+    text-align: center;
 }
 
 
