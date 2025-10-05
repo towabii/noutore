@@ -60,7 +60,7 @@ const items = [
     description: "同じ色のブロックをそろえて消そう！連鎖が気持ちいい！",
     thumbnail: "./apps/app2/thumbnail.png",
     url: "./apps/app2/index.html",
-    recommend: "あと、3日でアップデート。申請お早めに"
+    recommend: "あと、3日で終了。移行申請お早めに"
   },
   {
     title: "ブロックトレーニング拡張版",
