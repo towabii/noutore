@@ -3,10 +3,12 @@
 // ここの情報を書き換えるだけでサイトに反映されます
 // ===============================================
 
-// 「今日の一言」の内容
-const oneWordData = {
-    image: "hitokoto.jpeg", // 画像ファイル名
-    text: "ねむ" // 表示する文章
+// 「お知らせ」の内容
+const notificationData = {
+    title: "【重要】メンテナンスのお知らせ",
+    text: "いつもご利用いただき、誠にありがとうございます。このたび「ブロックトレーニング」にて大型アップデートを実施いたします。#これに伴い、ハイスコアデータがリセットされます。#ただし、既存のハイスコアを新バージョンへ移行するための申請が可能となります。#移行を希望される方は、お早めに底原永和に話をしてください。#",
+    closeDelaySeconds: 10, // お知らせを閉じられるようになるまでの秒数
+    showOncePerDay: false // true: 1日1回だけ表示, false: 毎回表示
 };
 
 // 「アップデート情報」の内容
@@ -20,7 +22,7 @@ const updateInfoData = {
     video: "cpu.mp4", // 表示する動画ファイル名
     futureUpdates: [
         "ブロックトレーニングにCPUを追加予定",
-        "果物集めにもCPUを追加予定", // カンマを修正
+        "果物集めにもCPUを追加予定",
         "リンゴクリッカーを追加予定"
     ] // 今後のアップデート予定 (必要なだけ追加・削除できます)
 };
@@ -30,8 +32,8 @@ const scheduleData = [
     { name: "ジオメタリートレーニング", date: "10月23日" },
     { name: "3Dトレーニング", date: "11月7日" },
     { name: "ちょっとGPT", date: "11月30日" },
-    { name: "7番出口", date: "12月25日" }, // カンマを修正
-    { name: "リンゴクリッカー", date: "10月11日" }, // カンマを修正
+    { name: "7番出口", date: "12月25日" },
+    { name: "リンゴクリッカー", date: "10月11日" },
     { name: "時計", date: "明日" }
 ]; // { name: "ゲーム名", date: "日付" } の形式で追加・削除できます
 
@@ -136,23 +138,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- 動的コンテンツの読み込み ---
     function populateDynamicContent() {
-        // 今日の一言
-        const oneWordImg = document.getElementById('oneword-img');
-        const oneWordText = document.getElementById('oneword-text');
-        if (oneWordImg) oneWordImg.src = oneWordData.image;
-        if (oneWordText) oneWordText.textContent = oneWordData.text;
+        // お知らせ
+        const notificationTitle = document.getElementById('notification-title');
+        const notificationText = document.getElementById('notification-text');
+        if (notificationTitle) notificationTitle.textContent = notificationData.title;
+        if (notificationText) {
+            // #...# を <span class="highlight">...</span> に変換
+            const formattedText = notificationData.text.replace(/#(.*?)#/g, '<span class="highlight">$1</span>');
+            notificationText.innerHTML = formattedText;
+        }
 
         // アップデート情報
         const updateInfoTitle = document.getElementById('update-info-title');
         const updateInfoVideo = document.getElementById('update-info-video');
         const updateInfoFutureList = document.getElementById('update-info-future-list');
         if (updateInfoTitle) {
-            // titles配列の各要素を<br>タグで連結して、改行して表示する
             updateInfoTitle.innerHTML = updateInfoData.titles.join('<br>');
         }
         if (updateInfoVideo) updateInfoVideo.src = updateInfoData.video;
         if (updateInfoFutureList) {
-            updateInfoFutureList.innerHTML = ''; // リストを初期化
+            updateInfoFutureList.innerHTML = '';
             updateInfoData.futureUpdates.forEach(item => {
                 const li = document.createElement('li');
                 li.textContent = item;
@@ -163,7 +168,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // 実装予定日一覧
         const scheduleList = document.getElementById('schedule-list');
         if (scheduleList) {
-            scheduleList.innerHTML = ''; // リストを初期化
+            scheduleList.innerHTML = '';
             scheduleData.forEach(item => {
                 const li = document.createElement('li');
                 li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--panel-border);";
@@ -171,6 +176,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 scheduleList.appendChild(li);
             });
         }
+    }
+
+    // --- 毎日AM8時にリロード ---
+    function scheduleDailyReload() {
+        const now = new Date();
+        const reloadTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0);
+        let timeout;
+
+        if (now.getTime() > reloadTime.getTime()) {
+            // 今日の8時を過ぎていたら、明日の8時に設定
+            reloadTime.setDate(reloadTime.getDate() + 1);
+        }
+
+        timeout = reloadTime.getTime() - now.getTime();
+        setTimeout(() => window.location.reload(true), timeout);
     }
     
     // --- サイト初期化フロー ---
@@ -274,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const countdownMessageEl = document.getElementById('countdown-message');
         const testCountdownEl = document.getElementById('test-countdown-timer');
         const birthdayCountdownEl = document.getElementById('birthday-countdown-timer');
+        const schoolTripCountdownEl = document.getElementById('school-trip-countdown-timer');
 
         const now = new Date();
         const targetDate = new Date(now.getFullYear() + (90 - age), now.getMonth(), now.getDate());
@@ -305,6 +326,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 const testDiff = Math.ceil((testDate - now) / (1000 * 60 * 60 * 24));
                 testCountdownEl.textContent = `${testDiff} 日`;
             }
+            
+            // 修学旅行 (2026年1月16日)
+            const schoolTripDate = new Date(2026, 0, 16); // 月は0から始まる
+            if (now > schoolTripDate) {
+                schoolTripCountdownEl.textContent = '終了';
+            } else {
+                const tripDiff = Math.ceil((schoolTripDate - now) / (1000 * 60 * 60 * 24));
+                schoolTripCountdownEl.textContent = `${tripDiff} 日`;
+            }
     
             // 誕生日 (4月6日)
             let birthdayDate = new Date(currentYear, 3, 6); // 月は0-11
@@ -326,7 +356,7 @@ document.addEventListener('DOMContentLoaded', function() {
         countdownMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)];
         setInterval(() => {
             countdownMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)];
-        }, 10000); // 10秒ごとにメッセージを更新
+        }, 10000);
     }
 
 
@@ -358,14 +388,36 @@ document.addEventListener('DOMContentLoaded', function() {
             document.body.classList.remove('no-scroll');
             siteWrapper.classList.add('visible');
             
-            const lastShown = localStorage.getItem('onewordLastShown');
-            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            const lastShown = localStorage.getItem('notificationLastShown');
+            const today = new Date().toISOString().slice(0, 10);
             
-            if (lastShown !== today) {
-                const onewordModal = document.getElementById('oneword-modal');
+            // 設定に応じてお知らせを表示するかどうかを決定
+            const shouldShow = !notificationData.showOncePerDay || (notificationData.showOncePerDay && lastShown !== today);
+
+            if (shouldShow) {
+                const notificationModal = document.getElementById('notification-modal');
+                const closeBtn = document.getElementById('notification-close-btn');
                 setTimeout(() => { 
-                    onewordModal.classList.add('visible'); 
-                    localStorage.setItem('onewordLastShown', today);
+                    notificationModal.classList.add('visible'); 
+                    
+                    // 1日1回表示設定の場合のみ、今日の日付を記録
+                    if (notificationData.showOncePerDay) {
+                        localStorage.setItem('notificationLastShown', today);
+                    }
+                    
+                    let count = notificationData.closeDelaySeconds || 5;
+                    closeBtn.textContent = `閉じる (${count})`;
+                    const timer = setInterval(() => {
+                        count--;
+                        if (count > 0) {
+                            closeBtn.textContent = `閉じる (${count})`;
+                        } else {
+                            clearInterval(timer);
+                            closeBtn.disabled = false;
+                            closeBtn.textContent = '閉じる';
+                        }
+                    }, 1000);
+
                 }, 500);
             }
         }
@@ -382,7 +434,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target.closest('input, textarea') || document.querySelector('.modal-overlay.visible')) {
             return;
         }
-        // Enterキーで偽翻訳サイトをトグル
         if (e.key === 'Enter') {
             e.preventDefault();
             fakeTranslator.classList.toggle('hidden');
@@ -403,11 +454,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 cheatCodeBuffer += e.key.toLowerCase();
             }
             if (cheatCodeBuffer === 'reset') {
-                if (confirm('本当に設定（年齢・利用規約同意）をリセットしますか？')) {
-                    localStorage.removeItem('userAge');
-                    localStorage.removeItem('termsAgreed');
-                    localStorage.removeItem('tutorialCompleted');
-                    localStorage.removeItem('onewordLastShown');
+                if (confirm('本当に設定（年齢・利用規約同意など）をリセットしますか？')) {
+                    localStorage.clear(); // 全てのローカルストレージを削除
                     alert('設定をリセットしました。ページをリロードします。');
                     window.location.reload();
                 }
@@ -456,12 +504,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const showUpdateInfoBtn = document.getElementById('show-update-info-btn');
     const showScheduleBtn = document.getElementById('show-schedule-btn');
 
-    showUpdateInfoBtn.addEventListener('click', () => {
-        updateInfoModal.classList.add('visible');
-    });
-    showScheduleBtn.addEventListener('click', () => {
-        scheduleModal.classList.add('visible');
-    });
+    showUpdateInfoBtn.addEventListener('click', () => updateInfoModal.classList.add('visible'));
+    showScheduleBtn.addEventListener('click', () => scheduleModal.classList.add('visible'));
 
     let currentItemUrl = '';
 
@@ -490,7 +534,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const qrcodeContainer = document.getElementById('qrcode');
         qrcodeContainer.innerHTML = '';
         QRCode.toCanvas(url, { width: 220, errorCorrectionLevel: 'H' }, (err, canvas) => {
-            if (err) return console.error(err);
+            if (err) {
+                console.error(err);
+                qrcodeContainer.innerHTML = '<p style="color: var(--text-secondary); text-align:center; padding: 20px 0;">QRコードの生成に失敗しました。<br>URLをコピーしてご利用ください。</p>';
+                return;
+            }
             qrcodeContainer.appendChild(canvas);
         });
         shareModal.classList.add('visible');
@@ -508,18 +556,17 @@ document.addEventListener('DOMContentLoaded', function() {
         openShareModal('このサイトを共有', window.location.href);
     });
     
-    // URLコピーボタン（フォールバック対応）
+    // URLコピーボタン
     document.getElementById('copy-url-btn').addEventListener('click', (e) => {
         const urlInput = document.getElementById('share-url-input');
         const urlToCopy = urlInput.value;
         const button = e.target;
 
-        if (navigator.clipboard && window.isSecureContext) {
-            navigator.clipboard.writeText(urlToCopy).then(() => {
-                button.textContent = 'コピー完了!';
-                setTimeout(() => { button.textContent = 'コピー'; }, 2000);
-            }).catch(err => console.error('クリップボードへのコピーに失敗:', err));
-        } else {
+        navigator.clipboard.writeText(urlToCopy).then(() => {
+            button.textContent = 'コピー完了!';
+            setTimeout(() => { button.textContent = 'コピー'; }, 2000);
+        }).catch(err => {
+            console.error('クリップボードへのコピーに失敗:', err);
             urlInput.select();
             try {
                 document.execCommand('copy');
@@ -528,7 +575,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } catch (err) {
                 alert('このブラウザでは自動コピーがサポートされていません。手動でコピーしてください。');
             }
-        }
+        });
     });
 
     // モーダルを閉じる処理
@@ -536,6 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('visible'); }));
 
     // --- サイト起動 ---
-    populateDynamicContent(); // サイトの動的コンテンツを読み込む
+    populateDynamicContent();
+    scheduleDailyReload();
     initSiteFlow();
 });
