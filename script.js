@@ -55,21 +55,14 @@ const items = [
     description: "CPU(人工知能)と対戦できるブロック落とし！あなたは勝てるか！？",
     thumbnail: "./apps/app10/thumbnail.jpeg",
     url: "./apps/app10/index.html",
-    recommend: "早期アクセスバージョン"
+    recommend: "一番頑張った泣"
   },
   {
     title: "ブロックトレーニング",
     description: "同じ色のブロックをそろえて消そう！連鎖が気持ちいい！",
     thumbnail: "./apps/app2/thumbnail.png",
     url: "./apps/app2/index.html",
-    recommend: "あと、3日で終了。移行申請お早めに"
-  },
-  {
-    title: "ブロックトレーニング拡張版",
-    description: "同じ色のブロックをそろえて消そう！CPUに勝てるのか！！",
-    thumbnail: "./apps/app11/thumbnail.jpg",
-    url: "./apps/app11/index.html",
-    recommend: "早期アクセス"
+    recommend: "一番人気！"
   },
   {
     title: "果物集め",
