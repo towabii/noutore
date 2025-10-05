@@ -1,4 +1,10 @@
 // ===============================================
+// ▲▲▲ 必ず設定してください ▲▲▲
+// ===============================================
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwYKqMQ0iH_DykpsWNJh3Yj5DIrUc07eUVw0uB-H36tssHOCyDyY6IuAVndQ2iU6LFt/exec';
+// ===============================================
+
+// ===============================================
 // 簡単更新エリア
 // ここの情報を書き換えるだけでサイトに反映されます
 // ===============================================
@@ -129,6 +135,27 @@ document.addEventListener('DOMContentLoaded', function() {
     let staffRollTimer;
     let countdownInterval;
 
+    // --- GAS通信 ---
+    async function callGas(action, payload = {}) {
+        try {
+            if (!GAS_URL || GAS_URL.includes('貼り付け')) {
+                throw new Error('GASのURLが設定されていません。');
+            }
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action, payload })
+            });
+            if (!response.ok) throw new Error(`サーバーエラー: ${response.status}`);
+            const result = await response.json();
+            if (result.status === 'error') throw new Error(result.message);
+            return result.data;
+        } catch (error) {
+            console.error('GAS通信エラー:', error);
+            throw error;
+        }
+    }
+
     // --- 動的コンテンツの読み込み ---
     function populateDynamicContent() {
         // お知らせ
@@ -136,7 +163,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const notificationText = document.getElementById('notification-text');
         if (notificationTitle) notificationTitle.textContent = notificationData.title;
         if (notificationText) {
-            // #...# を <span class="highlight">...</span> に変換
             const formattedText = notificationData.text.replace(/#(.*?)#/g, '<span class="highlight">$1</span>');
             notificationText.innerHTML = formattedText;
         }
@@ -175,25 +201,94 @@ document.addEventListener('DOMContentLoaded', function() {
     function scheduleDailyReload() {
         const now = new Date();
         const reloadTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 8, 0, 0, 0);
-        let timeout;
-
         if (now.getTime() > reloadTime.getTime()) {
-            // 今日の8時を過ぎていたら、明日の8時に設定
             reloadTime.setDate(reloadTime.getDate() + 1);
         }
-
-        timeout = reloadTime.getTime() - now.getTime();
+        const timeout = reloadTime.getTime() - now.getTime();
         setTimeout(() => window.location.reload(true), timeout);
     }
     
     // --- サイト初期化フロー ---
     function initSiteFlow() {
-        const tutorialCompleted = localStorage.getItem('tutorialCompleted');
-        if (!tutorialCompleted) {
-            runTutorial(() => checkTerms());
+        playStaffRoll(); // 先にスタッフロールを開始
+    }
+
+    // スタッフロールが終わった後の処理
+    function afterStaffRoll() {
+        const userInfo = localStorage.getItem('userInfo');
+        if (!userInfo) {
+            showUserInfoModal();
         } else {
-            checkTerms();
+            const userData = JSON.parse(userInfo);
+            callGas('login', { uuid: userData.uuid, token: userData.token })
+                .then(data => {
+                    if (data.status === 'banned') {
+                        document.body.innerHTML = `<div style="display:flex; justify-content:center; align-items:center; height:100vh; font-size:1.5rem; color:red; text-align:center;">あなたのアカウントは利用が制限されています。</div>`;
+                        return;
+                    }
+                    // 新しいトークンを保存
+                    userData.token = data.token;
+                    localStorage.setItem('userInfo', JSON.stringify(userData));
+                    
+                    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+                    if (!tutorialCompleted) {
+                        runTutorial(() => checkTermsAndStart());
+                    } else {
+                        checkTermsAndStart();
+                    }
+                })
+                .catch(err => {
+                    alert(`ログインに失敗しました: ${err.message}\nページをリロードします。`);
+                    localStorage.clear();
+                    window.location.reload();
+                });
         }
+    }
+    
+    function showUserInfoModal() {
+        const modal = document.getElementById('user-info-modal');
+        const form = document.getElementById('user-info-form');
+        const errorEl = document.getElementById('user-info-error');
+        const submitBtn = document.getElementById('user-info-submit-btn');
+
+        modal.classList.add('visible');
+        document.body.classList.add('no-scroll');
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            submitBtn.disabled = true;
+            submitBtn.textContent = '登録中...';
+            errorEl.style.display = 'none';
+
+            const fullName = document.getElementById('full-name').value.trim();
+            const userName = document.getElementById('user-name').value.trim();
+            const birthDate = document.getElementById('birth-date').value;
+
+            if (!fullName || !userName || !birthDate) {
+                errorEl.textContent = 'すべての項目を入力してください。';
+                errorEl.style.display = 'block';
+                submitBtn.disabled = false;
+                submitBtn.textContent = '利用を開始する';
+                return;
+            }
+
+            const userData = { fullName, userName, birthDate };
+
+            try {
+                const result = await callGas('registerUser', userData);
+                const storedData = { ...userData, uuid: result.uuid, token: result.token };
+                localStorage.setItem('userInfo', JSON.stringify(storedData));
+                modal.classList.remove('visible');
+                document.body.classList.remove('no-scroll');
+                runTutorial(() => checkTermsAndStart());
+            } catch (err) {
+                errorEl.textContent = `登録に失敗しました: ${err.message}`;
+                errorEl.style.display = 'block';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = '利用を開始する';
+            }
+        };
     }
 
     function runTutorial(callback) {
@@ -207,9 +302,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const totalSteps = steps.length;
 
         function updateStep() {
-            steps.forEach((step, index) => {
-                step.classList.toggle('active', index === currentStep);
-            });
+            steps.forEach((step, index) => step.classList.toggle('active', index === currentStep));
             indicator.textContent = `${currentStep + 1} / ${totalSteps}`;
             prevBtn.style.visibility = currentStep === 0 ? 'hidden' : 'visible';
             nextBtn.textContent = currentStep === totalSteps - 1 ? '完了' : '次へ';
@@ -229,21 +322,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 completeTutorial();
             }
         });
-
         prevBtn.addEventListener('click', () => {
             if (currentStep > 0) {
                 currentStep--;
                 updateStep();
             }
         });
-        
         skipBtn.addEventListener('click', completeTutorial);
-        
         modal.classList.add('visible');
         updateStep();
     }
 
-    function checkTerms() {
+    function checkTermsAndStart() {
         const termsAgreed = localStorage.getItem('termsAgreed');
         if (!termsAgreed) {
             const termsModal = document.getElementById('terms-modal');
@@ -251,27 +341,35 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('terms-agree-btn').addEventListener('click', () => {
                 localStorage.setItem('termsAgreed', 'true');
                 termsModal.classList.remove('visible');
-                checkAgeAndStart();
+                startSiteWithCountdown();
             });
         } else {
-            checkAgeAndStart();
+            startSiteWithCountdown();
         }
     }
 
-    function checkAgeAndStart() {
-        let userAge = localStorage.getItem('userAge');
-        if (!userAge) {
-            const ageInput = prompt('あなたの現在の年齢を半角数字で入力してください。人生の残り時間を表示します。');
-            if (ageInput && !isNaN(ageInput) && parseInt(ageInput) > 0) {
-                userAge = parseInt(ageInput);
-                localStorage.setItem('userAge', userAge);
-            } else {
-                alert('無効な値です。ページをリロードして再入力してください。');
-                return;
-            }
+    function calculateAge(birthDateString) {
+        const birthDate = new Date(birthDateString);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
         }
-        startCountdown(parseInt(userAge));
-        startSite();
+        return age;
+    }
+
+    function startSiteWithCountdown() {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (userInfo && userInfo.birthDate) {
+            const age = calculateAge(userInfo.birthDate);
+            startCountdown(age);
+            showMainContent();
+        } else {
+            alert('ユーザー情報の取得に失敗しました。設定をリセットします。');
+            localStorage.clear();
+            window.location.reload();
+        }
     }
 
     // --- カウントダウン機能 ---
@@ -311,8 +409,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const now = new Date();
             const currentYear = now.getFullYear();
     
-            // 中間テスト (11月18日)
-            const testDate = new Date(currentYear, 10, 18); // 月は0-11
+            const testDate = new Date(currentYear, 10, 18);
             if (now > testDate) {
                  testCountdownEl.textContent = '終了';
             } else {
@@ -320,8 +417,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 testCountdownEl.textContent = `${testDiff} 日`;
             }
             
-            // 修学旅行 (2026年1月16日)
-            const schoolTripDate = new Date(2026, 0, 16); // 月は0から始まる
+            const schoolTripDate = new Date(2026, 0, 16);
             if (now > schoolTripDate) {
                 schoolTripCountdownEl.textContent = '終了';
             } else {
@@ -329,8 +425,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 schoolTripCountdownEl.textContent = `${tripDiff} 日`;
             }
     
-            // 誕生日 (4月6日)
-            let birthdayDate = new Date(currentYear, 3, 6); // 月は0-11
+            let birthdayDate = new Date(currentYear, 3, 6);
             if (now > birthdayDate) {
                 birthdayDate.setFullYear(currentYear + 1);
             }
@@ -354,12 +449,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
     // --- スタッフロールとサイト表示 ---
-    function startSite() {
-        if (document.body.dataset.siteStarted) return;
-        document.body.dataset.siteStarted = true;
-        playStaffRoll();
-    }
-
     function playStaffRoll() {
         const container = document.getElementById('staffRollContainer');
         const oldCredits = container.querySelector('.credits-list');
@@ -372,51 +461,49 @@ document.addEventListener('DOMContentLoaded', function() {
         loader.classList.remove('fade-out');
         siteWrapper.classList.remove('visible');
         clearTimeout(staffRollTimer);
-        staffRollTimer = setTimeout(showMainContent, 20000);
+        staffRollTimer = setTimeout(onStaffRollEnd, 20000);
+    }
+
+    function onStaffRollEnd() {
+        if (!loader.classList.contains('fade-out')) {
+            loader.classList.add('fade-out');
+            afterStaffRoll();
+        }
     }
 
     function showMainContent() {
-        if (!loader.classList.contains('fade-out')) {
-            loader.classList.add('fade-out');
-            document.body.classList.remove('no-scroll');
-            siteWrapper.classList.add('visible');
-            
-            const lastShown = localStorage.getItem('notificationLastShown');
-            const today = new Date().toISOString().slice(0, 10);
-            
-            // 設定に応じてお知らせを表示するかどうかを決定
-            const shouldShow = !notificationData.showOncePerDay || (notificationData.showOncePerDay && lastShown !== today);
+        document.body.classList.remove('no-scroll');
+        siteWrapper.classList.add('visible');
+        
+        const lastShown = localStorage.getItem('notificationLastShown');
+        const today = new Date().toISOString().slice(0, 10);
+        const shouldShow = !notificationData.showOncePerDay || (notificationData.showOncePerDay && lastShown !== today);
 
-            if (shouldShow) {
-                const notificationModal = document.getElementById('notification-modal');
-                const closeBtn = document.getElementById('notification-close-btn');
-                setTimeout(() => { 
-                    notificationModal.classList.add('visible'); 
-                    
-                    // 1日1回表示設定の場合のみ、今日の日付を記録
-                    if (notificationData.showOncePerDay) {
-                        localStorage.setItem('notificationLastShown', today);
+        if (shouldShow) {
+            const notificationModal = document.getElementById('notification-modal');
+            const closeBtn = document.getElementById('notification-close-btn');
+            setTimeout(() => { 
+                notificationModal.classList.add('visible'); 
+                if (notificationData.showOncePerDay) {
+                    localStorage.setItem('notificationLastShown', today);
+                }
+                let count = notificationData.closeDelaySeconds || 5;
+                closeBtn.textContent = `閉じる (${count})`;
+                const timer = setInterval(() => {
+                    count--;
+                    if (count > 0) {
+                        closeBtn.textContent = `閉じる (${count})`;
+                    } else {
+                        clearInterval(timer);
+                        closeBtn.disabled = false;
+                        closeBtn.textContent = '閉じる';
                     }
-                    
-                    let count = notificationData.closeDelaySeconds || 5;
-                    closeBtn.textContent = `閉じる (${count})`;
-                    const timer = setInterval(() => {
-                        count--;
-                        if (count > 0) {
-                            closeBtn.textContent = `閉じる (${count})`;
-                        } else {
-                            clearInterval(timer);
-                            closeBtn.disabled = false;
-                            closeBtn.textContent = '閉じる';
-                        }
-                    }, 1000);
-
-                }, 500);
-            }
+                }, 1000);
+            }, 500);
         }
     }
     
-    skipBtn.addEventListener('click', () => { clearTimeout(staffRollTimer); showMainContent(); });
+    skipBtn.addEventListener('click', () => { clearTimeout(staffRollTimer); onStaffRollEnd(); });
     replayStaffRollBtn.addEventListener('click', playStaffRoll);
 
     
@@ -433,7 +520,6 @@ document.addEventListener('DOMContentLoaded', function() {
             cheatCodeBuffer = null;
             return;
         }
-        
         if (e.key === ' ' || e.code === 'Space') {
             e.preventDefault();
             cheatCodeBuffer = '';
@@ -441,14 +527,17 @@ document.addEventListener('DOMContentLoaded', function() {
             cheatTimeout = setTimeout(() => { cheatCodeBuffer = null; }, 3000);
             return;
         }
-
         if (cheatCodeBuffer !== null) {
             if (e.key.length === 1) {
                 cheatCodeBuffer += e.key.toLowerCase();
             }
             if (cheatCodeBuffer === 'reset') {
-                if (confirm('本当に設定（年齢・利用規約同意など）をリセットしますか？')) {
-                    localStorage.clear(); // 全てのローカルストレージを削除
+                if (confirm('本当にすべての設定（ユーザー情報、利用規約同意など）をリセットしますか？')) {
+                    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+                    if (userInfo && userInfo.token) {
+                         callGas('logout', { token: userInfo.token }).catch(err => console.error("ログアウト失敗", err));
+                    }
+                    localStorage.clear();
                     alert('設定をリセットしました。ページをリロードします。');
                     window.location.reload();
                 }
@@ -457,7 +546,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
-    
+
+    // ページを離れるときにログアウト処理を試みる
+    window.addEventListener('beforeunload', () => {
+        const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+        if (userInfo && userInfo.token) {
+            callGas('logout', { token: userInfo.token }).catch(() => {});
+        }
+    });
+
     // --- 偽翻訳の簡易ロジック ---
     translatorInput.addEventListener('input', () => {
         translatorOutput.value = simpleTranslate(translatorInput.value);
@@ -502,7 +599,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let currentItemUrl = '';
 
-    // 作品詳細モーダル表示
     itemListContainer.addEventListener('click', function(event) {
         const clickedCard = event.target.closest('.item-card');
         if (clickedCard) {
@@ -520,7 +616,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // 共有モーダルを開く汎用関数
     function openShareModal(title, url) {
         document.getElementById('share-modal-title').textContent = title;
         document.getElementById('share-url-input').value = url;
@@ -537,19 +632,16 @@ document.addEventListener('DOMContentLoaded', function() {
         shareModal.classList.add('visible');
     }
 
-    // 作品の共有ボタン
     document.getElementById('details-modal-share-btn').addEventListener('click', () => {
         const url = new URL(currentItemUrl, window.location.href).href;
         openShareModal('作品を共有', url);
         detailsModal.classList.remove('visible');
     });
     
-    // サイト自体の共有ボタン
     document.getElementById('share-site-btn').addEventListener('click', () => {
         openShareModal('このサイトを共有', window.location.href);
     });
     
-    // URLコピーボタン
     document.getElementById('copy-url-btn').addEventListener('click', (e) => {
         const urlInput = document.getElementById('share-url-input');
         const urlToCopy = urlInput.value;
@@ -560,18 +652,10 @@ document.addEventListener('DOMContentLoaded', function() {
             setTimeout(() => { button.textContent = 'コピー'; }, 2000);
         }).catch(err => {
             console.error('クリップボードへのコピーに失敗:', err);
-            urlInput.select();
-            try {
-                document.execCommand('copy');
-                button.textContent = 'コピー完了!';
-                setTimeout(() => { button.textContent = 'コピー'; }, 2000);
-            } catch (err) {
-                alert('このブラウザでは自動コピーがサポートされていません。手動でコピーしてください。');
-            }
+            try { document.execCommand('copy'); button.textContent = 'コピー完了!'; setTimeout(() => { button.textContent = 'コピー'; }, 2000); } catch (err) { alert('自動コピーがサポートされていません。'); }
         });
     });
 
-    // モーダルを閉じる処理
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.addEventListener('click', () => btn.closest('.modal-overlay').classList.remove('visible')));
     document.querySelectorAll('.modal-overlay').forEach(overlay => overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.remove('visible'); }));
 
