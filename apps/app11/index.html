@@ -102,6 +102,21 @@ PR .............................. 底原永和
     </div>
 
     <div class="app hidden" role="application" aria-label="ブロックトレーニング" id="appContainer">
+      <!-- CPU対戦用パネル (ここから) -->
+      <div class="game-panel hidden" id="cpuPanel">
+        <div class="header">
+          <div class="title">CPU</div>
+          <div class="meta">
+            <div class="box" id="cpuLevelBox">Level: 1</div>
+            <div class="box" id="cpuScoreBox">Score: 0</div>
+          </div>
+        </div>
+        <div class="board-wrap">
+          <div class="board" id="cpuBoard" aria-label="CPUの盤面"></div>
+        </div>
+      </div>
+      <!-- CPU対戦用パネル (ここまで) -->
+      
       <div class="game-panel" id="gamePanel">
         <div class="header">
           <div class="title">ブロックトレーニング</div>
@@ -121,6 +136,7 @@ PR .............................. 底原永和
           </div>
         </div>
       </div>
+
       <aside class="side" id="side">
         <h3>Available Pieces</h3>
         <div class="pieces" id="piecesContainer" role="list"></div>
@@ -153,11 +169,12 @@ PR .............................. 底原永和
         </div>
       </aside>
     </div>
-    
+
     <!-- モーダルウィンドウ集 -->
     <div id="noticeModal" class="modal-overlay hidden"></div>
     <div id="rankingModal" class="modal-overlay hidden"></div>
     <div id="modeSelectModal" class="modal-overlay hidden"></div>
+    <div id="cpuLevelSelectModal" class="modal-overlay hidden"></div>
 
     <div id="cheatCodeModal" class="modal-overlay hidden">
       <div class="modal-content">
