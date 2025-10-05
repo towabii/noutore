@@ -301,7 +301,11 @@ main {
 .modal-content h2 { margin-top: 0; font-size: 22px; border-bottom: 1px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 16px; }
 .modal-footer { text-align: right; margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end; }
 
-#oneword-modal img { max-width: 100%; border-radius: 8px; margin-bottom: 1rem; }
+#notification-text span.highlight {
+    color: #ff5555; /* 強調用の赤色 */
+    font-weight: bold;
+}
+
 #details-modal-img { width: 100%; height: 240px; object-fit: cover; border-radius: 8px; margin-bottom: 16px; }
 #details-modal-desc { color: var(--text-secondary); line-height: 1.7; }
 
