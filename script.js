@@ -1,7 +1,7 @@
 // ===============================================
 // ▲▲▲ 必ず設定してください ▲▲▲
 // ===============================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwABUATpZm2Sv66l61N7a7-B5XWIp8zk999cR2yrMbzl_HOwJ96RbZ5uCkG2OFHMZW3/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzmaoPuWPExC2fkD3pMHVxcrnj7kvLikrLDFQC8TwhAZDrIyBAPTTaIUOnJTARF2GVh/exec';
 // ===============================================
 
 // ===============================================
