@@ -51,14 +51,7 @@ const scheduleData = [
 const items = [
   {
     title: "ブロック落とし",
-    description: "あれをを底原永和がまあパクったゲーム",
-    thumbnail: "./apps/app1/thumbnail.png",
-    url: "./apps/app1/index.html",
-    recommend: "とわ一押し"
-  },
-  {
-    title: "ブロック落としCPUモード",
-    description: "CPU(人工知能)と対戦できるブロック落とし！あなたは勝てるか！？",
+    description: "CPUと対戦できるブロック落とし！あなたは勝てるか！？",
     thumbnail: "./apps/app10/thumbnail.jpeg",
     url: "./apps/app10/index.html",
     recommend: "一番頑張った泣"
