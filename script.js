@@ -92,6 +92,13 @@ const items = [
     recommend: null
   },
   {
+    title: "提出物共有",
+    description: "提出物の期限が書かれてるよ❤",
+    thumbnail: "./apps/app10/thumbnail.jpeg",
+    url: "https://calendar.google.com/calendar/u/0?cid=Y184OTcwNjUzMGZkZWQ1MGRhMjdhYTE0MmEyNTJmMmVjMzU3NTMxNGY2YTk3NjA5MzcyN2VlODg2MTQ3NDkxYmU5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20",
+    recommend: "みんなで協力"
+  },  
+  {
     title: "3Dトレーニング",
     description: "三次元空間で頭を鍛える新しい体験。完成までもう少し待っててね！",
     thumbnail: "./apps/app7/thumbnail.png", 
