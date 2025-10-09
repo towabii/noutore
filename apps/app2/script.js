@@ -23,8 +23,8 @@ const GAME_CONFIG = {
     RANKINGS: {
         normal: [{
             rank: 1,
-            name: "匿名()",
-            score: 72000
+            name: "四皇の右腕",
+            score: 101100
         }, {
             rank: 2,
             name: "底原永和",
