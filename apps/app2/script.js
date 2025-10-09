@@ -23,7 +23,7 @@ const GAME_CONFIG = {
     RANKINGS: {
         normal: [{
             rank: 1,
-            name: "四皇の右腕",
+            name: "sei-",
             score: 101100
         }, {
             rank: 2,
