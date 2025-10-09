@@ -13,7 +13,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzmaoPuWPExC2fkD3pMHVxc
 const notificationData = {
     title: "【重要】ちょっとGPT有料化について",
     text: "これまで無料で提供予定だった当AIサービスですが、運営体制の都合により、#月額制の有料サービスとして提供することになりました。#突然の変更となり申し訳ございません。<br>ライトプラン：月額 80円<br><br>スタンダードプラン：月額 110円<br><br>プレミアムプラン：月額 250円<br><br>できるだけ安く提供できるよう赤字覚悟でやっております。何卒よろしくお願いいたします。<br>",
-    closeDelaySeconds: 2, // お知らせを閉じられるようになるまでの秒数
+    closeDelaySeconds: 0, // お知らせを閉じられるようになるまでの秒数
     showOncePerDay: false // true: 1日1回だけ表示, false: 毎回表示
 };
 
