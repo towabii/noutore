@@ -12,7 +12,7 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyU27oTz6Nt65kkF7nLu_r9
 // 「お知らせ」の内容
 const notificationData = {
     title: "【重要】大規模アップデートについて",
-    text: "このサイトの、大規模アップデートを#2025/10/20#に配信する予定です。これに伴いデータ消失バグなどが起こる可能性があります。その場合は底原永和に直接お申し付けください。",
+    text: "このサイトの、大規模アップデートを#2025/10/20の20時#から配信する予定です。これに伴いデータ消失バグなどが起こる可能性があります。その場合は底原永和に直接お申し付けください。",
     closeDelaySeconds: 0, // お知らせを閉じられるようになるまでの秒数
     showOncePerDay: false // true: 1日1回だけ表示, false: 毎回表示
 };
