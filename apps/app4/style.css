@@ -1,0 +1,107 @@
+:root {
+    --bg-start: #232526;
+    --bg-end: #414345;
+    --panel-bg: rgba(44, 44, 46, 0.85);
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --accent-primary: #0a84ff;
+    --accent-secondary: #30d158;
+    --border-color: rgba(138, 138, 143, 0.3);
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 基本スタイル */
+body { margin: 0; font-family: var(--font-family); background: linear-gradient(160deg, var(--bg-start), var(--bg-end)); color: var(--text-primary); overflow: hidden; height: 100vh; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; user-select: none; }
+.hidden { display: none !important; }
+
+/* ローディング画面 */
+#loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+#skipBtn { position: absolute; bottom: 20px; right: 20px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer; z-index: 10000; font-weight: bold; }
+#staffRollContainer { width: 100%; height: 100%; overflow: hidden; position: relative; }
+.credits-list { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 90%; max-width: 700px; color: #e0e0e0; text-align: center; font-size: 16px; animation: scroll-up 14s linear forwards; }
+.credits-list pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 1em; line-height: 1.8; text-align: left; white-space: pre-wrap; margin: 0; }
+@keyframes scroll-up { 0% { top: 100%; } 100% { top: -100%; } }
+@keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
+.fade-out { animation: fade-out 0.5s ease-out forwards; }
+
+/* メインアプリコンテナ */
+#app-container { display: flex; justify-content: center; align-items: center; height: 100%; position: relative; perspective: 1200px; }
+.screen { width: 100%; height: 100%; position: absolute; display: flex; flex-direction: column; backface-visibility: hidden; transition: transform 0.7s cubic-bezier(0.45, 0, 0.55, 1), opacity 0.5s ease; opacity: 1; transform: rotateY(0deg) translateZ(0); }
+.screen:not(.active) { transform: rotateY(-90deg) translateZ(-300px); opacity: 0; pointer-events: none; }
+
+/* ヘッダー */
+.screen-header { display: flex; justify-content: center; align-items: center; padding: 24px; flex-shrink: 0; position: relative; width: 100%; max-width: 900px; margin: 0 auto; box-sizing: border-box; }
+.header-main-content { text-align: center; }
+.screen-header h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -0.5px; }
+.screen-header p { margin: 8px 0 0; color: var(--text-secondary); }
+.game-header { display: flex; justify-content: space-between; align-items: center; padding: 24px; width: 100%; max-width: 900px; margin: 0 auto; box-sizing: border-box; }
+.level-display { font-size: 24px; font-weight: 600; }
+
+/* ボタン */
+.btn, .btn-secondary, .btn-icon { padding: 12px 24px; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease; font-family: var(--font-family); text-decoration: none; display: inline-flex; justify-content: center; align-items: center; }
+.btn { background-color: var(--accent-primary); color: white; }
+.btn:hover { background-color: #007aff; box-shadow: 0 4px 15px rgba(10, 132, 255, 0.3); transform: translateY(-2px); }
+.btn-secondary { background-color: var(--panel-bg); color: var(--text-primary); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background-color: rgba(60, 60, 62, 0.85); transform: translateY(-2px); }
+.btn-icon { background: none; color: var(--text-secondary); padding: 8px; width: 44px; height: 44px; }
+.btn-icon.btn-main-home { position: absolute; left: 24px; top: 50%; transform: translateY(-50%); }
+.btn-icon svg { width: 24px; height: 24px; }
+.btn-icon:hover { color: var(--text-primary); background-color: var(--panel-bg); }
+
+/* 操作モード選択 */
+.mode-selection-container { display: flex; gap: 24px; justify-content: center; margin-top: 32px; }
+.mode-btn { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 32px; width: 200px; height: 160px; font-size: 20px; }
+.mode-icon { font-size: 48px; }
+
+/* レベル選択画面 */
+.level-grid { flex-grow: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 20px; padding: 24px; max-width: 800px; width: 100%; margin: 0 auto; overflow-y: auto; box-sizing: border-box; }
+.level-btn { aspect-ratio: 1 / 1; background-color: var(--panel-bg); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 24px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; overflow: hidden; }
+.level-btn.cleared { background-color: rgba(48, 209, 88, 0.2); border-color: rgba(48, 209, 88, 0.5); }
+.level-btn.locked { background-color: rgba(44, 44, 46, 0.5); color: var(--text-secondary); cursor: not-allowed; }
+.level-btn.locked::after { content: '🔒'; position: absolute; font-size: 18px; bottom: 8px; right: 8px; opacity: 0.5; }
+.screen-footer { padding: 24px; text-align: center; }
+
+/* ゲーム画面 */
+.game-board-container { flex-grow: 1; display: flex; justify-content: center; align-items: center; position: relative; padding: 16px; overflow: hidden; }
+.game-board { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; align-items: flex-end; padding: 24px; max-width: 1200px; }
+.vial { width: 60px; height: 240px; border: 3px solid var(--border-color); border-top: none; background: rgba(0, 0, 0, 0.15); border-radius: 0 0 30px 30px; display: flex; flex-direction: column-reverse; padding: 8px; box-sizing: border-box; cursor: pointer; transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out; position: relative; }
+.vial::before { content: ''; position: absolute; top: -8px; left: -3px; right: -3px; height: 8px; background: var(--border-color); border-radius: 5px 5px 0 0; transition: background-color 0.2s ease; }
+.vial.selected { transform: translateY(-25px) scale(1.08); box-shadow: 0 12px 35px var(--shadow-color); border-color: var(--accent-primary); }
+.vial.selected::before { background-color: var(--accent-primary); }
+.vial.focused { box-shadow: 0 0 25px var(--accent-primary); border-color: var(--accent-primary); }
+.vial.focused::before { background-color: var(--accent-primary); }
+.vial.completed { border-color: var(--accent-secondary); }
+.vial.completed::before { background-color: var(--accent-secondary); }
+.block { width: 100%; height: calc(100% / 4 - 4px); border-radius: 50%; box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.4); margin-top: 4px; flex-shrink: 0; }
+
+/* アニメーション用 */
+#animation-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+.moving-block { position: absolute; width: 44px; height: 50px; border-radius: 50%; box-shadow: inset 0 -6px 12px rgba(0, 0, 0, 0.4); z-index: 10; }
+
+/* モーダル */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+.modal-overlay:not(.hidden) { opacity: 1; pointer-events: auto; }
+.modal-content { background: var(--panel-bg); border-radius: 20px; padding: 32px 40px; text-align: center; border: 1px solid var(--border-color); box-shadow: 0 20px 50px var(--shadow-color); transform: scale(0.9); transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); max-width: 500px; width: 90%; }
+.modal-overlay:not(.hidden) .modal-content { transform: scale(1); }
+.modal-icon { font-size: 48px; margin-bottom: 16px; }
+.modal-content h2 { margin: 0 0 8px; font-size: 24px; }
+.modal-content p { margin: 0 0 24px; color: var(--text-secondary); line-height: 1.6; }
+.modal-actions { display: flex; gap: 16px; justify-content: center; margin-top: 24px; }
+
+/* チュートリアル用 */
+.tutorial-content { text-align: left; margin: 24px 0; border-top: 1px solid var(--border-color); padding-top: 24px; }
+.tutorial-content h3 { margin-top: 0; }
+.tutorial-content p { margin: 12px 0; color: var(--text-primary); }
+.tutorial-content .tutorial-hint { color: var(--accent-secondary); background-color: rgba(48, 209, 88, 0.1); padding: 12px; border-radius: 8px; }
+.tutorial-content kbd { background-color: rgba(255, 255, 255, 0.1); border: 1px solid var(--border-color); border-radius: 6px; padding: 4px 8px; font-size: 14px; font-family: inherit; }
+
+@media (max-width: 768px) {
+    .vial { width: 50px; height: 200px; border-radius: 0 0 25px 25px; }
+    .game-board { gap: 16px; }
+    .level-grid { grid-template-columns: repeat(auto-fill, minmax(65px, 1fr)); gap: 16px; }
+    .screen-header { flex-direction: column; }
+    .btn-icon.btn-main-home { position: static; transform: none; align-self: flex-start; margin-bottom: 16px; }
+    .mode-selection-container { flex-direction: column; align-items: center; }
+    .mode-btn { width: 240px; height: auto; padding: 24px; }
+}

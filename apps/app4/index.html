@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocearya - Color Sort</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+</head>
+<body>
+    <!-- ローディング画面 -->
+    <div id="loader">
+      <button id="skipBtn">スキップ</button>
+      <div id="staffRollContainer"><div class="credits-list"><pre>
+プロデューサー .................. 底原永和
+ディレクター .................... 底原永和
+エグゼクティブプロデューサー .... 底原永和
+アシスタントプロデューサー ...... 底原永和
+デザイン ........................ 底原永和
+シナリオ ........................ 底原永和
+レベルデザイン .................. 底原永和
+バランス調整 .................... 底原永和
+UI/UXデザイン ................... 底原永和
+プログラムリード ................ 底原永和
+エンジンプログラマー ............ 底原永和
+ネットワークプログラマー ........ 底原永和
+AIプログラマー .................. 底原永和
+ツールプログラマー .............. 底原永和
+サウンドプログラマー ............ 底原永和
+グラフィックプログラマー ........ 底原永和
+アートディレクター .............. 底原永和
+キャラクターデザイナー .......... 底原永和
+モンスターデザイナー ............ 底原永和
+背景デザイナー .................. 底原永和
+UIデザイナー .................... 底原永和
+2Dアーティスト .................. 底原永和
+3Dモデラー ...................... 底原永和
+リガー .......................... 底原永和
+アニメーター .................... 底原永和
+モーションキャプチャー .......... 底原永和
+VFXアーティスト ................ 底原永和
+ライティングアーティスト ........ 底原永和
+テクスチャーアーティスト ........ 底原永和
+サウンドディレクター ............ 底原永和
+作曲 ............................ 底原永和
+効果音制作 ...................... 底原永和
+ボイス収録 ...................... 底原永和
+ミキシング ...................... 底原永和
+QAマネージャー .................. 底原永和
+QAリーダー ...................... 底原永和
+QAテスター ...................... 底原永和
+ローカライズディレクター ........ 底原永和
+翻訳 ............................ 底原永和
+ローカライズテスター ............ 底原永和
+マーケティングマネージャー ...... 底原永和
+PR .............................. 底原永和
+コミュニティマネージャー ........ 底原永和
+公式サイト運営 .................. 底原永和
+スペシャルサンクス .............. 底原永和
+      </pre></div></div>
+    </div>
+
+    <!-- 開発者モード用（非表示） -->
+    <div id="dev-hud" class="hidden"></div>
+    <div id="dev-console" class="hidden"></div>
+    <div id="sokohara-record" class="hidden">底原永和の最高記録: 6分21秒</div>
+
+    <div id="app-container" class="hidden">
+        <!-- 操作モード選択画面 -->
+        <div id="mode-selection-screen" class="screen active">
+            <header class="screen-header">
+                <h1>操作方法を選択</h1>
+                <p>快適にプレイする操作方法を選んでください</p>
+            </header>
+            <div class="mode-selection-container">
+                <button id="mouse-mode-btn" class="btn mode-btn">
+                    <span class="mode-icon">🖱️</span>
+                    <span class="mode-text">マウスで操作</span>
+                </button>
+                <button id="keyboard-mode-btn" class="btn mode-btn">
+                    <span class="mode-icon">⌨️</span>
+                    <span class="mode-text">キーボードで操作</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- レベル選択画面 -->
+        <div id="level-selection-screen" class="screen">
+            <header class="screen-header">
+                <a href="../../index.html" class="btn-icon btn-main-home" title="サイトトップへ戻る">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                </a>
+                <div class="header-main-content">
+                    <h1>Level Select</h1>
+                    <p>クリアしたレベルまで選択できます</p>
+                </div>
+            </header>
+            <div id="level-grid" class="level-grid"></div>
+            <footer class="screen-footer">
+                <button id="reset-progress-btn" class="btn btn-secondary">進捗をリセット</button>
+            </footer>
+        </div>
+
+        <!-- ゲーム画面 -->
+        <div id="game-screen" class="screen">
+            <header class="game-header">
+                <button id="back-to-level-select-btn" class="btn-icon" title="レベル選択へ戻る">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-7v6h5V5h-5z"/></svg>
+                </button>
+                <div class="level-display">Level <span id="current-level-text">1</span></div>
+                <button id="restart-level-btn" class="btn-icon" title="このレベルをリスタート">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+                </button>
+            </header>
+            <main id="game-board-container" class="game-board-container">
+                <div id="game-board" class="game-board"></div>
+                <div id="animation-layer"></div>
+            </main>
+        </div>
+
+        <!-- モーダル -->
+        <div id="level-complete-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-icon">🎉</div>
+                <h2>Level Complete!</h2>
+                <p>レベル<span id="completed-level-text"></span>をクリアしました。<br>スペースキーで次のレベルへ進めます。</p>
+                <div class="modal-actions">
+                    <button id="next-level-btn" class="btn">次のレベルへ</button>
+                    <button id="back-to-menu-btn" class="btn btn-secondary">レベル選択へ</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="game-complete-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <div class="modal-icon">🏆</div>
+                <h2>CONGRATULATIONS!</h2>
+                <p>全てのレベルをクリアしました！</p>
+                <div class="modal-actions">
+                    <button id="back-to-menu-final-btn" class="btn">レベル選択へ</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="tutorial-modal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2>操作方法</h2>
+                <div id="tutorial-mouse" class="tutorial-content hidden">
+                    <h3>🖱️ マウス操作</h3>
+                    <p><strong>1. 選択:</strong> 移動させたいボールが入った試験管をクリックします。</p>
+                    <p><strong>2. 移動:</strong> 移動先の試験管をクリックします。</p>
+                    <p class="tutorial-hint"><b>ヒント:</b> 試験管に空きスペースがあれば、違う色の上にボールを一時的に置くこともできます。</p>
+                </div>
+                <div id="tutorial-keyboard" class="tutorial-content hidden">
+                    <h3>⌨️ キーボード操作</h3>
+                    <p><strong>選択カーソル移動:</strong> <kbd>←</kbd> <kbd>→</kbd> キー</p>
+                    <p><strong>試験管の選択/決定:</strong> <kbd>スペース</kbd> or <kbd>Enter</kbd> キー</p>
+                    <p class="tutorial-hint"><b>ヒント:</b> 試験管に空きスペースがあれば、違う色の上にボールを一時的に置くこともできます。</p>
+                </div>
+                <div class="modal-actions">
+                    <button id="close-tutorial-btn" class="btn">ゲームをはじめる</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
