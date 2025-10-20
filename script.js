@@ -9,8 +9,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyU27oTz6Nt65kkF7nLu_r9
 
 // --- お知らせモーダルの設定 ---
 const notificationData = {
-    title: "【重要】ちょっとGPT有料化について",
-    text: "これまで無料で提供予定だった当AIサービスですが、運営体制の都合により、#月額制の有料サービスとして提供することになりました。#突然の変更となり申し訳ございません。<br>ライトプラン：月額 80円<br><br>スタンダードプラン：月額 110円<br><br>プレミアムプラン：月額 250円<br><br>できるだけ安く提供できるよう赤字覚悟でやっております。何卒よろしくお願いいたします。<br>",
+    title: "【重要】アップデート完了について",
+    text: "こんばんは。この文を書いてる時間は1:05分です。やっと、完成しました。バグなどあったら教えてください。<br>",
     closeDelaySeconds: 0,
     showOncePerDay: false 
 };
@@ -19,30 +19,30 @@ const notificationData = {
 const updateInfoData = {
     history: [
         { 
-            version: "v2.1", 
-            date: "2025-10-20", 
-            title: "ブロック落としにCPU(人工知能)が追加！", 
-            details: [
-                "新しい対戦モード「CPUチャレンジ」を追加しました。",
-                "AIの思考ルーチンを改善し、より手強くなりました。",
-                "軽微なバグを修正しました。",
-            ],
-            video: "cpu.mp4" 
-        },
-        { 
-            version: "v2.0", 
-            date: "2025-10-15", 
-            title: "新デザインとカウントダウン機能", 
+            version: "v13.1", 
+            date: "2025-10-21", 
+            title: "大規模アップデート", 
             details: [
                 "サイトのデザインを全面的にリニューアルしました。",
                 "各種カウントダウン機能を追加しました。",
                 "パフォーマンスの改善を行いました。",
             ],
+            video: "cpu.mp4" 
+        },
+        { 
+            version: "v13.0", 
+            date: "2025-10-15", 
+            title: "CPUシステムを開発", 
+            details: [
+                "ブロック落としのCPUを開発しました。",
+                "ブロックトレーニングのCPUを追加しました",
+                "諸々のバグを修正しました",
+            ],
             video: null 
         }
     ],
     future: [
-        "ブロックトレーニングにCPUを追加予定",
+        "ジオメタリートレーニングを追加",
         "果物集めにもCPUを追加予定",
         "リンゴクリッカーを追加予定"
     ]
@@ -55,7 +55,7 @@ const scheduleData = [
     { name: "ちょっとGPT", date: "11月30日" },
     { name: "7番出口", date: "12月25日" },
     { name: "リンゴクリッカー", date: "10月11日" },
-    { name: "時計", date: "明日" }
+    { name: "", date: "" }
 ];
 
 // --- 作品リストの設定 ---
@@ -78,7 +78,7 @@ const items = [
     },
     {
         title: "果物集め",
-        description: "大きな果物を作ろう！人気のスイカゲーム風の楽しいやつ。",
+        description: "大きな果物を作ろう！人気のスイカのあれ風の楽しいやつ。",
         thumbnail: "./apps/app3/thumbnail.png",
         url: "./apps/app3/index.html",
         recommend: null,
@@ -110,7 +110,7 @@ const items = [
     },
     {
         title: "待ち針のやつ",
-        description: "回転する円に針を刺していく、シンプルながらも奥が深いタイミングゲーム。",
+        description: "回転する円に針を刺していく、シンプルながらも奥が深いタイミングトレーニング。",
         thumbnail: "./apps/app6/thumbnail.png",
         url: "./apps/app6/index.html",
         recommend: null,
@@ -118,7 +118,7 @@ const items = [
     },
     {
         title: "ボール移動",
-        description: "ボールをゴールまで導こう。意外なところに落とし穴があるかも…？",
+        description: "意外と人気！！",
         thumbnail: "./apps/app4/thumbnail.png",
         url: "./apps/app4/index.html",
         recommend: null,
