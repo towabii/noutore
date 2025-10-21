@@ -1,11 +1,36 @@
 // ===============================================
 // ▲▲▲ 必ず設定してください ▲▲▲
 // ===============================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyU27oTz6Nt65kkF7nLu_r9KSFiCZP0CqwvTzlCBcegweEcvs65W2Wco_NKcX3G9k1_/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycby1mXeLe5GTei_gDN-RPBYfWOAavtxpICC4L8YV46p_G8yr9XPp7hXkdUgLz1B1mcQX/exec';
 
 // ===============================================
-// 簡単更新エリア（見やすく整形しました）
+// 簡単更新エリア
 // ===============================================
+
+// --- 1日1回アンケートの設定 ---
+// ここで1日に1回表示するアンケートの内容を設定します。
+const surveyData = {
+    // 【重要】アンケートID：このIDでどのアンケートに回答したかを記録します。
+    // アンケート内容を変更した場合は、必ずこのIDも新しいものに変更してください。
+    // (例: "20251022_satisfaction_survey" -> "20251023_new_feature_survey")
+    // こうしないと、古いアンケートに回答済みのユーザーに新しいアンケートが表示されません。
+    id: "20251022_satisfaction_survey", 
+
+    // アンケートの質問文です。モーダルのタイトルとして表示されます。
+    question: "このサイト、ぶっちゃけどう思う？",
+
+    // アンケートの選択肢です。
+    // []の中に、""で囲んだ選択肢をカンマ(,)で区切って記述します。
+    // 選択肢は2個から10個まで自由に設定できます。
+    options: [ 
+        "神。毎日使ってる！",
+        "面白いし、便利で良い。",
+        "まあまあかな。",
+        "改善の余地あり。",
+        "あまり使わないかも..."
+    ],
+};
+
 
 // --- お知らせモーダルの設定 ---
 const notificationData = {
@@ -153,9 +178,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const onlineCountDisplay = document.getElementById('online-count-display');
     const themeToggle = document.getElementById('theme-toggle');
     const staffRollContainer = document.getElementById('staffRollContainer');
+    const creditsPre = document.getElementById('credits-text');
     const welcomeContainer = document.getElementById('welcome-animation-container');
 
-    let staffRollTimer, countdownInterval;
+    let staffRollTimer, countdownInterval, typingInterval;
     const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
     function getUserId() {
@@ -176,7 +202,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const result = await response.json();
             if (result.status === 'error') throw new Error(result.message);
             return result.data;
-        } catch (error) { console.error('GAS通信エラー:', error); }
+        } catch (error) { 
+            console.error('GAS通信エラー:', error);
+            throw error; // エラーを再スローして、呼び出し元でcatchできるようにする
+        }
     }
 
     function populateDynamicContent() {
@@ -209,14 +238,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- サイト初期化 & テーマ設定 ---
     function applyTheme(theme) {
         document.body.dataset.theme = theme;
         themeToggle.checked = theme === 'light';
     }
     
     function initSiteFlow() {
-        const savedTheme = localStorage.getItem('theme') || 'dark'; // デフォルトはdark
+        const savedTheme = localStorage.getItem('theme') || 'dark';
         applyTheme(savedTheme);
         playStaffRoll();
     }
@@ -230,15 +258,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function afterStaffRoll() {
         callGas('accessStart', { clientId, userId });
         const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+        const afterTutorial = () => checkTermsAndStart(() => {
+            showMainContent(); 
+        });
+
         if (!tutorialCompleted) { 
-            runTutorial(() => checkTermsAndStart()); 
+            runTutorial(afterTutorial); 
         } 
         else { 
-            checkTermsAndStart(); 
+            afterTutorial(); 
         }
     }
 
-    // --- チュートリアル ---
     function runTutorial(callback) {
         const modal = document.getElementById("tutorial-modal");
         const steps = modal.querySelectorAll(".tutorial-step");
@@ -288,8 +319,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateStep();
     }
 
-    // --- 利用規約と年齢確認 ---
-    function checkTermsAndStart() {
+    function checkTermsAndStart(callback) {
         const termsAgreed = localStorage.getItem("termsAgreed");
         if (!termsAgreed) {
             const termsModal = document.getElementById("terms-modal");
@@ -300,14 +330,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 localStorage.setItem("termsAgreed", "true");
                 termsModal.classList.remove("visible");
                 document.body.classList.remove("no-scroll");
-                promptForAgeAndStart();
+                promptForAgeAndStart(callback);
             }, { once: true });
         } else {
-            promptForAgeAndStart();
+            promptForAgeAndStart(callback);
         }
     }
 
-    function promptForAgeAndStart() {
+    function promptForAgeAndStart(callback) {
         let age = localStorage.getItem('userAge');
         if (!age) {
             let userInput = prompt("あなたの年齢を半角数字で入力してください。\nこの情報は「人生終了まで」の時間を計算するためにのみ使用されます。", "14");
@@ -321,6 +351,7 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('userAge', age);
         }
         startSite(parseInt(age));
+        if(callback) callback();
     }
 
     async function updateOnlineCount() {
@@ -332,12 +363,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function startSite(age) {
         startCountdown(age);
-        showMainContent();
         updateOnlineCount();
         setInterval(updateOnlineCount, 15000);
     }
 
-    // --- カウントダウン機能 ---
     const countdownMessages = ["この時間の何時間を遊びに使うのでしょうか？", "残り時間は、わずかです。", "時は金なり。有効に使おう。", "今日という日は、残りの人生の最初の一日。"];
     function startCountdown(age) {
         const els = { 
@@ -347,7 +376,7 @@ document.addEventListener('DOMContentLoaded', function() {
             birthday: document.getElementById('birthday-countdown-timer'), 
             trip: document.getElementById('school-trip-countdown-timer'), 
             chorus: document.getElementById('chorus-countdown-timer'),
-            endCeremony: document.getElementById('end-ceremony-countdown-timer') // 追加
+            endCeremony: document.getElementById('end-ceremony-countdown-timer')
         };
         const birthYear = new Date().getFullYear() - age;
         const targetDate = new Date(birthYear + 90, new Date().getMonth(), new Date().getDate());
@@ -380,10 +409,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.classList.toggle('warning', result.days > 0 && result.days <= 30);
             };
             
-            updateElement(els.test, new Date(y, 10, 18)); // 11月18日
-            updateElement(els.chorus, new Date(y, 9, 31)); // 10月31日
-            updateElement(els.trip, new Date(2026, 0, 16)); // 2026年1月16日
-            updateElement(els.endCeremony, new Date(2026, 2, 19)); // 2026年3月19日 (月は0から始まる)
+            updateElement(els.test, new Date(y, 10, 18));
+            updateElement(els.chorus, new Date(y, 9, 31));
+            updateElement(els.trip, new Date(2026, 0, 16));
+            updateElement(els.endCeremony, new Date(2026, 2, 19));
             
             let bday = new Date(y, 3, 6); 
             if (now > bday) bday.setFullYear(y + 1);
@@ -399,14 +428,17 @@ document.addEventListener('DOMContentLoaded', function() {
         setInterval(() => { els.message.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)]; }, 10000);
     }
     
-    // --- スタッフロールとサイト表示 ---
+    const originalCreditsText = creditsPre.innerHTML;
+
     function playStaffRoll() {
-        const credits = staffRollContainer.querySelector(".credits-list");
-        if (credits) {
-            const newCredits = credits.cloneNode(true);
-            staffRollContainer.innerHTML = '';
-            staffRollContainer.appendChild(newCredits);
+        const creditsContainer = staffRollContainer.querySelector(".credits-list");
+        if (creditsContainer) {
+            creditsContainer.style.animation = 'none';
+            void creditsContainer.offsetHeight;
+            creditsContainer.style.animation = '';
         }
+
+        creditsPre.innerHTML = '';
         document.body.classList.add("no-scroll");
         loader.classList.remove("fade-out");
         staffRollContainer.style.opacity = '1';
@@ -414,11 +446,29 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const skipBtn = document.getElementById('skipBtn');
         skipBtn.style.display = 'block';
-        skipBtn.onclick = () => { clearTimeout(staffRollTimer); onStaffRollEnd(); };
+        const onSkip = () => {
+            clearTimeout(staffRollTimer);
+            clearInterval(typingInterval);
+            onStaffRollEnd();
+        };
+        skipBtn.onclick = onSkip;
 
         siteWrapper.classList.remove("visible");
         clearTimeout(staffRollTimer);
-        staffRollTimer = setTimeout(onStaffRollEnd, 25000); // アニメーション時間に合わせて調整
+        clearInterval(typingInterval);
+
+        let charIndex = 0;
+        const textToType = originalCreditsText.trim();
+        typingInterval = setInterval(() => {
+            if (charIndex < textToType.length) {
+                creditsPre.innerHTML += textToType.charAt(charIndex);
+                charIndex++;
+            } else {
+                clearInterval(typingInterval);
+            }
+        }, 30);
+
+        staffRollTimer = setTimeout(onStaffRollEnd, 40000);
     }
 
     function onStaffRollEnd() {
@@ -432,7 +482,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             setTimeout(() => {
                 welcomeContainer.style.display = 'flex';
-                welcomeContainer.innerHTML = ''; // クリア
+                welcomeContainer.innerHTML = '';
                 const text = "こんにちは";
                 text.split('').forEach((char, index) => {
                     const span = document.createElement('span');
@@ -446,7 +496,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(() => {
                     loader.classList.add('fade-out');
                     afterStaffRoll();
-                }, text.length * 100 + 2000); // アニメーション時間 + 待機時間
+                }, text.length * 100 + 2000);
             }, 500);
         } else {
             loader.classList.add('fade-out');
@@ -460,9 +510,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const lastShown = localStorage.getItem("notificationLastShown");
         const today = new Date().toISOString().slice(0, 10);
         
-        if (!notificationData.showOncePerDay || lastShown !== today) {
+        if (notificationData.text && (!notificationData.showOncePerDay || lastShown !== today)) {
             const modal = document.getElementById("notification-modal");
             const closeBtn = document.getElementById("notification-close-btn");
+            
+            const closeHandler = () => checkAndShowSurvey();
+            const modalCloseHandler = (e) => { if (e.target === modal) closeHandler(); };
+            
+            closeBtn.addEventListener('click', closeHandler, { once: true });
+            modal.addEventListener('click', modalCloseHandler, { once: true });
+
             setTimeout(() => {
                 modal.classList.add("visible");
                 if (notificationData.showOncePerDay) {
@@ -487,12 +544,73 @@ document.addEventListener('DOMContentLoaded', function() {
                     closeBtn.textContent = "閉じる";
                 }
             }, 500);
+        } else {
+            checkAndShowSurvey();
         }
+    }
+    
+    let toastTimer;
+    function showToast(message) {
+        const toast = document.getElementById('toast-notification');
+        if (!toast) return;
+        clearTimeout(toastTimer);
+        toast.textContent = message;
+        toast.classList.add('show');
+        toastTimer = setTimeout(() => {
+            toast.classList.remove('show');
+        }, 3000);
+    }
+
+    function checkAndShowSurvey() {
+        if (!surveyData || !surveyData.id || !surveyData.options || surveyData.options.length < 2) return;
+        const lastAnsweredDay = localStorage.getItem('surveyAnsweredDay-' + surveyData.id);
+        const today = new Date().toISOString().slice(0, 10);
+        if (lastAnsweredDay !== today) {
+            showSurveyModal();
+        }
+    }
+
+    function showSurveyModal() {
+        const modal = document.getElementById("survey-modal");
+        const questionEl = document.getElementById("survey-question");
+        const optionsContainer = document.getElementById("survey-options-container");
+
+        questionEl.textContent = surveyData.question;
+        optionsContainer.innerHTML = '';
+
+        surveyData.options.forEach(optionText => {
+            const button = document.createElement('button');
+            button.className = 'survey-option-btn';
+            button.textContent = optionText;
+            button.onclick = () => {
+                // UIをブロックしないように、すぐにモーダルを閉じてメッセージを表示
+                modal.classList.remove('visible');
+                document.body.classList.remove("no-scroll");
+                showToast('ご協力ありがとうございました。');
+
+                // 今日は回答済みであることを記録
+                const today = new Date().toISOString().slice(0, 10);
+                localStorage.setItem('surveyAnsweredDay-' + surveyData.id, today);
+
+                // データの送信はバックグラウンドで行う（エラーはコンソールに出力）
+                callGas('submitSurvey', {
+                    userId: userId,
+                    surveyId: surveyData.id,
+                    question: surveyData.question,
+                    answer: optionText
+                }).catch(error => {
+                    console.error("アンケートのバックグラウンド送信に失敗:", error);
+                });
+            };
+            optionsContainer.appendChild(button);
+        });
+
+        modal.classList.add('visible');
+        document.body.classList.add("no-scroll");
     }
 
     document.getElementById('replay-staffroll').addEventListener('click', playStaffRoll);
 
-    // --- キーボードイベント & ページ離脱 ---
     let cheatCodeBuffer = null, cheatTimeout;
     document.addEventListener("keydown", e => {
         if (e.target.closest("input, textarea") || document.querySelector(".modal-overlay.visible")) return;
@@ -516,6 +634,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if ("reset" === cheatCodeBuffer) {
                 if (confirm("設定をリセットしますか？ (年齢設定や利用規約の同意状況などが初期化されます)")) {
                     ["tutorialCompleted", "termsAgreed", "notificationLastShown", "sokohara-site-user-id", "theme", "userAge"].forEach(e => localStorage.removeItem(e));
+                    Object.keys(localStorage).forEach(key => {
+                        if (key.startsWith('surveyAnsweredDay-')) {
+                            localStorage.removeItem(key);
+                        }
+                    });
                     alert("リセットしました。ページをリロードします。");
                     window.location.reload();
                 }
@@ -535,10 +658,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.getElementById('translator-input').addEventListener("input",(e)=>{document.getElementById('translator-output').value=e.target.value.toLowerCase().split("").map(c=>({a:"あ",i:"い",u:"う",e:"え",o:"お"," ":"　"})[c]||c).join("")});
 
-    // --- ナビゲーションタブ切り替え ---
     document.querySelectorAll('nav a[data-target]').forEach(link => { link.addEventListener('click', (event) => { const targetId = event.currentTarget.dataset.target; document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(`content-${targetId}`).classList.add('active'); }); });
 
-    // --- 作品カードの動的生成とフィルター ---
     const itemListContainer = document.getElementById('item-list');
     function generateItemCards() {
         itemListContainer.innerHTML = '';
@@ -568,7 +689,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); filterItems(button.dataset.category); }); });
 
-    // --- モーダル関連 ---
     const allModals = { details: document.getElementById('details-modal'), share: document.getElementById('share-modal'), update: document.getElementById('update-info-modal'), schedule: document.getElementById('schedule-modal'), notification: document.getElementById('notification-modal') };
     document.getElementById('show-update-info-btn').addEventListener('click',()=>allModals.update.classList.add('visible'));
     document.getElementById('show-schedule-btn').addEventListener('click',()=>allModals.schedule.classList.add('visible'));
@@ -623,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     document.querySelectorAll("[data-close-modal]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal-overlay").classList.remove("visible")));
     document.querySelectorAll(".modal-overlay").forEach(modal => modal.addEventListener("click", e => {
-        if (e.target === modal) {
+        if (e.target === modal && modal.id !== 'survey-modal') {
             modal.classList.remove("visible");
         }
     }));
