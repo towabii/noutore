@@ -27,9 +27,9 @@
         <button id="skipBtn">スキップ</button>
         <div id="staffRollContainer">
             <div class="credits-list">
-<pre>
+<pre id="credits-text">
 プロデューサー .................. 底原永和
-ディレクター .................... 底原永وا
+ディレクター .................... 底原永和
 エグゼクティブプロデューサー .... 底原永和
 アシスタントプロデューサー ...... 底原永和
 デザイン ........................ 底原永和
@@ -122,7 +122,7 @@ PR .............................. 底原永和
         </main>
     </div>
     
-    <!-- モーダル関連のHTMLは変更ありません -->
+    <!-- モーダル関連 -->
     <div id="tutorial-modal" class="modal-overlay"><div class="modal-content"><div id="tutorial-step-1" class="tutorial-step active"><h2>ようこそ！</h2><p>このサイトの便利な機能を紹介します！<br>いくつかのステップで簡単に説明します。</p></div><div id="tutorial-step-2" class="tutorial-step"><h2>緊急回避！偽装サイトモード</h2><p>先生が近くに来た時など、すぐに画面を切り替えたい時はキーボードの <strong style="color:var(--accent-color)">Enterキー</strong> を押してください。</p><p>一瞬で翻訳サイトの画面に切り替わります。もう一度押すと元の画面に戻ります。</p></div><div id="tutorial-step-3" class="tutorial-step"><h2>人生の残り時間</h2><p>画面上部には、あなたが90歳になるまでの残り時間が表示されています。<br>限りある時間を大切に、そして楽しんで使いましょう！</p></div><div id="tutorial-step-4" class="tutorial-step"><h2>準備完了！</h2><p>これでチュートリアルは終わりです。<br>このサイトを存分にお楽しみください！</p></div><div class="modal-footer tutorial-nav"><button id="tutorial-skip-btn" class="btn ghost">スキップ</button><span id="tutorial-step-indicator" class="step-indicator">1 / 4</span><div><button id="tutorial-prev-btn" class="btn ghost">戻る</button><button id="tutorial-next-btn" class="btn">次へ</button></div></div></div></div>
     <div id="terms-modal" class="modal-overlay"><div class="modal-content"><h2>利用規約</h2><div id="terms-text"><p>本サイトをご利用になる前に、以下の利用規約をよくお読みください。本サイトの利用を開始した時点で、本規約に同意したものとみなします。</p><p><strong>第1条 (自己責任)</strong></p><p>本サイトの利用は、利用者自身の責任において行うものとします。学校のネットワーク内で本サイトを利用し、それによって発生したいかなる問題（先生からの指導、PCの没収、成績への影響など）についても、サイト作成者は一切の責任を負いません。</p><p><strong>第2条 (コンテンツの利用)</strong></p><p>本サイトで提供されるすべてのコンテンツ（テキスト、画像など）の著作権は、サイト作成者「底原 永和」に帰属します。無断での複製、転載、配布を固く禁じます。</p><p><strong>第3条 (禁止事項)</strong></p><p>利用者は、本サイトの利用にあたり、以下の行為を行ってはなりません。</p><ul><li>法令または公序良俗に違反する行為</li><li>本サイトのサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li><li>他の利用者に関する個人情報等を収集または蓄積する行為</li><li>他の利用者に成りすます行為</li><li>その他、作成者が不適切と判断する行為</li></ul><p><strong>第4条 (免責事項)</strong></p><p>サイト作成者は、本サイトのコンテンツの正確性、完全性、安全性等について、いかなる保証も行いません。また、本サイトの利用によって利用者に生じたいかなる損害についても、一切の責任を負いません。</p><p><strong>第5条 (規約の変更)</strong></p><p>サイト作成者は、必要と判断した場合には、利用者に通知することなくいつでも本規約を変更することができるものとします。</p></div><div class="modal-footer"><button id="terms-agree-btn" class="btn">同意して利用する</button></div></div></div>
     <div id="details-modal" class="modal-overlay"><div class="modal-content"><h2 id="details-modal-title"></h2><img id="details-modal-img" src="" alt="作品のサムネイル"><p id="details-modal-desc"></p><div class="modal-footer"><a id="details-modal-launch-btn" href="#" target="_blank" class="btn">起動する</a><button id="details-modal-share-btn" class="btn ghost">共有</button><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
@@ -130,7 +130,19 @@ PR .............................. 底原永和
     <div id="notification-modal" class="modal-overlay"><div class="modal-content"><h2 id="notification-title"></h2><p id="notification-text" style="line-height: 1.7; font-size: 16px;"></p><div class="modal-footer"><button id="notification-close-btn" data-close-modal class="btn" disabled>閉じる</button></div></div></div>
     <div id="schedule-modal" class="modal-overlay"><div class="modal-content"><h2 id="schedule-modal-title">実装予定日一覧</h2><ul id="schedule-list" style="list-style: none; padding: 0;"></ul><div class="modal-footer"><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
     <div id="update-info-modal" class="modal-overlay"><div class="modal-content large"><h2>アップデート情報</h2><div id="update-info-content"></div><h3 class="future-updates-title">今後のアップデート予定</h3><ul id="update-info-future-list"></ul><div class="modal-footer"><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
+    
+    <div id="survey-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 id="survey-question"></h2>
+            <div id="survey-options-container"></div>
+            <p class="survey-notice">これは本日最初のアクセスのため必須のアンケートです。ご協力ありがとうございます。</p>
+        </div>
+    </div>
+
     <div id="fake-translator" class="hidden"><header class="translator-header"><div class="translator-logo"><svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg><span>翻訳</span></div></header><main class="translator-main"><div class="translator-lang-bar"><button class="lang-btn active">日本語</button><button class="lang-btn">英語</button></div><div class="translator-body"><div class="translator-panel"><textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea></div><div class="translator-divider"></div><div class="translator-panel"><textarea id="translator-output" class="translator-textarea" readonly></textarea></div></div></main></div>
+
+    <!-- 【新規追加】回答ありがとうメッセージ表示用 -->
+    <div id="toast-notification"></div>
 
     <script src="script.js"></script>
 </body>
