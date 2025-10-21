@@ -9,8 +9,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbyU27oTz6Nt65kkF7nLu_r9
 
 // --- お知らせモーダルの設定 ---
 const notificationData = {
-    title: "【重要】アップデート完了について",
-    text: "こんばんは。この文を書いてる時間は1:05分です。やっと、完成しました。バグなどあったら教えてください。<br>",
+    title: "【報告】7番出口の作成作業開始",
+    text: "ご利用いただきありがとうございます。7番出口の作成作業を2025/10/21/23:22に開始しました。<br>",
     closeDelaySeconds: 0,
     showOncePerDay: false 
 };
