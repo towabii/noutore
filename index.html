@@ -5,6 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新しいタブ</title>
 
+    <!-- ▼▼▼ SEO対策：ここから追加 ▼▼▼ -->
+    <meta name="description" content="底原永和（そこはらとわ）の公式サイト。ソコハラ トワが作った楽しいやつや、ちょっと便利なツールなどを公開しています。">
+    <meta name="keywords" content="底原永和, 底原, 永和, とわ, そこはらとわ, そこはら, ソコハラ, トワ, ソコハラトワ, 公式サイト">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "底原永和",
+      "alternateName": ["そこはら とわ", "ソコハラ トワ", "sokohara towa"],
+      "jobTitle": "クリエイター",
+      "url": "https://towabii.github.io/noutore/",
+      "description": "楽しいやつを作る中学2年生。このサイトの全コンテンツを制作・運営しています。"
+    }
+    </script>
+    <!-- ▲▲▲ SEO対策：ここまで追加 ▲▲▲ -->
+
     <!-- QRコード生成ライブラリ -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
 
@@ -80,7 +96,9 @@ PR .............................. 底原永和
 
     <div class="site-wrapper" id="site-wrapper">
         <header class="site-header">
-            <div class="site-title">底原永和の作った楽しいやつ</div>
+            <!-- ▼▼▼ SEO対策：divをh1に変更（見た目は変わりません） ▼▼▼ -->
+            <h1 class="site-title">底原永和の作った楽しいやつ</h1>
+            <!-- ▲▲▲ SEO対策：ここまで変更 ▲▲▲ -->
             <nav>
                 <ul>
                     <li><a data-target="home"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg><span>ホーム</span></a></li>
@@ -118,7 +136,18 @@ PR .............................. 底原永和
                 <div id="item-list" class="item-grid"></div>
             </div>
             <div id="content-faq" class="content-section"><div class="info-container"><h2>よくある質問</h2><dl><dt>Q. なぜ、アイフィルターにブロックされないのですか？</dt><dd>A. アイフィルターは特定の文字列を含むサイトをブロックする仕組みになっています。文字列を工夫して含めないようにしているためブロックされません。また、タブの名前を変えてあるので先生にも気づかれにくく、エンターキーを押すとすべてのサイトで偽の翻訳サイトが表示されるようになっています。後ろから先生が来ても安心です。</dd><dt>Q. アップデートの頻度はどれくらいですか？</dt><dd>A. 基本的に毎日です。毎日のアップデートで細かな不具合を修正しています。特に土日には新しい「楽しいやつ」が追加されるので、ぜひフィードバックから「追加してほしいもの」を教えてください。</dd><dt>Q. 本当に底原永和が作ったんですか？</dt><dd>A. もちろんです。当たり前だろ、なめんな。</dd><dt>Q. 万が一ブロックされたらどうしますか？</dt><dd>A. 必ずプレイできるように修正します。</dd><dt>Q. セキュリティは大丈夫ですか？</dt><dd>A. ご安心ください。あの「伝説の底原永和」が作ったので大丈夫です。</dd><dt>Q. 実装されたと書かれているのに、されていない機能があります。</dt><dd>A. それは申し訳ありません。</dd><dt>Q. くそゲーですね。</dt><dd>A. BANです。</dd><dt>Q. なぜ本名を入力しないといけないのですか？</dt><dd>A. 管理をしやすくするためです。</dd><dt>Q. スマホでもできますか？</dt><dd>A. スマホには対応していません。推奨環境はPCです。</dd><dt>Q. 有料ですか？</dt><dd>A. 無料で遊べます。</dd><dt>Q. 広告は入っていますか？</dt><dd>A. 広告は一切ありません。</dd><dt>Q. 不具合を見つけた場合はどうすればいいですか？</dt><dd>A. フィードバックから送ってください。</dd><dt>Q. フィードバックはどこから送れますか？</dt><dd>A. 上のメニューから入力できます。</dd><dt>Q. データは保存されますか？</dt><dd>A. ハイスコアなどはローカルで保存されます。</dd></dl></div></div>
-            <div id="content-author" class="content-section"><div class="info-container"><h2>作成者情報</h2><div class="author-profile"><img src="kao.png" alt="作成者の顔写真" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2E3YjNkOSI+PHBhdGggZD0iTTEyIDJhMTAgMTAgMCAwIDAgMCAyMCAxMCAxMCAwIDAgMCAwLTIwem0wIDE4YTEuNSAxLjUgMCAxIDEgMS41LTEuNUExLjUgMS41IDAgMCAxIDEyIDIwWm0yLjA3LTExLjI1bC0uOS45MkM١٢LjUgOS45OCAxMiA١٠LjUgMTIgMTJINDBhMyAzIDAgMCAxIDMtM2MuMDItMS40Ny0xLjI5LTIuNjYtMi44My0yLjQ5LS4yNS4wMy0uNS4xLS43Mi4yWiIvPjwvc3ZnPg=='; this.style.border='none';"><div class="author-details"><p class="name">底原 永和</p><p>楽しい中学2年生</p><p>誕生日: 4月6日</p></div></div></div></div>
+            <div id="content-author" class="content-section"><div class="info-container"><h2>作成者情報</h2><div class="author-profile">
+                <!-- ▼▼▼ SEO対策：alt属性を変更 ▼▼▼ -->
+                <img src="kao.png" alt="底原永和（そこはらとわ）" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2E3YjNkOSI+PHBhdGggZD0iTTEyIDJhMTAgMTAgMCAwIDAgMCAyMCAxMCAxMCAwIDAgMCAwLTIwem0wIDE4YTEuNSAxLjUgMCAxIDEgMS41LTEuNUExLjUgMS41IDAgMCAxIDEyIDIwWm0yLjA3LTExLjI1bC0uOS45MkM١٢LjUgOS45OCAxMiA١٠LjUgMTIgMTJINDBhMyAzIDAgMCAxIDMtM2MuMDItMS40Ny0xLjI5LTIuNjYtMi44My0yLjQ5LS4yNS4wMy0uNS4xLS43Mi4yWiIvPjwvc3ZnPg=='; this.style.border='none';">
+                <!-- ▲▲▲ SEO対策：ここまで変更 ▲▲▲ -->
+                <div class="author-details">
+                    <!-- ▼▼▼ SEO対策：カタカナ表記を追記 ▼▼▼ -->
+                    <p class="name">底原 永和 (ソコハラ トワ)</p>
+                    <!-- ▲▲▲ SEO対策：ここまで変更 ▲▲▲ -->
+                    <p>楽しい中学2年生</p>
+                    <p>誕生日: 4月6日</p>
+                </div>
+            </div></div></div>
         </main>
     </div>
     
