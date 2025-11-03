@@ -111,11 +111,11 @@ const items = [
         category: "fun"
     },
     {
-        title: "提出物共有カレンダー",
-        description: "提出物の期限をみんなで共有・管理できるカレンダー。これで提出忘れもなし！",
+        title: "学習プランナー Pro",
+        description: "提出物の期限を管理できるカレンダー。これで提出忘れもなし！",
         thumbnail: "学習.png",
-        url: "https://calendar.google.com/calendar/u/0?cid=Y184OTcwNjUzMGZkZWQ1MGRhMjdhYTE0MmEyNTJmMmVjMzU3NTMxNGY2YTk3NjA5MzcyN2VlODg2MTQ3NDkxYmU5QGdyb3VwLmNhbGVuZGFyLmdvb2dsZS5jb20",
-        recommend: "協力しよう",
+        url: "./apps/TODO/index.html",
+        recommend: "GOOD",
         category: "study"
     },
     {
