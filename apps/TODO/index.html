@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学習プランナー Pro</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- サイドナビゲーション -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>学習プランナー Pro</h1>
+            </div>
+            <ul>
+                <li><a href="#dashboard" class="nav-link active" data-view="dashboard">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"></path></svg>
+                    <span>ダッシュボード</span>
+                </a></li>
+                <li><a href="#tasks" class="nav-link" data-view="tasks">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path></svg>
+                    <span>タスク一覧</span>
+                </a></li>
+                <li><a href="#calendar" class="nav-link" data-view="calendar">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M17 12h-5v5h5v-5zM16 1v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2h-1V1h-2zm3 18H5V8h14v11z"></path></svg>
+                    <span>カレンダー</span>
+                </a></li>
+                <li><a href="#timetable" class="nav-link" data-view="timetable">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z"></path></svg>
+                    <span>時間割</span>
+                </a></li>
+                <li><a href="#settings" class="nav-link" data-view="settings">
+                    <svg class="icon" viewBox="0 0 24 24"><path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69-.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49 1c.52.4 1.08.73 1.69-.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59-1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"></path></svg>
+                    <span>設定</span>
+                </a></li>
+            </ul>
+        </nav>
+
+        <!-- メインコンテンツ -->
+        <main class="main-content">
+            <header class="main-header">
+                <button class="hamburger-menu" id="hamburger-menu">
+                    <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg>
+                </button>
+                <h2 id="view-title"></h2>
+                <button id="add-task-btn-main" class="add-task-btn" title="新しいタスクを追加">＋</button>
+            </header>
+            
+            <div id="content-area">
+                <!-- ここに各ビューのコンテンツがJSによって挿入される -->
+            </div>
+        </main>
+    </div>
+
+    <!-- タスク追加/編集モーダル -->
+    <div id="task-modal" class="modal">
+        <div class="modal-content card">
+            <span class="close-btn" id="close-modal-btn">&times;</span>
+            <h3 id="modal-title"></h3>
+            <form id="task-form">
+                <input type="hidden" id="task-id">
+                <label for="task-title">タイトル</label>
+                <input type="text" id="task-title" required>
+                <label for="task-category">カテゴリ (色)</label>
+                <select id="task-category"></select>
+                
+                <div class="task-type-selector">
+                    <input type="radio" name="task-type" id="task-type-single" value="single" checked> <label for="task-type-single">単日</label>
+                    <input type="radio" name="task-type" id="task-type-period" value="period"> <label for="task-type-period">期間</label>
+                </div>
+
+                <label for="task-start-date" id="task-start-date-label">日付</label>
+                <input type="date" id="task-start-date" required>
+                
+                <div id="task-end-date-wrapper" style="display: none;">
+                    <label for="task-end-date">終了日</label>
+                    <input type="date" id="task-end-date">
+                </div>
+                
+                <label for="task-memo">メモ</label>
+                <textarea id="task-memo"></textarea>
+                <div class="modal-actions">
+                    <button type="button" id="delete-task-btn" class="delete-btn">削除</button>
+                    <button type="submit" class="submit-btn">保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>
