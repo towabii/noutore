@@ -69,14 +69,17 @@
   #canvas-wrapper { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 10px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
   #trainingCanvas { display: block; background-color: #000; cursor: pointer; }
   
-  /* コース選択画面 */
-  #difficulty-selector { text-align: center; color: var(--text-light); padding: 20px; display: flex; flex-direction: column; justify-content: center; align-items: center; width: 100%; height: 100%; position: absolute; inset: 0; z-index: 100; }
-  #difficulty-selector h2 { font-size: 3rem; color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); margin-bottom: 40px; letter-spacing: 2px; }
-  .difficulty-buttons { display: flex; gap: 30px; }
-  .btn.difficulty-btn { font-size: 1.5rem; padding: 20px 50px; min-width: 200px; }
-  .btn#hard-btn { color: var(--neon-magenta); border-color: var(--neon-magenta); }
-  .btn#hard-btn:hover { box-shadow: 0 0 15px var(--neon-magenta); }
-
+  /* レベル選択画面 */
+  #level-selector { position: absolute; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+  #level-selector-content { width: 100%; max-width: 900px; max-height: 80vh; background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; overflow-y: auto; }
+  .level-mode-title { font-size: 2rem; font-weight: bold; margin: 20px 0 15px; padding-bottom: 10px; border-bottom: 1px solid var(--accent); }
+  .level-mode-title.easy { color: var(--neon-cyan); }
+  .level-mode-title.hard { color: var(--neon-magenta); }
+  .level-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 12px; }
+  .level-btn { aspect-ratio: 1 / 1; font-size: 1.2rem; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+  .level-btn.locked { background: #111; border-color: #333; color: #555; cursor: not-allowed; }
+  .level-btn.locked:hover { box-shadow: none; color: #555; }
+  
   /* モーダル共通 */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
   .modal-content { background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 24px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -165,12 +168,8 @@ SPECIAL THANKS ........... 底原永和</pre></div></div>
       <div id="loadComplete" class="hidden"><h1>Core Pin</h1></div>
     </div>
 
-    <div id="difficulty-selector" class="hidden">
-        <h2>コース選択</h2>
-        <div class="difficulty-buttons">
-            <button class="btn difficulty-btn" id="easy-btn">イージー</button>
-            <button class="btn difficulty-btn" id="hard-btn">ハード</button>
-        </div>
+    <div id="level-selector" class="hidden">
+        <div id="level-selector-content"></div>
     </div>
     
     <div id="hamburger-icon" class="hidden"><span></span><span></span><span></span></div>
@@ -271,55 +270,76 @@ window.addEventListener('DOMContentLoaded', () => {
     const logoDuration = 2000;
     let startTimer;
 
-    const showDifficultySelector = () => {
-        const difficultySelector = document.getElementById('difficulty-selector');
+    const showLevelSelector = () => {
         if (loader.parentNode) {
             loader.classList.add('fade-out');
             loader.addEventListener('animationend', () => loader.remove());
         }
-        difficultySelector.classList.remove('hidden');
-        difficultySelector.classList.add('fade-in');
+
+        const levelSelector = document.getElementById('level-selector');
+        const content = document.getElementById('level-selector-content');
+        
+        const maxEasy = parseInt(localStorage.getItem('corepin_maxphase_easy') || '0', 10);
+        const maxHard = parseInt(localStorage.getItem('corepin_maxphase_hard') || '0', 10);
+
+        let html = '';
+        
+        // Easy Mode
+        html += '<h2 class="level-mode-title easy">イージーモード</h2><div class="level-grid">';
+        for (let i = 1; i <= 100; i++) {
+            if (i <= maxEasy + 1) {
+                html += `<button class="btn level-btn" data-mode="easy" data-phase="${i}">${i}</button>`;
+            } else {
+                html += `<button class="btn level-btn locked" disabled>${i}</button>`;
+            }
+        }
+        html += '</div>';
+
+        // Hard Mode
+        html += '<h2 class="level-mode-title hard">ハードモード</h2><div class="level-grid">';
+        for (let i = 1; i <= 100; i++) {
+            if (i <= maxHard + 1) {
+                html += `<button class="btn level-btn" data-mode="hard" data-phase="${i}" style="color:var(--neon-magenta); border-color:var(--neon-magenta);">${i}</button>`;
+            } else {
+                html += `<button class="btn level-btn locked" disabled>${i}</button>`;
+            }
+        }
+        html += '</div>';
+
+        content.innerHTML = html;
+        levelSelector.classList.remove('hidden');
+        levelSelector.classList.add('fade-in');
+
+        content.addEventListener('click', (e) => {
+            if (e.target.matches('.level-btn:not(.locked)')) {
+                const mode = e.target.dataset.mode;
+                const phase = parseInt(e.target.dataset.phase, 10);
+                levelSelector.classList.add('hidden');
+                
+                const noticeModal = document.getElementById('noticeModal');
+                noticeModal.classList.remove('hidden');
+
+                document.getElementById('closeNoticeBtn').addEventListener('click', () => {
+                    noticeModal.classList.add('hidden');
+                    startMainApp(mode, phase);
+                }, { once: true });
+            }
+        });
     };
 
-    const skipLoading = () => { clearTimeout(startTimer); showDifficultySelector(); };
-    startTimer = setTimeout(showDifficultySelector, staffRollDuration + logoDuration);
+    const skipLoading = () => { clearTimeout(startTimer); showLevelSelector(); };
+    startTimer = setTimeout(showLevelSelector, staffRollDuration + logoDuration);
     skipBtn.addEventListener('click', skipLoading);
-
-    // --- コース選択 ---
-    document.getElementById('easy-btn').addEventListener('click', () => handleCourseSelection('easy'));
-    document.getElementById('hard-btn').addEventListener('click', () => handleCourseSelection('hard'));
 });
 
-function handleCourseSelection(mode) {
-    const difficultySelector = document.getElementById('difficulty-selector');
-    difficultySelector.classList.add('hidden');
-    
-    const noticeModal = document.getElementById('noticeModal');
-    noticeModal.classList.remove('hidden');
 
-    document.getElementById('closeNoticeBtn').addEventListener('click', () => {
-        noticeModal.classList.add('hidden');
-        showSokoharaRecordAndStart(mode);
-    }, { once: true });
-}
-
-function showSokoharaRecordAndStart(mode) {
-    const recordEl = document.getElementById('sokohara-record');
-    recordEl.classList.remove('hidden');
-    recordEl.style.animation = 'fade-in-then-out 5s ease-out forwards';
-    recordEl.addEventListener('animationend', () => {
-        recordEl.classList.add('hidden');
-        recordEl.style.animation = '';
-        startMainApp(mode);
-    }, { once: true });
-}
-
-function startMainApp(mode) {
+function startMainApp(mode, startPhase) {
+    // Sokohara record is not shown in this flow.
     const appContainer = document.getElementById('appContainer');
     const hamburgerIcon = document.getElementById('hamburger-icon');
     appContainer.classList.remove('hidden');
     hamburgerIcon.classList.remove('hidden');
-    initTraining(mode);
+    initTraining(mode, startPhase);
 }
 
 // ========== 開発者モードHUDここから ==========
@@ -375,7 +395,7 @@ requestAnimationFrame(updateDevHUD);
 // ========== 開発者モードHUDここまで ==========
 
 
-function initTraining(trainingMode) {
+function initTraining(trainingMode, startPhase = 1) {
     const canvas = document.getElementById('trainingCanvas'), ctx = canvas.getContext('2d'), wrapper = document.getElementById('canvas-wrapper'), phaseBox = document.getElementById('phaseBox'), maxPhaseBox = document.getElementById('maxPhaseBox');
     const stickAudio = document.getElementById('stickAudio'), collideAudio = document.getElementById('collideAudio'), levelUpAudio = document.getElementById('levelUpAudio');
 
@@ -386,6 +406,7 @@ function initTraining(trainingMode) {
     let core = { x: 0, y: 0, radius: 0, originalRadius: 0, angle: 0, speed: 0.01, dir: 1, dirChangeTimer: null };
     let pin = { headRadius: 0, length: 0 };
     let player = { pins: [] }, stuckPins = [], launchingPin = null;
+    let playerPinShotCount = 0;
 
     const PHASE_CONFIG = Array.from({ length: 100 }, (_, i) => {
         const phase = i + 1;
@@ -412,6 +433,7 @@ function initTraining(trainingMode) {
         sessionState = 'playing';
         if (phase > 100) { sessionState = 'courseComplete'; return; }
 
+        playerPinShotCount = 0;
         const config = PHASE_CONFIG[phase - 1];
         core.angle = 0; core.speed = config.speed; core.dir = Math.random() > 0.5 ? 1 : -1;
         stuckPins = [];
@@ -419,7 +441,7 @@ function initTraining(trainingMode) {
         for (let i = 0; i < config.initialPins; i++) {
             let angle = baseAngle * i;
             if (config.randomPlacement) angle += (Math.random() - 0.5) * baseAngle * 0.6;
-            stuckPins.push({ angle });
+            stuckPins.push({ angle, number: null, stickTime: 0 });
         }
         player.pins = Array(config.playerPins).fill(true);
         launchingPin = null;
@@ -441,11 +463,27 @@ function initTraining(trainingMode) {
         ctx.fillText(currentPhase <= 100 ? currentPhase : '★', core.x, core.y);
 
         stuckPins.forEach(p => {
+            const elapsed = performance.now() - p.stickTime;
+            const animationDuration = 100;
+            let animatedLength = pin.length;
+            if (p.stickTime > 0 && elapsed < animationDuration) {
+                const progress = elapsed / animationDuration;
+                animatedLength = pin.length * (1 + 0.3 * Math.sin(Math.PI * progress));
+            }
+
             const angle = core.angle + p.angle;
             const startX = core.x + Math.cos(angle) * core.radius; const startY = core.y + Math.sin(angle) * core.radius;
-            const endX = core.x + Math.cos(angle) * (core.radius + pin.length); const endY = core.y + Math.sin(angle) * (core.radius + pin.length);
+            const endX = core.x + Math.cos(angle) * (core.radius + animatedLength); const endY = core.y + Math.sin(angle) * (core.radius + animatedLength);
             ctx.strokeStyle = '#e0e0e0'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke();
+            
             ctx.fillStyle = '#e0e0e0'; ctx.beginPath(); ctx.arc(endX, endY, pin.headRadius, 0, Math.PI * 2); ctx.fill();
+
+            if (p.number) {
+                ctx.fillStyle = '#000';
+                ctx.font = `bold ${pin.headRadius * 1.5}px Inter`;
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(p.number, endX, endY);
+            }
         });
 
         const queueStartY = canvas.height * 0.9;
@@ -499,7 +537,9 @@ function initTraining(trainingMode) {
                     }
                     if (hasCollided) { playSound(collideAudio); sessionState = 'sessionFailed'; launchingPin.y = core.y + Math.sin(newAngle) * (core.radius + pin.length); return; }
                     else {
-                        playSound(stickAudio); stuckPins.push({ angle: newAngle - core.angle }); launchingPin = null;
+                        playSound(stickAudio);
+                        stuckPins.push({ angle: newAngle - core.angle, number: launchingPin.number, stickTime: performance.now() });
+                        launchingPin = null;
                         if (player.pins.length === 0) {
                             sessionState = 'sessionComplete'; playSound(levelUpAudio);
                             setTimeout(() => {
@@ -523,12 +563,16 @@ function initTraining(trainingMode) {
     function handleAction() {
         if (sessionState === 'playing') {
             if (launchingPin || player.pins.length === 0) return;
-            player.pins.pop(); launchingPin = { x: canvas.width / 2, y: canvas.height * 0.9 - pin.length };
+            player.pins.pop();
+            playerPinShotCount++;
+            launchingPin = { x: canvas.width / 2, y: canvas.height * 0.9 - pin.length, number: playerPinShotCount };
         } else if (sessionState === 'sessionFailed') {
             setupPhase(currentPhase);
+        } else if (sessionState === 'sessionComplete') {
+            // This is now handled in update(), but keeping the logic here for potential restart from end screen.
+            // currentPhase++; setupPhase(currentPhase);
         } else if (sessionState === 'courseComplete') {
-            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `最高: 0`;
-            currentPhase = 1; setupPhase(currentPhase);
+            window.location.reload(); // Go back to level select
         }
     }
     
@@ -552,8 +596,7 @@ function initTraining(trainingMode) {
     window.corePinTraining = {
         restart: () => { 
             if (core.dirChangeTimer) clearInterval(core.dirChangeTimer);
-            highestPhaseCompleted = 0; localStorage.removeItem(storageKey); maxPhaseBox.textContent = `最高: 0`;
-            currentPhase = 1; setupPhase(currentPhase); 
+            setupPhase(currentPhase);
         },
         goToPhase: (phase) => { 
             if (phase > 0 && phase <= 100) { currentPhase = phase; if(core.dirChangeTimer) clearInterval(core.dirChangeTimer); setupPhase(currentPhase); } 
@@ -569,7 +612,7 @@ function initTraining(trainingMode) {
         document.getElementById('sound-toggle').checked = isSoundEnabled;
     } catch(e) {}
     
-    currentPhase = highestPhaseCompleted + 1;
+    currentPhase = startPhase;
     maxPhaseBox.textContent = `最高: ${highestPhaseCompleted}`;
     
     window.addEventListener('resize', resizeCanvas);
