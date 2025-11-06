@@ -167,11 +167,11 @@ const items = [
         category: "fun"
     },
     {
-        title: "ちょっとGPT",
-        description: "高性能な対話プログラムとおしゃべり。宿題の相談から雑談まで、君は何を話す？",
+        title: "底原 永和の連絡先一覧",
+        description: "底原永和の連絡先が全てあるよみんな友達になろう！",
         thumbnail: "./apps/app9/thumbnail.png",
-        url: "#",
-        recommend: "調整中",
+        url: "https://towabii.github.io/meisi/",
+        recommend: "いいね！",
         category: "other"
      },
      ];
