@@ -165,8 +165,16 @@ const items = [
         url: "#",
         recommend: "工事中",
         category: "fun"
-    }
-];
+    },
+    {
+        title: "ちょっとGPT",
+        description: "高性能な対話プログラムとおしゃべり。宿題の相談から雑談まで、君は何を話す？",
+        thumbnail: "./apps/app9/thumbnail.png",
+        url: "#",
+        recommend: "調整中",
+        category: "other"
+     },
+     ];
 
 // ===============================================
 // 簡単更新エリアここまで
