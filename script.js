@@ -80,7 +80,7 @@ const scheduleData = [
     { name: "3Dトレーニング", date: "11月7日" },
     { name: "ちょっとGPT", date: "11月30日" },
     { name: "7番出口", date: "12月25日" },
-    { name: "リンゴクリッカー", date: "10月11日" },
+    { name: "キャンディークリッカー", date: "10月11日" },
     { name: "", date: "" }
 ];
 
@@ -173,6 +173,38 @@ const items = [
         url: "https://towabii.github.io/meisi/",
         recommend: "いいね！",
         category: "other"
+     },
+     {
+        title: "砂ブロック落とし",
+        description: "最近流行ってるあれ",
+        thumbnail: "./apps/app12/thumbnail.png",
+        url: "#",
+        recommend: "作成中",
+        category: "fun"
+     },
+     {
+        title: "ブロック崩し",
+        description: "グーグルのねあれよあれ",
+        thumbnail: "./apps/app13/thumbnail.png",
+        url: "#",
+        recommend: "作成中",
+        category: "fun"
+     },
+     {
+        title: "パズルブロック",
+        description: "まあ、楽しくない",
+        thumbnail: "./apps/app14/thumbnail.png",
+        url: "#",
+        recommend: "作成中",
+        category: "fun"
+     },
+     {
+        title: "キャンディークリッカー",
+        description: "暇つぶし",
+        thumbnail: "./apps/app16/thumbnail.png",
+        url: "#",
+        recommend: "作成中",
+        category: "fun"
      },
      ];
 
