@@ -153,7 +153,7 @@ const items = [
     {
         title: "3Dトレーニング",
         description: "三次元空間で頭を鍛える新しい体験。完成までもう少し待っててね！",
-        thumbnail: "./apps/app7/thumbnail.png",
+        thumbnail: "./apps/app7/thumbnail.jpeg",
         url: "#",
         recommend: "作成中",
         category: "fun"
@@ -177,7 +177,7 @@ const items = [
      {
         title: "砂ブロック落とし",
         description: "最近流行ってるあれ",
-        thumbnail: "./apps/app12/thumbnail.png",
+        thumbnail: "./apps/app12/thumbnail.jpeg",
         url: "#",
         recommend: "作成中",
         category: "fun"
@@ -185,7 +185,7 @@ const items = [
      {
         title: "ブロック崩し",
         description: "グーグルのねあれよあれ",
-        thumbnail: "./apps/app13/thumbnail.png",
+        thumbnail: "./apps/app13/thumbnail.jpeg",
         url: "#",
         recommend: "作成中",
         category: "fun"
@@ -193,7 +193,7 @@ const items = [
      {
         title: "パズルブロック",
         description: "まあ、楽しくない",
-        thumbnail: "./apps/app14/thumbnail.png",
+        thumbnail: "./apps/app14/thumbnail.jpeg",
         url: "#",
         recommend: "作成中",
         category: "fun"
@@ -201,7 +201,7 @@ const items = [
      {
         title: "キャンディークリッカー",
         description: "暇つぶし",
-        thumbnail: "./apps/app16/thumbnail.png",
+        thumbnail: "./apps/app16/thumbnail.jpeg",
         url: "#",
         recommend: "作成中",
         category: "fun"
