@@ -1,0 +1,365 @@
+<!doctype html>
+<html lang="ja">
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width,initial-scale=1"/>
+        <title>BLOCK FALL</title>
+        <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧱</text></svg>">
+        <!-- 外部ライブラリ -->
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+        <!-- 外部CSS -->
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <!-- 開発者モード用HUD (通常は非表示) -->
+        <div id="dev-hud" class="hidden"></div>
+        <div id="dev-console" class="hidden"></div>
+
+        <!-- ローディング画面 -->
+        <div id="loader">
+            <button id="skipBtn">スキップ</button>
+            <div id="staffRollContainer">
+                <div class="credits-list">
+                    <pre>プロデューサー .................. 底原永和
+ディレクター .................... 底原永和
+エグゼクティブプロデューサー .... 底原永和
+アシスタントプロデューサー ...... 底原永和
+デザイン ........................ 底原永和
+シナリオ ........................ 底原永和
+レベルデザイン .................. 底原永和
+バランス調整 .................... 底原永和
+UI/UXデザイン ................... 底原永和
+プログラムリード ................ 底原永和
+エンジンプログラマー ............ 底原永和
+ネットワークプログラマー ........ 底原永和
+AIプログラマー .................. 底原永和
+ツールプログラマー .............. 底原永和
+サウンドプログラマー ............ 底原永和
+グラフィックプログラマー ........ 底原永和
+アートディレクター .............. 底原永和
+キャラクターデザイナー .......... 底原永和
+モンスターデザイナー ............ 底原永和
+背景デザイナー .................. 底原永和
+UIデザイナー .................... 底原永和
+2Dアーティスト .................. 底原永和
+3Dモデラー ...................... 底原永和
+リガー .......................... 底原永和
+アニメーター .................... 底原永和
+モーションキャプチャー .......... 底原永和
+VFXアーティスト ................ 底原永和
+ライティングアーティスト ........ 底原永和
+テクスチャーアーティスト ........ 底原永和
+サウンドディレクター ............ 底原永和
+作曲 ............................ 底原永和
+効果音制作 ...................... 底原永和
+ボイス収録 ...................... 底原永和
+ミキシング ...................... 底原永和
+QAマネージャー .................. 底原永和
+QAリーダー ...................... 底原永和
+QAテスター ...................... 底原永和
+ローカライズディレクター ........ 底原永和
+翻訳 ............................ 底原永和
+ローカライズテスター ............ 底原永和
+マーケティングマネージャー ...... 底原永和
+PR .............................. 底原永和
+コミュニティマネージャー ........ 底原永和
+公式サイト運営 .................. 底原永和
+スペシャルサンクス .............. 底原永和
+</pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- 初期設定画面 -->
+        <div id="initial-setup-container" class="hidden">
+            <div id="animation-mode-screen">
+                <div class="overlay-content">
+                    <h2>アニメーション設定</h2>
+                    <p>最適な体験を選択してください</p>
+                </div>
+                <div class="overlay-footer">
+                    <button class="btn" data-animation-mode="normal">通常モード</button>
+                    <button class="btn" data-animation-mode="low">軽量モード</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- メインコンテナ -->
+        <div class="container">
+            <!-- ハンバーガーメニューアイコン -->
+            <div id="hamburger-icon" class="hidden">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
+            <!-- サイドメニューパネル -->
+            <div id="menu-panel">
+                <div class="menu-item" id="menu-home-btn">
+                    <span>ホームに戻る</span>
+                </div>
+                <div class="menu-item" id="menu-restart-btn">
+                    <span>やり直す</span>
+                </div>
+                <div class="menu-item">
+                    <span>サウンド</span>
+                    <label class="switch">
+                        <input type="checkbox" id="sound-toggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="menu-item" id="menu-key-config-btn">
+                    <span>キー設定</span>
+                </div>
+                <div class="menu-item" id="menu-share-btn">
+                    <span>共有する</span>
+                </div>
+                <div class="menu-item" id="menu-cheat-btn">
+                    <span>コード入力</span>
+                </div>
+                <div class="menu-item" id="menu-dev-mode-btn">
+                    <span>開発者モード</span>
+                </div>
+            </div>
+
+            <!-- ゲームアプリケーション本体 -->
+            <div class="app hidden single-player-mode" id="appContainer">
+                <!-- 左サイドパネル -->
+                <aside class="side-panel left">
+                    <div class="panel-card">
+                        <h3>HOLD</h3>
+                        <div class="preview-box" id="holdContainer"></div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>SCORE</h3>
+                        <div class="score-grid">
+                            <div class="scorebox">
+                                <span>HIGH</span>
+                                <span id="highScore">0</span>
+                            </div>
+                            <div class="scorebox">
+                                <span>SCORE</span>
+                                <span id="currentScore">0</span>
+                            </div>
+                            <div class="scorebox">
+                                <span>LINES</span>
+                                <span id="lines">0</span>
+                            </div>
+                            <div class="scorebox">
+                                <span>LEVEL</span>
+                                <span id="level">1</span>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="panel-card hidden" id="modeInfoPanel">
+                        <h3 id="modeInfoTitle">MODE INFO</h3>
+                        <div class="score-grid" id="modeInfoContent"></div>
+                    </div>
+                </aside>
+
+                <!-- メインゲームコンテナ -->
+                <main class="game-container" id="player-game-container">
+                    <div class="board-wrap">
+                        <!-- モード別記録表示用の要素 -->
+                        <div id="sokohara-record" class="hidden"></div>
+                        
+                        <div id="countdown" class="hidden"></div>
+                        <div id="game-overlay">
+                            <!-- スタート画面 -->
+                            <div id="start-screen">
+                                <div class="overlay-content">
+                                    <h1 class="game-title">BLOCK FALL</h1>
+                                    <p>モードを選択してください</p>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" data-mode="TRAINING">トレーニング</button>
+                                    <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
+                                    <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
+                                    <div class="cpu-select-container">
+                                        <button class="btn" id="vs-cpu-btn">VS CPU ▼</button>
+                                        <div class="cpu-level-dropdown" id="vs-cpu-select">
+                                            <button class="btn" data-mode="VS_CPU_1">LV.1</button><button class="btn" data-mode="VS_CPU_2">LV.2</button><button class="btn" data-mode="VS_CPU_3">LV.3</button><button class="btn" data-mode="VS_CPU_4">LV.4</button><button class="btn" data-mode="VS_CPU_5">LV.5</button><button class="btn" data-mode="VS_CPU_6">LV.6</button><button class="btn" data-mode="VS_CPU_7">LV.7</button><button class="btn" data-mode="VS_CPU_8">LV.8</button><button class="btn" data-mode="VS_CPU_9">LV.9</button>
+                                        </div>
+                                    </div>
+                                    <div class="cpu-select-container">
+                                        <button class="btn" id="ultra-vs-cpu-btn">ウルトラ VS CPU ▼</button>
+                                        <div class="cpu-level-dropdown" id="ultra-vs-cpu-select">
+                                             <button class="btn" data-mode="ULTRA_VS_CPU_1">LV.1</button><button class="btn" data-mode="ULTRA_VS_CPU_2">LV.2</button><button class="btn" data-mode="ULTRA_VS_CPU_3">LV.3</button><button class="btn" data-mode="ULTRA_VS_CPU_4">LV.4</button><button class="btn" data-mode="ULTRA_VS_CPU_5">LV.5</button><button class="btn" data-mode="ULTRA_VS_CPU_6">LV.6</button><button class="btn" data-mode="ULTRA_VS_CPU_7">LV.7</button><button class="btn" data-mode="ULTRA_VS_CPU_8">LV.8</button><button class="btn" data-mode="ULTRA_VS_CPU_9">LV.9</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- ゲームオーバー画面 -->
+                            <div id="gameover-screen" class="hidden">
+                                <div class="overlay-content">
+                                    <h2 id="gameover-title"></h2>
+                                    <p id="gameover-result"></p>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" id="restartButton">もう一度プレイ</button>
+                                </div>
+                            </div>
+                            <!-- 一時停止画面 -->
+                            <div id="pause-screen" class="hidden">
+                                <div class="overlay-content">
+                                    <h2>PAUSED</h2>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" id="resumeButton">ゲームに戻る</button>
+                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
+                                    <button class="btn ghost" id="pauseHomeButton">ホームに戻る</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="board" id="board"></div>
+                    </div>
+                </main>
+
+                <!-- VSモード用: プレイヤーのNEXTパネル -->
+                <aside class="side-panel player-next-panel hidden">
+                    <div class="panel-card">
+                        <h3>NEXT</h3>
+                        <div class="preview-box" id="playerNextContainerVS"></div>
+                    </div>
+                </aside>
+                
+                <!-- VSモード用: CPUのゲームコンテナ -->
+                <main id="cpu-container" class="game-container hidden">
+                    <div class="game-header">
+                        <div class="title">CPU</div>
+                        <div class="meta-box" id="cpu-level-box">AI</div>
+                    </div>
+                    <div class="board-wrap">
+                        <div class="board" id="cpu-board"></div>
+                    </div>
+                </main>
+                
+                <!-- VSモード用: CPUの情報パネル -->
+                <aside class="side-panel cpu-info-panel hidden">
+                    <div class="panel-card">
+                        <h3>NEXT</h3>
+                        <div class="preview-box" id="cpuNextContainer"></div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>HOLD</h3>
+                        <div class="preview-box" id="cpuHoldContainer"></div>
+                    </div>
+                </aside>
+                
+                <!-- 右サイドパネル -->
+                <aside class="side-panel right">
+                    <div class="panel-card" id="sp-next-panel">
+                        <h3>NEXT</h3>
+                        <div class="preview-box" id="nextContainer"></div>
+                    </div>
+                    <div class="panel-card">
+                        <h3>CONTROLS</h3>
+                        <div class="note">
+                            → : 右移動<br>
+                            ← : 左移動<br>
+                            ↑ : ハードドロップ<br>
+                            ↓ : ソフトドロップ<br>
+                            Z : 左回転<br>
+                            X : 右回転<br>
+                            C : ホールド<br>Esc : 停止
+                        </div>
+                    </div>
+                     <div class="panel-card">
+                         <div class="controls-panel">
+                            <button class="btn" id="pauseButton">停止</button>
+                            <button class="btn ghost" id="forceRestartBtn">やり直す</button>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+
+        <!-- 各種モーダルウィンドウ -->
+        <div id="noticeModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2>アップデート情報</h2>
+                <div class="sub-header">今回の修正・追加</div>
+                <ul>
+                    <li>ハイスコアがモード別に保存されるようになりました。</li>
+                    <li>低アニメーションモードを追加しました。</li>
+                    <li>開発者モードを追加しました。（メニューから）</li>
+                </ul>
+                <div class="modal-footer">
+                    <button class="btn" id="closeNoticeBtn">閉じる</button>
+                </div>
+            </div>
+        </div>
+        <div id="keyConfigModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2>キー設定</h2>
+                <div id="key-config-list"></div>
+                <div class="modal-footer">
+                    <button class="btn ghost" id="resetKeysBtn">初期設定に戻す</button>
+                    <button class="btn" id="saveKeysBtn">保存して閉じる</button>
+                </div>
+            </div>
+        </div>
+        <div id="cheatCodeModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2>コード入力</h2>
+                <p class="note">コードを入力してください。</p>
+                <input type="password" id="cheatInput" class="text-input">
+                <div class="modal-footer">
+                    <button class="btn" id="submitCheatBtn">実行</button>
+                    <button class="btn ghost" id="closeCheatBtn">キャンセル</button>
+                </div>
+            </div>
+        </div>
+        <div id="devPasswordModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2>開発者モード</h2>
+                <p class="note">パスワードを入力してください。</p>
+                <input type="password" id="devPasswordInput" class="text-input">
+                <div class="modal-footer">
+                    <button class="btn" id="submitDevPasswordBtn">認証</button>
+                    <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
+                </div>
+            </div>
+        </div>
+        <div id="shareModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h2>共有</h2>
+                <div id="qrcode"></div>
+                <p class="note center">QRコードをスキャンするか、URLをコピー</p>
+                <div class="url-container">
+                    <input type="text" id="urlInput" class="url-input" readonly>
+                    <button class="btn" id="copyUrlBtn">コピー</button>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn" id="closeShareBtn">閉じる</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 偽装画面 -->
+        <div id="fake-translator" class="hidden">
+            <header class="translator-header">
+                <div class="translator-logo">
+                    <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
+                    <span>翻訳</span>
+                </div>
+            </header>
+            <main class="translator-main">
+                <div class="translator-lang-bar"><button class="lang-btn active">日本語</button><button class="lang-btn">英語</button></div>
+                <div class="translator-body">
+                    <div class="translator-panel"><textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea></div>
+                    <div class="translator-divider"></div>
+                    <div class="translator-panel"><textarea id="translator-output" class="translator-textarea" readonly></textarea></div>
+                </div>
+            </main>
+        </div>
+
+        <!-- オーディオ要素 -->
+        <audio id="bgmAudio" src="bgm.mp3" loop></audio>
+        <audio id="pushAudio" src="push.mp3"></audio>
+        <audio id="delAudio" src="del.mp3"></audio>
+        
+        <!-- 外部JavaScript -->
+        <script src="script.js"></script>
+    </body>
+</html>
