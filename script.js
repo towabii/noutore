@@ -17,7 +17,7 @@ const surveyData = {
     id: "20251103_satisfaction_survey", 
 
     // アンケートの質問文です。モーダルのタイトルとして表示されます。
-    question: "このゲームサイトに評価をつけるならいくつですか？",
+    question: "このサイトに評価をつけるならいくつですか？",
 
     // アンケートの選択肢です。
     // []の中に、""で囲んだ選択肢をカンマ(,)で区切って記述します。
@@ -167,14 +167,6 @@ const items = [
         category: "fun"
     },
     {
-        title: "底原 永和の連絡先一覧",
-        description: "底原永和の連絡先が全てあるよみんな友達になろう！",
-        thumbnail: "./apps/app9/名刺.png",
-        url: "https://towabii.github.io/meisi/",
-        recommend: "いいね！",
-        category: "other"
-     },
-     {
         title: "砂ブロック落とし",
         description: "最近流行ってるあれ",
         thumbnail: "./apps/app12/thumbnail.jpeg",
