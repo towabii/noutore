@@ -1,18 +1,13 @@
 // ===============================================
 // ▲▲▲ 必ず設定してください ▲▲▲
 // ===============================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycby1mXeLe5GTei_gDN-RPBYfWOAavtxpICC4L8YV46p_G8yr9XPp7hXkdUgLz1B1mcQX/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxiSSxUUs0bbPSJUEeVo78IGWV5tr1jY0cAqzEFxUGAd4gOol4isJ7_BgKpvjl3YBN0/exec'; // 【重要】GASのURLを設定してください
 
 // ===============================================
 // 簡単更新エリア
 // ===============================================
 
-// --- 【修正】カウントダウンの設定 ---
-// ここで表示したいカウントダウンを自由に設定できます。
-// label: カードのヘッダーに表示されるテキスト
-// type: 'life' (人生終了まで), 'online' (オンライン人数) の特別なカード
-// date: 'YYYY/MM/DD' または 'MM/DD' 形式で指定。'MM/DD'の場合は次のその日付までの日数を計算します。
-// span: 'full' を指定するとカードが横幅いっぱいに表示されます。
+// --- カウントダウンの設定 ---
 const countdownConfig = [
     { label: "人生終了まで", type: "life", span: "full" },
     { label: "期末テストまで", date: "2026/02/16" },
@@ -23,20 +18,10 @@ const countdownConfig = [
     { label: "現在のアクセス人数", type: "online" }
 ];
 
-// --- 【修正】不定期アンケートの設定 ---
-// ここで不定期に表示するアンケートの内容を設定します。
+// --- 不定期アンケートの設定 ---
 const surveyData = {
-    // 【重要】アンケートID：このIDで回答済みかを記録します。
-    // アンケート内容を変更した場合は、必ずこのIDも新しいものに変更してください。
-    // (例: "survey_001" -> "survey_002")
-    // こうしないと、古いアンケートに回答済みのユーザーに新しいアンケートが表示されません。
     id: "20251103_satisfaction_survey", 
-
-    // アンケートの質問文です。モーダルのタイトルとして表示されます。
     question: "このサイトに評価をつけるならいくつですか？",
-
-    // アンケートの選択肢です。
-    // []の中に、""で囲んだ選択肢をカンマ(,)で区切って記述します。
     options: [ 
         "★5", "★4", "★3", "★2", "★1", "★0"
     ],
@@ -99,7 +84,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let staffRollTimer, countdownInterval, typingInterval;
     const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
-    // --- 【新規追加】オンライン状態管理 ---
+    // --- オンライン状態管理 ---
     const INACTIVITY_TIMEOUT = 3600 * 1000; // 1時間
     let inactivityTimer;
     let isOnline = false;
@@ -117,7 +102,13 @@ document.addEventListener('DOMContentLoaded', function() {
     async function callGas(action, payload = {}) {
         try {
             if (!GAS_URL || GAS_URL.includes('貼り付け')) throw new Error('GASのURLが設定されていません。');
-            const response = await fetch(GAS_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, payload }) });
+            const response = await fetch(GAS_URL, { 
+                method: 'POST', 
+                mode: 'cors', 
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                body: JSON.stringify({ action, payload }),
+                keepalive: action === 'accessEnd' 
+            });
             if (!response.ok) throw new Error(`サーバーエラー: ${response.status}`);
             const result = await response.json();
             if (result.status === 'error') throw new Error(result.message);
@@ -128,25 +119,19 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // --- 【新規追加】オンライン状態を管理する関数 ---
+    // --- オンライン状態を管理する関数 ---
     function goOnline() {
         if (isOnline) return;
         isOnline = true;
-        callGas('accessStart', { clientId, userId });
         resetInactivityTimer();
         console.log("Status: Online");
     }
 
-    function goOffline(isBeacon = false) {
+    function goOffline() {
         if (!isOnline) return;
         isOnline = false;
         clearTimeout(inactivityTimer);
-        const payload = { action: "accessEnd", payload: { clientId } };
-        if (isBeacon && navigator.sendBeacon) {
-            navigator.sendBeacon(GAS_URL, new Blob([JSON.stringify(payload)], { type: "text/plain; charset=UTF-8" }));
-        } else {
-            callGas('accessEnd', { clientId });
-        }
+        callGas('accessEnd', { userId, clientId });
         console.log("Status: Offline");
     }
 
@@ -162,8 +147,29 @@ document.addEventListener('DOMContentLoaded', function() {
             goOnline();
         }
     }
+    
+    // --- BAN/管理者メッセージ表示用 ---
+    function showAdminMessage(title, text) {
+        const modal = document.getElementById("notification-modal");
+        document.getElementById('notification-title').textContent = title;
+        document.getElementById('notification-text').innerHTML = text;
+        const closeBtn = document.getElementById("notification-close-btn");
+        closeBtn.disabled = false;
+        closeBtn.textContent = "閉じる";
+        modal.classList.add("visible");
+        return true; 
+    }
 
-    // --- 【新規追加】カウントダウンカードを動的に生成 ---
+    function showBanScreen() {
+        document.body.innerHTML = `
+            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background-color:var(--bg-color); color:var(--text-primary); font-family:var(--font-family-sans); text-align:center; padding: 2rem;">
+                <h1 style="font-size:2rem; color: #ff4d4d;">アクセスが制限されています</h1>
+                <p style="font-size:1.1rem; max-width: 600px;">あなたはこのサイトへのアクセスが管理者によって制限されています。<br>心当たりがない場合は、サイト管理者にお問い合わせください。</p>
+            </div>
+        `;
+    }
+
+    // --- カウントダウンカードを動的に生成 ---
     function generateCountdownCards() {
         const container = document.getElementById('countdown-container');
         if (!container) return;
@@ -172,7 +178,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const card = document.createElement('div');
             card.className = 'countdown-card';
             if (config.span === 'full') card.classList.add('main');
-            
             let valueHtml = '';
             if (config.type === 'life') {
                 valueHtml = `<div id="countdown-timer" class="countdown-value-large">--</div><div id="countdown-message" class="countdown-sub-label"></div>`;
@@ -182,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.id = `countdown-card-${index}`;
                 valueHtml = `<div class="countdown-value">--</div>`;
             }
-            
             card.innerHTML = `<div class="countdown-header">${config.label}</div>${valueHtml}`;
             card.style.animationDelay = `${index * 80}ms`;
             container.appendChild(card);
@@ -190,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function populateDynamicContent() {
-        // (省略) 既存のロジックは変更なし
         const notificationTitle = document.getElementById('notification-title');
         const notificationText = document.getElementById('notification-text');
         if (notificationTitle) notificationTitle.textContent = notificationData.title;
@@ -235,23 +238,49 @@ document.addEventListener('DOMContentLoaded', function() {
         applyTheme(newTheme);
     });
 
-    function afterStaffRoll() {
-        goOnline(); // 【修正】オンライン状態を開始
-        const tutorialCompleted = localStorage.getItem('tutorialCompleted');
-        const afterTutorial = () => checkTermsAndStart(() => {
-            showMainContent(); 
-        });
+    async function afterStaffRoll() {
+        try {
+            const accessData = await callGas('accessStart', { userId, clientId });
+            
+            // BANチェック
+            if (accessData.status === 'BANNED') {
+                showBanScreen();
+                return;
+            }
+            
+            // 【新規追加】強制リフレッシュチェック
+            if (accessData.action === 'REFRESH') {
+                showToast("サイトが更新されました。");
+                setTimeout(() => location.reload(true), 1000); // 1秒後にリロード
+                return; 
+            }
 
-        if (!tutorialCompleted) { 
-            runTutorial(afterTutorial); 
-        } 
-        else { 
-            afterTutorial(); 
+            document.body.classList.remove("no-scroll");
+            siteWrapper.classList.add("visible");
+            goOnline();
+
+            const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+            const afterTutorial = () => checkTermsAndStart(() => {
+                let adminMessageShown = false;
+                if (accessData.message) {
+                    adminMessageShown = showAdminMessage("管理者からのお知らせ", accessData.message);
+                }
+                showMainContent(adminMessageShown); 
+            });
+
+            if (!tutorialCompleted) { 
+                runTutorial(afterTutorial); 
+            } else { 
+                afterTutorial(); 
+            }
+
+        } catch (error) {
+            console.error("初期化に失敗しました:", error);
+            showAdminMessage("接続エラー", "サーバーとの通信に失敗しました。時間をおいて再度お試しください。");
         }
     }
 
     function runTutorial(callback) {
-        // (省略) 既存のロジックは変更なし
         const modal = document.getElementById("tutorial-modal");
         const steps = modal.querySelectorAll(".tutorial-step");
         const nextBtn = document.getElementById("tutorial-next-btn");
@@ -281,7 +310,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function checkTermsAndStart(callback) {
-        // (省略) 既存のロジックは変更なし
         const termsAgreed = localStorage.getItem("termsAgreed");
         if (!termsAgreed) {
             const termsModal = document.getElementById("terms-modal");
@@ -299,7 +327,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function promptForAgeAndStart(callback) {
-        // (省略) 既存のロジックは変更なし
         let age = localStorage.getItem('userAge');
         if (!age) {
             let userInput = prompt("あなたの年齢を半角数字で入力してください。\nこの情報は「人生終了まで」の時間を計算するためにのみ使用されます。", "14");
@@ -329,18 +356,14 @@ document.addEventListener('DOMContentLoaded', function() {
     function startSite(age) {
         startCountdown(age);
         updateOnlineCount();
-        setInterval(updateOnlineCount, 15000);
+        setInterval(updateOnlineCount, 30000);
     }
     
-    // --- 【修正】カウントダウン更新ロジック ---
     const countdownMessages = ["この時間の何時間を遊びに使うのでしょうか？", "残り時間は、わずかです。", "時は金なり。有効に使おう。", "今日という日は、残りの人生の最初の一日。"];
     function startCountdown(age) {
         const birthYear = new Date().getFullYear() - age;
         const lifeTargetDate = new Date(birthYear + 90, new Date().getMonth(), new Date().getDate());
-        
         const updateFunctions = [];
-
-        // Life Countdown
         const lifeTimerEl = document.getElementById('countdown-timer');
         if (lifeTimerEl) {
             updateFunctions.push(() => {
@@ -355,41 +378,31 @@ document.addEventListener('DOMContentLoaded', function() {
                 setInterval(() => { lifeMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)]; }, 10000);
             }
         }
-        
-        // Date-based Countdowns
         countdownConfig.forEach((config, index) => {
             if (!config.date) return;
             const el = document.querySelector(`#countdown-card-${index} .countdown-value`);
             if(!el) return;
-
             let targetDate;
             const now = new Date();
             const [month, day] = config.date.split('/').slice(-2).map(Number);
-            
             if (config.date.includes('/')) {
                  if (config.date.split('/').length === 3) {
                     targetDate = new Date(config.date);
-                } else { // MM/DD
+                } else {
                     targetDate = new Date(now.getFullYear(), month - 1, day);
                     if (now > targetDate) {
                         targetDate.setFullYear(now.getFullYear() + 1);
                     }
                 }
             }
-
             updateFunctions.push(() => {
                 const now = new Date();
-                if (now > targetDate) {
-                    el.textContent = "終了";
-                    el.classList.remove('warning');
-                    return;
-                }
+                if (now > targetDate) { el.textContent = "終了"; el.classList.remove('warning'); return; }
                 const days = Math.ceil((targetDate - now) / 86400000);
                 el.textContent = `${days} 日`;
                 el.classList.toggle('warning', days > 0 && days <= 30);
             });
         });
-
         const updateAll = () => updateFunctions.forEach(fn => fn());
         updateAll(); 
         clearInterval(countdownInterval);
@@ -405,22 +418,18 @@ document.addEventListener('DOMContentLoaded', function() {
             void creditsContainer.offsetHeight;
             creditsContainer.style.animation = '';
         }
-
         creditsPre.innerHTML = '';
         document.body.classList.add("no-scroll");
         loader.classList.remove("fade-out");
         staffRollContainer.style.opacity = '1';
         welcomeContainer.style.display = 'none';
-
         const skipBtn = document.getElementById('skipBtn');
         skipBtn.style.display = 'block';
         const onSkip = () => { clearTimeout(staffRollTimer); clearInterval(typingInterval); onStaffRollEnd(); };
         skipBtn.onclick = onSkip;
-
         siteWrapper.classList.remove("visible");
         clearTimeout(staffRollTimer);
         clearInterval(typingInterval);
-
         let charIndex = 0;
         const textToType = originalCreditsText.trim();
         const cursor = '<span class="typing-cursor">█</span>';
@@ -430,22 +439,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 creditsPre.innerHTML = textToType.substring(0, charIndex) + cursor;
             } else {
                 clearInterval(typingInterval);
-                creditsPre.innerHTML = textToType + cursor; // Ensure full text is displayed
+                creditsPre.innerHTML = textToType + cursor;
             }
         }, 30);
-
         staffRollTimer = setTimeout(onStaffRollEnd, 40000);
     }
 
     function onStaffRollEnd() {
         if (loader.classList.contains('fade-out')) return;
-
         const tutorialCompleted = localStorage.getItem('tutorialCompleted');
         if (!tutorialCompleted) {
             staffRollContainer.style.transition = 'opacity 0.5s';
             staffRollContainer.style.opacity = '0';
             document.getElementById('skipBtn').style.opacity = '0';
-
             setTimeout(() => {
                 welcomeContainer.style.display = 'flex';
                 welcomeContainer.innerHTML = '';
@@ -458,7 +464,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     welcomeContainer.appendChild(span);
                     setTimeout(() => span.classList.add('animate'), 50);
                 });
-                
                 setTimeout(() => {
                     loader.classList.add('fade-out');
                     afterStaffRoll();
@@ -470,39 +475,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    function showMainContent() {
-        document.body.classList.remove("no-scroll");
-        siteWrapper.classList.add("visible");
-        const lastShown = localStorage.getItem("notificationLastShown");
-        const today = new Date().toISOString().slice(0, 10);
-        
-        if (notificationData.text && (!notificationData.showOncePerDay || lastShown !== today)) {
-            const modal = document.getElementById("notification-modal");
-            const closeBtn = document.getElementById("notification-close-btn");
-            const closeHandler = () => checkAndShowSurvey();
-            const modalCloseHandler = (e) => { if (e.target === modal) closeHandler(); };
-            closeBtn.addEventListener('click', closeHandler, { once: true });
-            modal.addEventListener('click', modalCloseHandler, { once: true });
-            setTimeout(() => {
-                modal.classList.add("visible");
-                if (notificationData.showOncePerDay) { localStorage.setItem("notificationLastShown", today); }
-                let delay = notificationData.closeDelaySeconds || 0;
-                closeBtn.disabled = true;
-                if (delay > 0) {
-                    closeBtn.textContent = `閉じる (${delay})`;
-                    const countdown = setInterval(() => {
-                        delay--;
-                        if (delay > 0) { closeBtn.textContent = `閉じる (${delay})`; }
-                        else { clearInterval(countdown); closeBtn.disabled = false; closeBtn.textContent = "閉じる"; }
-                    }, 1000);
-                } else {
-                    closeBtn.disabled = false;
-                    closeBtn.textContent = "閉じる";
+    function showMainContent(adminMessageShown = false) {
+        if (!adminMessageShown && notificationData.text) {
+            const lastShown = localStorage.getItem("notificationLastShown");
+            const today = new Date().toISOString().slice(0, 10);
+            if (!notificationData.showOncePerDay || lastShown !== today) {
+                showAdminMessage(notificationData.title, notificationData.text);
+                 if (notificationData.showOncePerDay) {
+                    localStorage.setItem("notificationLastShown", today);
                 }
-            }, 500);
-        } else {
-            checkAndShowSurvey();
+            }
         }
+        checkAndShowSurvey();
     }
     
     let toastTimer;
@@ -515,7 +499,6 @@ document.addEventListener('DOMContentLoaded', function() {
         toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
     }
     
-    // --- 【修正】アンケート表示ロジック ---
     function checkAndShowSurvey() {
         if (!surveyData || !surveyData.id || !surveyData.options || surveyData.options.length < 2) return;
         const hasAnswered = localStorage.getItem('surveyAnswered-' + surveyData.id);
@@ -554,7 +537,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     let cheatCodeBuffer = null, cheatTimeout;
     document.addEventListener("keydown", e => {
-        // (省略) 既存のロジックは変更なし
         if (e.target.closest("input, textarea") || document.querySelector(".modal-overlay.visible")) return;
         if (e.key === "Enter") { e.preventDefault(); document.getElementById('fake-translator').classList.toggle("hidden"); cheatCodeBuffer = null; return; }
         if (e.key === " " || e.code === "Space") { e.preventDefault(); cheatCodeBuffer = ""; clearTimeout(cheatTimeout); cheatTimeout = setTimeout(() => { cheatCodeBuffer = null; }, 3000); return; }
@@ -572,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    window.addEventListener("beforeunload", () => goOffline(true));
+    window.addEventListener("beforeunload", goOffline);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => document.addEventListener(event, resetInactivityTimer));
 
@@ -581,7 +563,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const itemListContainer = document.getElementById('item-list');
     function generateItemCards() {
-        // (省略) 既存のロジックは変更なし
         itemListContainer.innerHTML = '';
         items.forEach((item, index) => {
             const itemElement = document.createElement('div');
@@ -597,7 +578,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const filterButtons = document.querySelectorAll('.category-btn');
     function filterItems(category) {
-        // (省略) 既存のロジックは変更なし
         document.querySelectorAll('.item-card').forEach((card, index) => {
             const shouldShow = category === 'all' || card.dataset.category === category;
             card.style.display = shouldShow ? 'flex' : 'none';
@@ -616,7 +596,6 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let currentItemUrl = '';
     itemListContainer.addEventListener('click', function(e) {
-        // (省略) 既存のロジックは変更なし
         const card = e.target.closest('.item-card');
         if (card) {
             const item = items[card.dataset.itemId];
@@ -625,13 +604,18 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('details-modal-title').textContent = item.title;
             document.getElementById('details-modal-img').src = item.thumbnail;
             document.getElementById('details-modal-desc').textContent = item.description;
-            document.getElementById('details-modal-launch-btn').href = item.url;
+            const launchBtn = document.getElementById('details-modal-launch-btn');
+            launchBtn.href = item.url;
+            const newLaunchBtn = launchBtn.cloneNode(true);
+            launchBtn.parentNode.replaceChild(newLaunchBtn, launchBtn);
+            newLaunchBtn.addEventListener('click', () => {
+                callGas('logGamePlay', { userId, gameTitle: item.title });
+            });
             allModals.details.classList.add('visible');
         }
     });
 
     function openShareModal(title, url) {
-        // (省略) 既存のロジックは変更なし
         document.getElementById("share-modal-title").textContent = title;
         document.getElementById("share-url-input").value = url;
         const qrContainer = document.getElementById("qrcode");
