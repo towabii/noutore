@@ -65,23 +65,21 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.5px; }
 .credits-list{position:absolute;top:100%;left:50%;transform:translateX(-50%) rotateX(25deg);transform-origin: 50% 100%;width:90%;max-width:800px;color:#e0e0e0;text-align:center;font-size:18px;animation:scroll-up 40s linear forwards; text-shadow: 0 0 5px rgba(255,255,255,0.5), 0 0 20px rgba(255,220,100,0.5);}
 .credits-list pre{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace;font-size:1em;line-height:1.8;text-align:left;white-space:pre-wrap;margin:0; position: relative; }
 
-.credits-list pre::after {
-    content: '█';
+/* 【修正】タイピングアニメーションのカーソル */
+.credits-list pre .typing-cursor {
     animation: blink 1s step-end infinite;
-    position: absolute;
+    display: inline-block;
 }
-@keyframes blink {
-    50% { opacity: 0; }
-}
+@keyframes blink { 50% { opacity: 0; } }
 @keyframes scroll-up{from{top:100%;} to{top:-200%;}}
 
-/* WELCOME ANIMATION */
+/* 【修正】WELCOME ANIMATION */
 #welcome-animation-container { display: flex; text-align: center; color: #fff; font-size: 6rem; font-weight: 900; z-index: 10001; }
 #welcome-animation-container span { display: inline-block; opacity: 0; }
 .welcome-char.animate { animation: welcome-char-anim 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 @keyframes welcome-char-anim {
-    0% { transform: translateY(50px) scale(0.5) rotate(-30deg); opacity: 0; text-shadow: none; }
-    50% { transform: translateY(-20px) scale(1.1) rotate(5deg); opacity: 1; text-shadow: 0 0 10px #fff, 0 0 30px var(--accent-color); }
+    0% { transform: translateY(60px) scale(0.4) rotate(-45deg); opacity: 0; text-shadow: none; }
+    60% { transform: translateY(-25px) scale(1.15) rotate(10deg); opacity: 1; text-shadow: 0 0 15px #fff, 0 0 40px var(--accent-color); }
     100% { transform: translateY(0) scale(1) rotate(0); opacity: 1; text-shadow: 0 0 5px #fff, 0 0 20px var(--accent-color); }
 }
 
@@ -113,7 +111,8 @@ h1, h2, h3 { font-weight: 700; letter-spacing: -0.5px; }
 
 /* === Countdown Section === */
 #countdown-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:var(--spacing-md);margin-bottom:var(--spacing-lg)}
-.countdown-card{background:var(--panel-bg);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:var(--spacing-md);backdrop-filter:blur(10px);box-shadow:var(--shadow-sm);transition:all .3s ease}
+.countdown-card{background:var(--panel-bg);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:var(--spacing-md);backdrop-filter:blur(10px);box-shadow:var(--shadow-sm);transition:all .3s ease; opacity: 0; transform: translateY(20px); animation: fade-up 0.6s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;}
+@keyframes fade-up { to { opacity: 1; transform: translateY(0); } }
 .countdown-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-md)}
 .countdown-card.main{grid-column:1 / -1;text-align:center}
 .countdown-header{font-size:.8rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem}
@@ -150,7 +149,7 @@ main{flex-grow:1;padding:var(--spacing-lg);max-width:1600px;width:100%;margin:0 
 /* MODAL STYLES */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.2);backdrop-filter:blur(10px);z-index:1000;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease;pointer-events:none}
 .modal-overlay.visible{opacity:1;pointer-events:auto}
-.modal-content{background:var(--panel-bg-solid);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--spacing-lg);width:90%;max-width:500px;box-shadow:var(--shadow-lg);transform:scale(.95) translateY(10px);transition:transform .3s ease,opacity .3s ease; max-height: 90vh; display: flex; flex-direction: column;}
+.modal-content{background:var(--panel-bg-solid);border:1px solid var(--border-color);border-radius:var(--radius-lg);padding:var(--spacing-lg);width:90%;max-width:500px;box-shadow:var(--shadow-lg);transform:scale(.95) translateY(10px);transition:transform .4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity .4s ease; max-height: 90vh; display: flex; flex-direction: column;}
 .modal-overlay.visible .modal-content{transform:scale(1) translateY(0)}
 .modal-content.large{max-width:700px}
 .modal-content h2{margin-top:0;font-size:1.5rem;padding-bottom:.75rem;margin-bottom:1rem; flex-shrink: 0;}
