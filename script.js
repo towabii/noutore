@@ -66,7 +66,7 @@ const items = [
     { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-    { title: "My Wallet", description: "初の本格ウェブアプリ。PWA対応", thumbnail: "./apps/外部サイト用写真/My wallet.png", url: "https://towabii.github.io/My wallet/", recommend: "PWA対応！", category: "other" },
+    { title: "My Wallet", description: "初の本格ウェブアプリ。PWA対応", thumbnail: "./apps/外部サイト用写真/My wallet.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
 ];
 
 // ===============================================
