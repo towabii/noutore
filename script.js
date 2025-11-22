@@ -30,7 +30,7 @@ const surveyData = {
 // --- お知らせモーダルの設定 ---
 const notificationData = {
     title: "【追加】追加アプリについて",
-    text: "ご利用ありがとうございます。#Study Planner・My Wallet・ジオメタリートレーニング（早期アクセス）#を新たに追加しましたので、ぜひご活用ください。2025/11/22<br>",
+    text: "ご利用ありがとうございます。Study Planner・My Wallet・ジオメタリートレーニング（早期アクセス）を新たに追加しましたので、ぜひご活用ください。2025/11/22<br>",
     closeDelaySeconds: 0,
     showOncePerDay: false 
 };
@@ -71,7 +71,7 @@ const items = [
     { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-    { title: "My Wallet", description: "初の本格ウェブアプリ。PWA対応", thumbnail: "./apps/外部サイト用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
+    { title: "My Wallet", description: "初の本格ウェブアプリ。PWA対応", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
 ];
 
 // ===============================================
