@@ -7,6 +7,12 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbxiSSxUUs0bbPSJUEeVo78I
 // 簡単更新エリア
 // ===============================================
 
+// --- 広告バナーの設定 ---
+const adBanners = [
+    { image: './path/to/your/image1.jpg', link: 'https://example.com/1' },
+    { image: './path/to/your/image2.png', link: 'https://example.com/2' }
+];
+
 // --- カウントダウンの設定 ---
 const countdownConfig = [
     { label: "人生終了まで", type: "life", span: "full" },
@@ -38,7 +44,6 @@ const notificationData = {
 // --- アップデート情報の設定 ---
 const updateInfoData = {
     history: [
-        // 【修正】ここから下の行の末尾にカンマ(,)を追加しました
         { version: "v13.5", date: "2025-11-22", title: "アプリを追加", details: ["ジオメタリートレーニング(BETA)、My Walletを追加しました。", "その他のアプリを更新しました", "パフォーマンスの改善を行いました。"], video: null },
         { version: "v13.4", date: "2025-11-20", title: "カウントダウン更新、バックグラウンド更新", details: ["カウントダウンを更新しました。", "バック処理を変更しました。", "パフォーマンスの改善を行いました。"], video: null },
         { version: "v13.3", date: "2025-11-01", title: "Study planner(BETA)を公開", details: ["study Plannnerを追加しました。", "学習を更新しました。", "パフォーマンスの改善を行いました。"], video: null },
@@ -87,11 +92,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const creditsPre = document.getElementById('credits-text');
     const welcomeContainer = document.getElementById('welcome-animation-container');
 
-    let staffRollTimer, countdownInterval, typingInterval;
+    let staffRollTimer, countdownInterval, typingInterval, adTimer;
     const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
     // --- オンライン状態管理 ---
-    const INACTIVITY_TIMEOUT = 3600 * 1000; // 1時間
+    const INACTIVITY_TIMEOUT = 3600 * 1000;
     let inactivityTimer;
     let isOnline = false;
 
@@ -109,9 +114,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             if (!GAS_URL || GAS_URL.includes('貼り付け')) throw new Error('GASのURLが設定されていません。');
             const response = await fetch(GAS_URL, { 
-                method: 'POST', 
-                mode: 'cors', 
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+                method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify({ action, payload }),
                 keepalive: action === 'accessEnd' 
             });
@@ -124,15 +127,12 @@ document.addEventListener('DOMContentLoaded', function() {
             throw error;
         }
     }
-
-    // --- オンライン状態を管理する関数 ---
     function goOnline() {
         if (isOnline) return;
         isOnline = true;
         resetInactivityTimer();
         console.log("Status: Online");
     }
-
     function goOffline() {
         if (!isOnline) return;
         isOnline = false;
@@ -140,12 +140,10 @@ document.addEventListener('DOMContentLoaded', function() {
         callGas('accessEnd', { userId, clientId });
         console.log("Status: Offline");
     }
-
     function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => goOffline(), INACTIVITY_TIMEOUT);
     }
-    
     function handleVisibilityChange() {
         if (document.hidden) {
             goOffline();
@@ -153,8 +151,6 @@ document.addEventListener('DOMContentLoaded', function() {
             goOnline();
         }
     }
-    
-    // --- BAN/管理者メッセージ表示用 ---
     function showAdminMessage(title, text) {
         const modal = document.getElementById("notification-modal");
         document.getElementById('notification-title').textContent = title;
@@ -165,17 +161,18 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.classList.add("visible");
         return true; 
     }
-
+    
+    // 【修正】BAN画面にユーザーIDを表示
     function showBanScreen() {
         document.body.innerHTML = `
             <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background-color:var(--bg-color); color:var(--text-primary); font-family:var(--font-family-sans); text-align:center; padding: 2rem;">
                 <h1 style="font-size:2rem; color: #ff4d4d;">アクセスが制限されています</h1>
                 <p style="font-size:1.1rem; max-width: 600px;">あなたはこのサイトへのアクセスが管理者によって制限されています。<br>心当たりがない場合は、サイト管理者にお問い合わせください。</p>
+                <p style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-secondary); font-family: monospace;">User ID: ${userId}</p>
             </div>
         `;
     }
 
-    // --- カウントダウンカードを動的に生成 ---
     function generateCountdownCards() {
         const container = document.getElementById('countdown-container');
         if (!container) return;
@@ -198,7 +195,6 @@ document.addEventListener('DOMContentLoaded', function() {
             container.appendChild(card);
         });
     }
-
     function populateDynamicContent() {
         const notificationTitle = document.getElementById('notification-title');
         const notificationText = document.getElementById('notification-text');
@@ -226,45 +222,28 @@ document.addEventListener('DOMContentLoaded', function() {
             scheduleData.forEach(item => { const li = document.createElement('li'); li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--border-color);"; li.innerHTML = `<span>${item.name}</span> <span style="color: var(--text-secondary);">${item.date}</span>`; scheduleList.appendChild(li); });
         }
     }
-
     function applyTheme(theme) {
         document.body.dataset.theme = theme;
         themeToggle.checked = theme === 'light';
     }
-    
     function initSiteFlow() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         applyTheme(savedTheme);
         playStaffRoll();
     }
-    
     themeToggle.addEventListener('change', () => {
         const newTheme = themeToggle.checked ? 'light' : 'dark';
         localStorage.setItem('theme', newTheme);
         applyTheme(newTheme);
     });
-
     async function afterStaffRoll() {
         try {
             const accessData = await callGas('accessStart', { userId, clientId });
-            
-            // BANチェック
-            if (accessData.status === 'BANNED') {
-                showBanScreen();
-                return;
-            }
-            
-            // 【新規追加】強制リフレッシュチェック
-            if (accessData.action === 'REFRESH') {
-                showToast("サイトが更新されました。");
-                setTimeout(() => location.reload(true), 1000); // 1秒後にリロード
-                return; 
-            }
-
+            if (accessData.status === 'BANNED') { showBanScreen(); return; }
+            if (accessData.action === 'REFRESH') { showToast("サイトが更新されました。"); setTimeout(() => location.reload(true), 1000); return; }
             document.body.classList.remove("no-scroll");
             siteWrapper.classList.add("visible");
             goOnline();
-
             const tutorialCompleted = localStorage.getItem('tutorialCompleted');
             const afterTutorial = () => checkTermsAndStart(() => {
                 let adminMessageShown = false;
@@ -273,28 +252,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 showMainContent(adminMessageShown); 
             });
-
-            if (!tutorialCompleted) { 
-                runTutorial(afterTutorial); 
-            } else { 
-                afterTutorial(); 
-            }
-
+            if (!tutorialCompleted) { runTutorial(afterTutorial); } else { afterTutorial(); }
         } catch (error) {
             console.error("初期化に失敗しました:", error);
             showAdminMessage("接続エラー", "サーバーとの通信に失敗しました。時間をおいて再度お試しください。");
         }
     }
-
     function runTutorial(callback) {
-        const modal = document.getElementById("tutorial-modal");
-        const steps = modal.querySelectorAll(".tutorial-step");
-        const nextBtn = document.getElementById("tutorial-next-btn");
-        const prevBtn = document.getElementById("tutorial-prev-btn");
-        const skipBtn = document.getElementById("tutorial-skip-btn");
-        const indicator = document.getElementById("tutorial-step-indicator");
-        let currentStep = 0;
-        const totalSteps = steps.length;
+        const modal = document.getElementById("tutorial-modal"); const steps = modal.querySelectorAll(".tutorial-step");
+        const nextBtn = document.getElementById("tutorial-next-btn"); const prevBtn = document.getElementById("tutorial-prev-btn");
+        const skipBtn = document.getElementById("tutorial-skip-btn"); const indicator = document.getElementById("tutorial-step-indicator");
+        let currentStep = 0; const totalSteps = steps.length;
         function updateStep() {
             steps.forEach((step, index) => { step.classList.toggle("active", index === currentStep); });
             indicator.textContent = `${currentStep + 1} / ${totalSteps}`;
@@ -302,52 +270,36 @@ document.addEventListener('DOMContentLoaded', function() {
             nextBtn.textContent = (currentStep === totalSteps - 1) ? "完了" : "次へ";
         }
         function completeTutorial() {
-            localStorage.setItem("tutorialCompleted", "true");
-            modal.classList.remove("visible");
-            document.body.classList.remove("no-scroll");
-            if (callback) callback();
+            localStorage.setItem("tutorialCompleted", "true"); modal.classList.remove("visible");
+            document.body.classList.remove("no-scroll"); if (callback) callback();
         }
         nextBtn.addEventListener("click", () => { if (currentStep < totalSteps - 1) { currentStep++; updateStep(); } else { completeTutorial(); } });
         prevBtn.addEventListener("click", () => { if (currentStep > 0) { currentStep--; updateStep(); } });
         skipBtn.addEventListener("click", completeTutorial);
-        modal.classList.add("visible");
-        document.body.classList.add("no-scroll");
-        updateStep();
+        modal.classList.add("visible"); document.body.classList.add("no-scroll"); updateStep();
     }
-
     function checkTermsAndStart(callback) {
         const termsAgreed = localStorage.getItem("termsAgreed");
         if (!termsAgreed) {
             const termsModal = document.getElementById("terms-modal");
-            termsModal.classList.add("visible");
-            document.body.classList.add("no-scroll");
+            termsModal.classList.add("visible"); document.body.classList.add("no-scroll");
             document.getElementById("terms-agree-btn").addEventListener("click", () => {
-                localStorage.setItem("termsAgreed", "true");
-                termsModal.classList.remove("visible");
-                document.body.classList.remove("no-scroll");
-                promptForAgeAndStart(callback);
+                localStorage.setItem("termsAgreed", "true"); termsModal.classList.remove("visible");
+                document.body.classList.remove("no-scroll"); promptForAgeAndStart(callback);
             }, { once: true });
-        } else {
-            promptForAgeAndStart(callback);
-        }
+        } else { promptForAgeAndStart(callback); }
     }
-    
     function promptForAgeAndStart(callback) {
         let age = localStorage.getItem('userAge');
         if (!age) {
             let userInput = prompt("あなたの年齢を半角数字で入力してください。\nこの情報は「人生終了まで」の時間を計算するためにのみ使用されます。", "14");
             if (userInput === null || isNaN(parseInt(userInput)) || parseInt(userInput) <= 0 || parseInt(userInput) > 89) {
-                age = 14; 
-                alert("入力が無効か、範囲外です。デフォルトの年齢 (14歳) で設定します。");
-            } else {
-                age = parseInt(userInput);
-            }
+                age = 14; alert("入力が無効か、範囲外です。デフォルトの年齢 (14歳) で設定します。");
+            } else { age = parseInt(userInput); }
             localStorage.setItem('userAge', age);
         }
-        startSite(parseInt(age));
-        if(callback) callback();
+        startSite(parseInt(age)); if (callback) callback();
     }
-
     async function updateOnlineCount() {
         try {
             const data = await callGas('getOnlineCount');
@@ -358,23 +310,17 @@ document.addEventListener('DOMContentLoaded', function() {
             if (display) display.textContent = 'エラー';
         }
     }
-    
     function startSite(age) {
-        startCountdown(age);
-        updateOnlineCount();
-        setInterval(updateOnlineCount, 30000);
+        startCountdown(age); updateOnlineCount(); setInterval(updateOnlineCount, 30000);
     }
-    
     const countdownMessages = ["この時間の何時間を遊びに使うのでしょうか？", "残り時間は、わずかです。", "時は金なり。有効に使おう。", "今日という日は、残りの人生の最初の一日。"];
     function startCountdown(age) {
         const birthYear = new Date().getFullYear() - age;
         const lifeTargetDate = new Date(birthYear + 90, new Date().getMonth(), new Date().getDate());
-        const updateFunctions = [];
-        const lifeTimerEl = document.getElementById('countdown-timer');
+        const updateFunctions = []; const lifeTimerEl = document.getElementById('countdown-timer');
         if (lifeTimerEl) {
             updateFunctions.push(() => {
-                const rem = lifeTargetDate - new Date();
-                if (rem < 0) { lifeTimerEl.textContent = "目標達成！"; return; }
+                const rem = lifeTargetDate - new Date(); if (rem < 0) { lifeTimerEl.textContent = "目標達成！"; return; }
                 const s = Math.floor(rem / 1000 % 60), m = Math.floor(rem / 60000 % 60), h = Math.floor(rem / 3600000 % 24), d = Math.floor(rem / 86400000), w = Math.floor(d / 7);
                 lifeTimerEl.innerHTML = `${w}<span>週</span> ${d % 7}<span>日</span> ${h}<span>時間</span> ${m}<span>分</span> ${s}<span>秒</span>`;
             });
@@ -387,160 +333,96 @@ document.addEventListener('DOMContentLoaded', function() {
         countdownConfig.forEach((config, index) => {
             if (!config.date) return;
             const el = document.querySelector(`#countdown-card-${index} .countdown-value`);
-            if(!el) return;
-            let targetDate;
-            const now = new Date();
+            if(!el) return; let targetDate; const now = new Date();
             const [month, day] = config.date.split('/').slice(-2).map(Number);
             if (config.date.includes('/')) {
-                 if (config.date.split('/').length === 3) {
-                    targetDate = new Date(config.date);
-                } else {
-                    targetDate = new Date(now.getFullYear(), month - 1, day);
-                    if (now > targetDate) {
-                        targetDate.setFullYear(now.getFullYear() + 1);
-                    }
-                }
+                 if (config.date.split('/').length === 3) { targetDate = new Date(config.date); }
+                 else { targetDate = new Date(now.getFullYear(), month - 1, day); if (now > targetDate) { targetDate.setFullYear(now.getFullYear() + 1); } }
             }
             updateFunctions.push(() => {
-                const now = new Date();
-                if (now > targetDate) { el.textContent = "終了"; el.classList.remove('warning'); return; }
-                const days = Math.ceil((targetDate - now) / 86400000);
-                el.textContent = `${days} 日`;
+                const now = new Date(); if (now > targetDate) { el.textContent = "終了"; el.classList.remove('warning'); return; }
+                const days = Math.ceil((targetDate - now) / 86400000); el.textContent = `${days} 日`;
                 el.classList.toggle('warning', days > 0 && days <= 30);
             });
         });
         const updateAll = () => updateFunctions.forEach(fn => fn());
-        updateAll(); 
-        clearInterval(countdownInterval);
-        countdownInterval = setInterval(updateAll, 1000);
+        updateAll(); clearInterval(countdownInterval); countdownInterval = setInterval(updateAll, 1000);
     }
-    
     const originalCreditsText = creditsPre.innerHTML;
-
     function playStaffRoll() {
         const creditsContainer = staffRollContainer.querySelector(".credits-list");
-        if (creditsContainer) {
-            creditsContainer.style.animation = 'none';
-            void creditsContainer.offsetHeight;
-            creditsContainer.style.animation = '';
-        }
-        creditsPre.innerHTML = '';
-        document.body.classList.add("no-scroll");
-        loader.classList.remove("fade-out");
-        staffRollContainer.style.opacity = '1';
-        welcomeContainer.style.display = 'none';
-        const skipBtn = document.getElementById('skipBtn');
-        skipBtn.style.display = 'block';
-        const onSkip = () => { clearTimeout(staffRollTimer); clearInterval(typingInterval); onStaffRollEnd(); };
-        skipBtn.onclick = onSkip;
-        siteWrapper.classList.remove("visible");
-        clearTimeout(staffRollTimer);
-        clearInterval(typingInterval);
-        let charIndex = 0;
-        const textToType = originalCreditsText.trim();
-        const cursor = '<span class="typing-cursor">█</span>';
+        if (creditsContainer) { creditsContainer.style.animation = 'none'; void creditsContainer.offsetHeight; creditsContainer.style.animation = ''; }
+        creditsPre.innerHTML = ''; document.body.classList.add("no-scroll");
+        loader.classList.remove("fade-out"); staffRollContainer.style.opacity = '1';
+        welcomeContainer.style.display = 'none'; const skipBtn = document.getElementById('skipBtn');
+        skipBtn.style.display = 'block'; const onSkip = () => { clearTimeout(staffRollTimer); clearInterval(typingInterval); onStaffRollEnd(); };
+        skipBtn.onclick = onSkip; siteWrapper.classList.remove("visible"); clearTimeout(staffRollTimer); clearInterval(typingInterval);
+        let charIndex = 0; const textToType = originalCreditsText.trim(); const cursor = '<span class="typing-cursor">█</span>';
         typingInterval = setInterval(() => {
-            if (charIndex < textToType.length) {
-                charIndex++;
-                creditsPre.innerHTML = textToType.substring(0, charIndex) + cursor;
-            } else {
-                clearInterval(typingInterval);
-                creditsPre.innerHTML = textToType + cursor;
-            }
+            if (charIndex < textToType.length) { charIndex++; creditsPre.innerHTML = textToType.substring(0, charIndex) + cursor; }
+            else { clearInterval(typingInterval); creditsPre.innerHTML = textToType + cursor; }
         }, 30);
         staffRollTimer = setTimeout(onStaffRollEnd, 40000);
     }
-
     function onStaffRollEnd() {
         if (loader.classList.contains('fade-out')) return;
         const tutorialCompleted = localStorage.getItem('tutorialCompleted');
         if (!tutorialCompleted) {
-            staffRollContainer.style.transition = 'opacity 0.5s';
-            staffRollContainer.style.opacity = '0';
+            staffRollContainer.style.transition = 'opacity 0.5s'; staffRollContainer.style.opacity = '0';
             document.getElementById('skipBtn').style.opacity = '0';
             setTimeout(() => {
-                welcomeContainer.style.display = 'flex';
-                welcomeContainer.innerHTML = '';
-                const text = "こんにちは";
+                welcomeContainer.style.display = 'flex'; welcomeContainer.innerHTML = ''; const text = "こんにちは";
                 text.split('').forEach((char, index) => {
-                    const span = document.createElement('span');
-                    span.textContent = char;
-                    span.className = 'welcome-char';
-                    span.style.animationDelay = `${index * 100}ms`;
-                    welcomeContainer.appendChild(span);
+                    const span = document.createElement('span'); span.textContent = char; span.className = 'welcome-char';
+                    span.style.animationDelay = `${index * 100}ms`; welcomeContainer.appendChild(span);
                     setTimeout(() => span.classList.add('animate'), 50);
                 });
-                setTimeout(() => {
-                    loader.classList.add('fade-out');
-                    afterStaffRoll();
-                }, text.length * 100 + 2000);
+                setTimeout(() => { loader.classList.add('fade-out'); afterStaffRoll(); }, text.length * 100 + 2000);
             }, 500);
-        } else {
-            loader.classList.add('fade-out');
-            afterStaffRoll();
-        }
+        } else { loader.classList.add('fade-out'); afterStaffRoll(); }
     }
-
     function showMainContent(adminMessageShown = false) {
         if (!adminMessageShown && notificationData.text) {
             const lastShown = localStorage.getItem("notificationLastShown");
             const today = new Date().toISOString().slice(0, 10);
             if (!notificationData.showOncePerDay || lastShown !== today) {
                 showAdminMessage(notificationData.title, notificationData.text);
-                 if (notificationData.showOncePerDay) {
-                    localStorage.setItem("notificationLastShown", today);
-                }
+                 if (notificationData.showOncePerDay) { localStorage.setItem("notificationLastShown", today); }
             }
         }
         checkAndShowSurvey();
     }
-    
     let toastTimer;
     function showToast(message) {
         const toast = document.getElementById('toast-notification');
-        if (!toast) return;
-        clearTimeout(toastTimer);
-        toast.textContent = message;
+        if (!toast) return; clearTimeout(toastTimer); toast.textContent = message;
         toast.classList.add('show');
         toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
     }
-    
     function checkAndShowSurvey() {
         if (!surveyData || !surveyData.id || !surveyData.options || surveyData.options.length < 2) return;
         const hasAnswered = localStorage.getItem('surveyAnswered-' + surveyData.id);
-        if (hasAnswered !== 'true') {
-            showSurveyModal();
-        }
+        if (hasAnswered !== 'true') { showSurveyModal(); }
     }
-
     function showSurveyModal() {
         const modal = document.getElementById("survey-modal");
         const questionEl = document.getElementById("survey-question");
         const optionsContainer = document.getElementById("survey-options-container");
-        questionEl.textContent = surveyData.question;
-        optionsContainer.innerHTML = '';
+        questionEl.textContent = surveyData.question; optionsContainer.innerHTML = '';
         surveyData.options.forEach(optionText => {
-            const button = document.createElement('button');
-            button.className = 'survey-option-btn';
+            const button = document.createElement('button'); button.className = 'survey-option-btn';
             button.textContent = optionText;
             button.onclick = () => {
-                modal.classList.remove('visible');
-                document.body.classList.remove("no-scroll");
-                showToast('ご協力ありがとうございました。');
-                localStorage.setItem('surveyAnswered-' + surveyData.id, 'true');
-                callGas('submitSurvey', {
-                    userId: userId, surveyId: surveyData.id,
-                    question: surveyData.question, answer: optionText
-                }).catch(error => { console.error("アンケートのバックグラウンド送信に失敗:", error); });
+                modal.classList.remove('visible'); document.body.classList.remove("no-scroll");
+                showToast('ご協力ありがとうございました。'); localStorage.setItem('surveyAnswered-' + surveyData.id, 'true');
+                callGas('submitSurvey', { userId: userId, surveyId: surveyData.id, question: surveyData.question, answer: optionText })
+                .catch(error => { console.error("アンケートのバックグラウンド送信に失敗:", error); });
             };
             optionsContainer.appendChild(button);
         });
-        modal.classList.add('visible');
-        document.body.classList.add("no-scroll");
+        modal.classList.add('visible'); document.body.classList.add("no-scroll");
     }
-
     document.getElementById('replay-staffroll').addEventListener('click', playStaffRoll);
-
     let cheatCodeBuffer = null, cheatTimeout;
     document.addEventListener("keydown", e => {
         if (e.target.closest("input, textarea") || document.querySelector(".modal-overlay.visible")) return;
@@ -552,54 +434,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (confirm("設定をリセットしますか？ (年齢設定や利用規約の同意状況などが初期化されます)")) {
                     ["tutorialCompleted", "termsAgreed", "notificationLastShown", "sokohara-site-user-id", "theme", "userAge"].forEach(e => localStorage.removeItem(e));
                     Object.keys(localStorage).forEach(key => { if (key.startsWith('surveyAnswered-')) { localStorage.removeItem(key); } });
-                    alert("リセットしました。ページをリロードします。");
-                    window.location.reload();
+                    alert("リセットしました。ページをリロードします。"); window.location.reload();
                 }
                 cheatCodeBuffer = null; clearTimeout(cheatTimeout);
             }
         }
     });
-    
     window.addEventListener("beforeunload", goOffline);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => document.addEventListener(event, resetInactivityTimer));
-
     document.getElementById('translator-input').addEventListener("input",(e)=>{document.getElementById('translator-output').value=e.target.value.toLowerCase().split("").map(c=>({a:"あ",i:"い",u:"う",e:"え",o:"お"," ":"　"})[c]||c).join("")});
     document.querySelectorAll('nav a[data-target]').forEach(link => { link.addEventListener('click', (event) => { const targetId = event.currentTarget.dataset.target; document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(`content-${targetId}`).classList.add('active'); }); });
-    
     const itemListContainer = document.getElementById('item-list');
     function generateItemCards() {
         itemListContainer.innerHTML = '';
         items.forEach((item, index) => {
             const itemElement = document.createElement('div');
-            itemElement.className = 'item-card';
-            itemElement.dataset.itemId = index;
-            itemElement.dataset.category = item.category;
+            itemElement.className = 'item-card'; itemElement.dataset.itemId = index; itemElement.dataset.category = item.category;
             const recommendBadge = item.recommend ? `<div class="recommend-badge">${item.recommend}</div>` : '';
             const ribbon = `<div class="ribbon ${item.category}">${item.category==='fun'?'楽しいやつ':item.category==='study'?'学習':'その他'}</div>`;
             itemElement.innerHTML = `${recommendBadge}<div class="thumbnail-container"><img src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML = '<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);\'>画像なし</div>';"></div>${ribbon}<div class="item-card-content"><h3 class="item-card-title">${item.title}</h3><p class="item-card-desc">${item.description}</p></div>`;
             itemListContainer.appendChild(itemElement);
         });
     }
-
     const filterButtons = document.querySelectorAll('.category-btn');
     function filterItems(category) {
         document.querySelectorAll('.item-card').forEach((card, index) => {
             const shouldShow = category === 'all' || card.dataset.category === category;
             card.style.display = shouldShow ? 'flex' : 'none';
             if (shouldShow) {
-                card.style.animation = 'none';
-                void card.offsetHeight;
+                card.style.animation = 'none'; void card.offsetHeight;
                 card.style.animation = `card-appear 0.5s ease-out ${index * 50}ms forwards`;
             }
         });
     }
     filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); filterItems(button.dataset.category); }); });
-
     const allModals = { details: document.getElementById('details-modal'), share: document.getElementById('share-modal'), update: document.getElementById('update-info-modal'), schedule: document.getElementById('schedule-modal'), notification: document.getElementById('notification-modal') };
     document.getElementById('show-update-info-btn').addEventListener('click',()=>allModals.update.classList.add('visible'));
     document.getElementById('show-schedule-btn').addEventListener('click',()=>allModals.schedule.classList.add('visible'));
-    
     let currentItemUrl = '';
     itemListContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.item-card');
@@ -620,35 +492,76 @@ document.addEventListener('DOMContentLoaded', function() {
             allModals.details.classList.add('visible');
         }
     });
-
     function openShareModal(title, url) {
         document.getElementById("share-modal-title").textContent = title;
         document.getElementById("share-url-input").value = url;
         const qrContainer = document.getElementById("qrcode");
         qrContainer.innerHTML = "";
-        // QRCodeライブラリの存在確認を追加
         if (typeof QRCode !== 'undefined') {
             QRCode.toCanvas(url, { width: 220, errorCorrectionLevel: "H" }, (error, canvas) => {
                 if (error) { console.error(error); qrContainer.innerHTML = "<p>QRコード生成失敗</p>"; }
                 else { qrContainer.appendChild(canvas); }
             });
-        } else {
-            console.warn("QRCode library not found.");
-            qrContainer.innerHTML = "<p>QRコード機能は利用できません</p>";
-        }
+        } else { console.warn("QRCode library not found."); qrContainer.innerHTML = "<p>QRコード機能は利用できません</p>"; }
         allModals.share.classList.add("visible");
     }
-
     document.getElementById("details-modal-share-btn").addEventListener("click", () => { const absoluteUrl = new URL(currentItemUrl, window.location.href).href; openShareModal("作品を共有", absoluteUrl); allModals.details.classList.remove("visible"); });
     document.getElementById("share-site-btn").addEventListener("click", () => { openShareModal("このサイトを共有", window.location.href); });
     document.getElementById("copy-url-btn").addEventListener("click", e => { navigator.clipboard.writeText(document.getElementById('share-url-input').value).then(() => { e.target.textContent = "コピー完了!"; setTimeout(() => { e.target.textContent = "コピー" }, 2000); }); });
     document.querySelectorAll("[data-close-modal]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal-overlay").classList.remove("visible")));
     document.querySelectorAll(".modal-overlay").forEach(modal => modal.addEventListener("click", e => { if (e.target === modal && modal.id !== 'survey-modal') { modal.classList.remove("visible"); } }));
+
+    // --- 広告バナー初期化・制御 ---
+    let currentAdIndex = 0;
+    function updateAdBanner() {
+        if (!adBanners || adBanners.length === 0) return;
+        const adContainer = document.getElementById('ad-banner-container');
+        if (!adContainer) return;
+        const currentAd = adBanners[currentAdIndex];
+        const nextAdIndex = (currentAdIndex + 1) % adBanners.length;
+        const nextAd = adBanners[nextAdIndex];
+        const currentImg = adContainer.querySelector('img:not(.hidden)');
+        if(currentImg) currentImg.classList.remove('visible');
+        const nextLink = document.createElement('a');
+        nextLink.href = nextAd.link; nextLink.target = '_blank'; nextLink.rel = 'noopener noreferrer';
+        const nextImg = document.createElement('img');
+        nextImg.src = nextAd.image; nextImg.alt = 'Advertisement';
+        nextImg.onload = () => {
+            nextLink.appendChild(nextImg); adContainer.appendChild(nextLink);
+            if(currentImg) { setTimeout(() => currentImg.parentElement.remove(), 800); }
+            setTimeout(() => nextImg.classList.add('visible'), 50);
+        };
+        nextImg.onerror = () => { nextLink.remove(); }
+        currentAdIndex = nextAdIndex;
+    }
+    function initAdBanner() {
+        const adContainer = document.getElementById('ad-banner-container');
+        if (!adBanners || adBanners.length === 0 || !adContainer) return;
+        const firstAd = adBanners[0];
+        const firstLink = document.createElement('a');
+        firstLink.href = firstAd.link; firstLink.target = '_blank'; firstLink.rel = 'noopener noreferrer';
+        const firstImg = document.createElement('img');
+        firstImg.src = firstAd.image; firstImg.alt = 'Advertisement';
+        firstImg.onload = () => {
+            firstLink.appendChild(firstImg); adContainer.appendChild(firstLink);
+            adContainer.classList.add('visible');
+            setTimeout(() => firstImg.classList.add('visible'), 50);
+        };
+        currentAdIndex = 0;
+        if (adBanners.length > 1) { clearInterval(adTimer); adTimer = setInterval(updateAdBanner, 60000); }
+    }
     
+    // --- 【新規追加】ユーザーIDをヘッダーに表示 ---
+    const headerUserIdEl = document.getElementById('header-user-id');
+    if (headerUserIdEl) {
+        headerUserIdEl.textContent = `ID: ${userId}`;
+    }
+
     // --- サイト起動 ---
     generateCountdownCards();
     populateDynamicContent();
     generateItemCards();
     filterItems('fun');
+    initAdBanner();
     initSiteFlow();
 });
