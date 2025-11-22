@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>新しいタブ</title>
 
-    <!-- ▼▼▼ SEO対策：ここから追加 ▼▼▼ -->
     <meta name="description" content="底原永和（そこはらとわ）の公式サイト。ソコハラ トワが作った楽しいやつや、ちょっと便利なツールなどを公開しています。">
     <meta name="keywords" content="底原永和, 底原, 永和, とわ, そこはらとわ, そこはら, ソコハラ, トワ, ソコハラトワ, 公式サイト">
     <script type="application/ld+json">
@@ -19,26 +18,25 @@
       "description": "楽しいやつを作る中学2年生。このサイトの全コンテンツを制作・運営しています。"
     }
     </script>
-    <!-- ▲▲▲ SEO対策：ここまで追加 ▲▲▲ -->
 
-    <!-- QRコード生成ライブラリ -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
-
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
-
-    <!-- 外部CSSファイル -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body data-theme="dark">
 
-    <!-- 背景用要素 -->
     <div class="background-gradient"></div>
 
-    <!-- スタッフロール＆ローダー -->
     <div id="loader">
+        <div id="loading-status-container" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p id="loading-text">サーバーに接続中...</p>
+            <div class="progress-bar-container">
+                <div id="progress-bar-fill" class="progress-bar-fill"></div>
+            </div>
+        </div>
         <div id="welcome-animation-container"></div>
         <button id="skipBtn">スキップ</button>
         <div id="staffRollContainer">
@@ -46,13 +44,9 @@
 <pre id="credits-text">
 プロデューサー .................. 底原永和
 ディレクター .................... 底原永和
-エグゼクティブプロデューサー .... 底原永和
-アシスタントプロデューサー ...... 底原永和
 デザイン ........................ 底原永和
 シナリオ ........................ 底原永和
 レベルデザイン .................. 底原永和
-バランス調整 .................... 底原永和
-UI/UXデザイン ................... 底原永和
 プログラムリード ................ 底原永和
 エンジンプログラマー ............ 底原永和
 ネットワークプログラマー ........ 底原永和
@@ -94,6 +88,19 @@ PR .............................. 底原永和
         </div>
     </div>
 
+    <div id="ban-screen" class="hidden-screen">
+        <div class="ban-content">
+            <h1>🚫 アクセスが制限されています</h1>
+            <p>あなたはこのサイトへのアクセスが管理者によって制限されています。</p>
+            <p class="ban-user-id">User ID: <span id="ban-user-id-display"></span></p>
+            <div class="ban-actions"><button id="ban-feedback-btn" class="btn warning">異議申し立て / フィードバック</button></div>
+            <div id="ban-admin-message-container" class="admin-message-box">
+                <h3>管理者からのメッセージ</h3>
+                <p id="ban-admin-message">メッセージはありません。</p>
+            </div>
+        </div>
+    </div>
+
     <div class="site-wrapper" id="site-wrapper">
         <header class="site-header">
             <h1 class="site-title">底原永和の作った楽しいやつ</h1>
@@ -103,16 +110,12 @@ PR .............................. 底原永和
                     <li><a data-target="faq"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" /></svg><span>よくある質問</span></a></li>
                     <li><a data-target="author"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" /></svg><span>作成者</span></a></li>
                     <li><a id="share-site-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.186 2.25 2.25 0 0 0-3.933 2.186Z" /></svg><span>共有</span></a></li>
-                    <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSdUZqH-vSXeZr6nbuqrmJgiaLfytVIOxdlo4ylDFp-koLPT0g/viewform" target="_blank" rel="noopener noreferrer"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.5 7.5 0 0 1-7.5 0c-1.433-.422-2.599-1.655-2.816-3.134m13.132 3.134c-.217-1.479-1.383-2.712-2.816-3.134m0 0a2.25 2.25 0 0 0-2.25-2.25a2.25 2.25 0 0 0-2.25 2.25m4.5 0V19.5a2.25 2.25 0 0 1-2.25 2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25m0 0a2.25 2.25 0 0 0-2.25-2.25a2.25 2.25 0 0 0 2.25-2.25A2.25 2.25 0 0 0 12 7.5Z" /></svg><span>フィードバック</span></a></li>
+                    <li><a id="open-feedback-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18v-5.25m0 0a6.01 6.01 0 0 0 1.5-.189m-1.5.189a6.01 6.01 0 0 1-1.5-.189m3.75 7.478a12.06 12.06 0 0 1-4.5 0m3.75 2.311a7.5 7.5 0 0 1-7.5 0c-1.433-.422-2.599-1.655-2.816-3.134m13.132 3.134c-.217-1.479-1.383-2.712-2.816-3.134m0 0a2.25 2.25 0 0 0-2.25-2.25a2.25 2.25 0 0 0-2.25 2.25m4.5 0V19.5a2.25 2.25 0 0 1-2.25 2.25a2.25 2.25 0 0 1-2.25-2.25v-2.25m0 0a2.25 2.25 0 0 0-2.25-2.25a2.25 2.25 0 0 0 2.25-2.25A2.25 2.25 0 0 0 12 7.5Z" /></svg><span>フィードバック</span></a></li>
                     <li><a id="replay-staffroll"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0m0 0-3.182-3.182m0-11.667a8.25 8.25 0 0 0-11.667 0M6.168 12h.008v.008H6.168V12Z" /></svg><span>スタッフロール</span></a></li>
                 </ul>
             </nav>
-            
-            <!-- ▼▼▼ 【新規追加】ユーザーID表示用 ▼▼▼ -->
             <div id="header-user-id" class="user-id-tag"></div>
-            <!-- ▲▲▲ ここまで追加 ▲▲▲ -->
-
-             <div class="theme-switcher">
+            <div class="theme-switcher">
                 <input type="checkbox" id="theme-toggle" class="theme-toggle-checkbox">
                 <label for="theme-toggle" class="theme-toggle-label">
                     <svg class="sun" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.95-4.243-1.591 1.591M5.25 12H3m4.243-4.95L6.343 5.657M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z" /></svg>
@@ -123,9 +126,7 @@ PR .............................. 底原永和
 
         <main>
             <div id="content-home" class="content-section active">
-                <div id="countdown-container">
-                    <!-- この中はJSによって動的に生成されます -->
-                </div>
+                <div id="countdown-container"></div>
                 <div class="main-actions-container">
                     <div class="category-filter"><button class="category-btn active" data-category="fun">楽しいやつ</button><button class="category-btn" data-category="study">学習</button><button class="category-btn" data-category="other">その他</button></div>
                     <div><button id="show-update-info-btn" class="btn">アップデート情報</button><button id="show-schedule-btn" class="btn">追加予定日</button></div>
@@ -144,27 +145,34 @@ PR .............................. 底原永和
         </main>
     </div>
     
-    <!-- モーダル関連 -->
+    <div id="feedback-modal" class="modal-overlay">
+        <div class="modal-content large feedback-modal-content">
+            <h2>フィードバック / 異議申し立て</h2>
+            <form id="feedback-form">
+                <div class="form-group"><label for="fb-userid">ユーザーID</label><input type="text" id="fb-userid" class="form-input" readonly></div>
+                <div class="form-group"><label for="fb-name">お名前 (本名)</label><input type="text" id="fb-name" class="form-input" required placeholder="底原 永和"></div>
+                <div class="form-group"><label for="fb-type">フィードバックの種類</label><select id="fb-type" class="form-input"><option value="バグ報告">バグについて</option><option value="感想">感想</option><option value="改良案">改良案</option><option value="その他">その他</option></select></div>
+                <div class="form-group"><label for="fb-game">対象のゲーム (あれば)</label><select id="fb-game" class="form-input"><option value="なし">特になし</option></select></div>
+                <div class="form-group"><label>評価</label><div class="rating-stars" id="fb-rating"><span data-value="1">★</span><span data-value="2">★</span><span data-value="3">★</span><span data-value="4">★</span><span data-value="5">★</span></div><input type="hidden" id="fb-rating-value" value="5"></div>
+                <div class="form-group checkbox-group"><input type="checkbox" id="fb-ban-appeal"><label for="fb-ban-appeal">BANへの異議申し立て</label></div>
+                <div class="form-group"><label for="fb-content">内容</label><textarea id="fb-content" class="form-input" rows="5" required placeholder="ここに内容を入力してください..."></textarea></div>
+            </form>
+            <div class="modal-footer"><button type="button" class="btn ghost" data-close-modal>キャンセル</button><button type="button" id="fb-submit-btn" class="btn">送信</button></div>
+        </div>
+    </div>
+
     <div id="tutorial-modal" class="modal-overlay"><div class="modal-content"><div id="tutorial-step-1" class="tutorial-step active"><h2>ようこそ！</h2><p>このサイトの便利な機能を紹介します！<br>いくつかのステップで簡単に説明します。</p></div><div id="tutorial-step-2" class="tutorial-step"><h2>緊急回避！偽装サイトモード</h2><p>先生が近くに来た時など、すぐに画面を切り替えたい時はキーボードの <strong style="color:var(--accent-color)">Enterキー</strong> を押してください。</p><p>一瞬で翻訳サイトの画面に切り替わります。もう一度押すと元の画面に戻ります。</p></div><div id="tutorial-step-3" class="tutorial-step"><h2>人生の残り時間</h2><p>画面上部には、あなたが90歳になるまでの残り時間が表示されています。<br>限りある時間を大切に、そして楽しんで使いましょう！</p></div><div id="tutorial-step-4" class="tutorial-step"><h2>準備完了！</h2><p>これでチュートリアルは終わりです。<br>このサイトを存分にお楽しみください！</p></div><div class="modal-footer tutorial-nav"><button id="tutorial-skip-btn" class="btn ghost">スキップ</button><span id="tutorial-step-indicator" class="step-indicator">1 / 4</span><div><button id="tutorial-prev-btn" class="btn ghost">戻る</button><button id="tutorial-next-btn" class="btn">次へ</button></div></div></div></div>
     <div id="terms-modal" class="modal-overlay"><div class="modal-content"><h2>利用規約</h2><div id="terms-text"><p>本サイトをご利用になる前に、以下の利用規約をよくお読みください。本サイトの利用を開始した時点で、本規約に同意したものとみなします。</p><p><strong>第1条 (自己責任)</strong></p><p>本サイトの利用は、利用者自身の責任において行うものとします。学校のネットワーク内で本サイトを利用し、それによって発生したいかなる問題（先生からの指導、PCの没収、成績への影響など）についても、サイト作成者は一切の責任を負いません。</p><p><strong>第2条 (コンテンツの利用)</strong></p><p>本サイトで提供されるすべてのコンテンツ（テキスト、画像など）の著作権は、サイト作成者「底原 永和」に帰属します。無断での複製、転載、配布を固く禁じます。</p><p><strong>第3条 (禁止事項)</strong></p><p>利用者は、本サイトの利用にあたり、以下の行為を行ってはなりません。</p><ul><li>法令または公序良俗に違反する行為</li><li>本サイトのサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li><li>他の利用者に関する個人情報等を収集または蓄積する行為</li><li>他の利用者に成りすます行為</li><li>その他、作成者が不適切と判断する行為</li></ul><p><strong>第4条 (免責事項)</strong></p><p>サイト作成者は、本サイトのコンテンツの正確性、完全性、安全性等について、いかなる保証も行いません。また、本サイトの利用によって利用者に生じたいかなる損害についても、一切の責任を負いません。</p><p><strong>第5条 (規約の変更)</strong></p><p>サイト作成者は、必要と判断した場合には、利用者に通知することなくいつでも本規約を変更することができるものとします。</p></div><div class="modal-footer"><button id="terms-agree-btn" class="btn">同意して利用する</button></div></div></div>
     <div id="details-modal" class="modal-overlay"><div class="modal-content"><h2 id="details-modal-title"></h2><img id="details-modal-img" src="" alt="作品のサムネイル"><p id="details-modal-desc"></p><div class="modal-footer"><a id="details-modal-launch-btn" href="#" target="_blank" class="btn">起動する</a><button id="details-modal-share-btn" class="btn ghost">共有</button><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
     <div id="share-modal" class="modal-overlay"><div class="modal-content"><h2 id="share-modal-title">作品を共有</h2><div id="qrcode"></div><p style="font-size: 14px; text-align: center; color: var(--text-secondary);">QRコードをスキャンするか、URLをコピー</p><div class="url-container"><input type="text" id="share-url-input" class="url-input" readonly><button class="btn" id="copy-url-btn">コピー</button></div><div class="modal-footer"><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
-    <div id="notification-modal" class="modal-overlay"><div class="modal-content"><h2 id="notification-title"></h2><p id="notification-text" style="line-height: 1.7; font-size: 16px;"></p><div class="modal-footer"><button id="notification-close-btn" data-close-modal class="btn" disabled>閉じる</button></div></div></div>
+    <div id="notification-modal" class="modal-overlay"><div class="modal-content"><h2 id="notification-title"></h2><p id="notification-text" style="line-height: 1.7; font-size: 16px;"></p><div class="modal-footer"><button id="notification-close-btn" data-close-modal class="btn">閉じる</button></div></div></div>
     <div id="schedule-modal" class="modal-overlay"><div class="modal-content"><h2 id="schedule-modal-title">実装予定日一覧</h2><ul id="schedule-list" style="list-style: none; padding: 0;"></ul><div class="modal-footer"><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
     <div id="update-info-modal" class="modal-overlay"><div class="modal-content large"><h2>アップデート情報</h2><div id="update-info-content"></div><h3 class="future-updates-title">今後のアップデート予定</h3><ul id="update-info-future-list"></ul><div class="modal-footer"><button data-close-modal class="btn ghost">閉じる</button></div></div></div>
     
-    <div id="survey-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h2 id="survey-question"></h2>
-            <div id="survey-options-container"></div>
-            <p class="survey-notice">これは初めて表示されるアンケートです。ご協力ありがとうございます。</p>
-        </div>
-    </div>
-
+    <div id="survey-modal" class="modal-overlay"><div class="modal-content"><h2 id="survey-question"></h2><div id="survey-options-container"></div><p class="survey-notice">これは初めて表示されるアンケートです。ご協力ありがとうございます。</p></div></div>
     <div id="fake-translator" class="hidden"><header class="translator-header"><div class="translator-logo"><svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg><span>翻訳</span></div></header><main class="translator-main"><div class="translator-lang-bar"><button class="lang-btn active">日本語</button><button class="lang-btn">英語</button></div><div class="translator-body"><div class="translator-panel"><textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea></div><div class="translator-divider"></div><div class="translator-panel"><textarea id="translator-output" class="translator-textarea" readonly></textarea></div></div></main></div>
 
     <div id="toast-notification"></div>
-
     <div id="ad-banner-container"></div>
 
     <script src="script.js"></script>
