@@ -30,7 +30,7 @@ const surveyData = {
 // --- お知らせモーダルの設定 ---
 const notificationData = {
     title: "【追加】追加アプリについて",
-    text: "ご利用いただきありがとうございます。とわの連絡先一覧、スタディープランナーを正式に実装しました。スタディープランナーについては初の教育系アプリなのでぜひ使ってくださいね！<br>",
+    text: "ご利用ありがとうございます。#Study Planner・My Wallet・ジオメタリートレーニング（早期アクセス）#を新たに追加しましたので、ぜひご活用ください。2025/11/22<br>",
     closeDelaySeconds: 0,
     showOncePerDay: false 
 };
@@ -38,6 +38,10 @@ const notificationData = {
 // --- アップデート情報の設定 ---
 const updateInfoData = {
     history: [
+        { version: "v13.5", date: "2025-11-22", title: "アプリを追加", details: ["ジオメタリートレーニング(BETA)、My Walletを追加しました。", "その他のアプリを更新しました", "パフォーマンスの改善を行いました。"], video: null }
+        { version: "v13.4", date: "2025-11-20", title: "カウントダウン更新、バックグラウンド更新", details: ["カウントダウンを更新しました。", "バック処理を変更しました。", "パフォーマンスの改善を行いました。"], video: null }
+        { version: "v13.3", date: "2025-11-01", title: "Study planner(BETA)を公開", details: ["study Plannnerを追加しました。", "学習を更新しました。", "パフォーマンスの改善を行いました。"], video: null }
+        { version: "v13.2", date: "2025-10-31", title: "7番出口の基礎を開発", details: ["7番出口を開発中", "カウントダウンが一部更新。", "パフォーマンスの改善を行いました。"], video: null }
         { version: "v13.1", date: "2025-10-21", title: "大規模アップデート", details: ["サイトのデザインを全面的にリニューアルしました。", "各種カウントダウン機能を追加しました。", "パフォーマンスの改善を行いました。"], video: "cpu.mp4" },
         { version: "v13.0", date: "2025-10-15", title: "CPUシステムを開発", details: ["ブロック落としのCPUを開発しました。", "ブロックトレーニングのCPUを追加しました", "諸々のバグを修正しました"], video: null }
     ],
