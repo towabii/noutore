@@ -55,7 +55,7 @@ const items = [
     { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！あなたは勝てるか！？", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "一番頑張った", category: "fun" },
     { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！連鎖が気持ちいい！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "一番人気！", category: "fun" },
     { title: "果物集め", description: "大きな果物を作ろう！人気のスイカのあれ風の楽しいやつ。", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
-    { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。これで提出忘れもなし！", thumbnail: "学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
+    { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。これで提出忘れもなし！", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
     { title: "ジオメタリートレーニング", description: "リズムに合わせてジャンプ！シンプルな操作性がクセになる、早期アクセスバージョン。", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/index.html", recommend: "早期アクセス", category: "fun" },
     { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。宿題の相談から雑談まで、君は何を話す？", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
     { title: "待ち針のやつ", description: "回転する円に針を刺していく、シンプルながらも奥が深いタイミングトレーニング。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
@@ -66,6 +66,7 @@ const items = [
     { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
+    { title: "My Wallet", description: "初の本格ウェブアプリ。PWA対応", thumbnail: "./apps/外部サイト用写真/My wallet.png", url: "https://towabii.github.io/My wallet/", recommend: "PWA対応！", category: "other" },
 ];
 
 // ===============================================
