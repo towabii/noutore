@@ -1,19 +1,22 @@
 // ===============================================
 // ▲▲▲ 必ず設定してください ▲▲▲
 // ===============================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxiSSxUUs0bbPSJUEeVo78IGWV5tr1jY0cAqzEFxUGAd4gOol4isJ7_BgKpvjl3YBN0/exec'; // 【重要】GASのURLを設定してください
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMkvCnpi6Mc2VTb4BNgePwsCGAZR70zUOfhkqw8EqBspdNDqTaSiahdRAVXJovPoKr/exec'; 
 
 // ===============================================
-// 簡単更新エリア
+// データ定義
 // ===============================================
 
-// --- 広告バナーの設定 ---
 const adBanners = [
     { image: './path/to/your/image1.jpg', link: 'https://example.com/1' },
     { image: './path/to/your/image2.png', link: 'https://example.com/2' }
 ];
 
-// --- カウントダウンの設定 ---
+let notificationData = { title: "", text: "", active: false };
+let updateInfoData = { history: [], future: [] }; 
+let scheduleData = [];
+let surveyData = { id: "default_survey", question: "", options: [] };
+
 const countdownConfig = [
     { label: "人生終了まで", type: "life", span: "full" },
     { label: "期末テストまで", date: "2026/02/16" },
@@ -21,81 +24,43 @@ const countdownConfig = [
     { label: "修学旅行まで", date: "2026/01/16" },
     { label: "修了式まで", date: "2026/03/19" },
     { label: "底原永和の誕生日まで", date: "04/06" },
-    { label: "現在のアクセス人数", type: "online" }
+    { label: "現在のアクセス人数", type: "online" } // これが動くようになります
 ];
 
-// --- 不定期アンケートの設定 ---
-const surveyData = {
-    id: "20251103_satisfaction_survey", 
-    question: "このサイトに評価をつけるならいくつですか？",
-    options: [ 
-        "★5", "★4", "★3", "★2", "★1", "★0"
-    ],
-};
-
-// --- お知らせモーダルの設定 ---
-const notificationData = {
-    title: "【追加】追加アプリについて",
-    text: "ご利用ありがとうございます。Study Planner・My Wallet・ジオメタリートレーニング（早期アクセス）を新たに追加しましたので、ぜひご活用ください。2025/11/22<br>",
-    closeDelaySeconds: 0,
-    showOncePerDay: false 
-};
-
-// --- アップデート情報の設定 ---
-const updateInfoData = {
-    history: [
-        { version: "v13.5", date: "2025-11-22", title: "アプリを追加", details: ["ジオメタリートレーニング(BETA)、My Walletを追加しました。", "その他のアプリを更新しました", "パフォーマンスの改善を行いました。"], video: null },
-        { version: "v13.4", date: "2025-11-20", title: "カウントダウン更新、バックグラウンド更新", details: ["カウントダウンを更新しました。", "バック処理を変更しました。", "パフォーマンスの改善を行いました。"], video: null },
-        { version: "v13.3", date: "2025-11-01", title: "Study planner(BETA)を公開", details: ["study Plannnerを追加しました。", "学習を更新しました。", "パフォーマンスの改善を行いました。"], video: null },
-        { version: "v13.2", date: "2025-10-31", title: "7番出口の基礎を開発", details: ["7番出口を開発中", "カウントダウンが一部更新。", "パフォーマンスの改善を行いました。"], video: null },
-        { version: "v13.1", date: "2025-10-21", title: "大規模アップデート", details: ["サイトのデザインを全面的にリニューアルしました。", "各種カウントダウン機能を追加しました。", "パフォーマンスの改善を行いました。"], video: "cpu.mp4" },
-        { version: "v13.0", date: "2025-10-15", title: "CPUシステムを開発", details: ["ブロック落としのCPUを開発しました。", "ブロックトレーニングのCPUを追加しました", "諸々のバグを修正しました"], video: null }
-    ],
-    future: ["ジオメタリートレーニングを追加", "果物集めにもCPUを追加予定", "リンゴクリッカーを追加予定"]
-};
-
-// --- 実装予定日の設定 ---
-const scheduleData = [
-    { name: "ジオメタリートレーニング", date: "10月23日" }, { name: "3Dトレーニング", date: "11月7日" }, { name: "ちょっとGPT", date: "11月30日" },
-    { name: "7番出口", date: "12月25日" }, { name: "キャンディークリッカー", date: "10月11日" }, { name: "", date: "" }
-];
-
-// --- 作品リストの設定 ---
 const items = [
-    { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！あなたは勝てるか！？", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "一番頑張った", category: "fun" },
-    { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！連鎖が気持ちいい！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "一番人気！", category: "fun" },
-    { title: "果物集め", description: "大きな果物を作ろう！人気のスイカのあれ風の楽しいやつ。", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
-    { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。これで提出忘れもなし！", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
-    { title: "ジオメタリートレーニング", description: "リズムに合わせてジャンプ！シンプルな操作性がクセになる、早期アクセスバージョン。", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/index.html", recommend: "早期アクセス", category: "fun" },
-    { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。宿題の相談から雑談まで、君は何を話す？", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
-    { title: "待ち針のやつ", description: "回転する円に針を刺していく、シンプルながらも奥が深いタイミングトレーニング。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
+    { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "一番頑張った", category: "fun" },
+    { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "一番人気！", category: "fun" },
+    { title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
+    { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
+    { title: "ジオメタリートレーニング", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/index.html", recommend: "早期アクセス", category: "fun" },
+    { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
+    { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
     { title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "./apps/app4/index.html", recommend: null, category: "fun" },
-    { title: "3Dトレーニング", description: "三次元空間で頭を鍛える新しい体験。完成までもう少し待っててね！", thumbnail: "./apps/app7/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-    { title: "7番出口", description: "不思議な地下通路を探索する作品。異変を見逃さないで。現在工事中。", thumbnail: "./apps/app8/thumbnail.png", url: "#", recommend: "工事中", category: "fun" },
+    { title: "3Dトレーニング", description: "三次元空間で頭を鍛える新しい体験。", thumbnail: "./apps/app7/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
+    { title: "7番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "#", recommend: "工事中", category: "fun" },
     { title: "砂ブロック落とし", description: "最近流行ってるあれ", thumbnail: "./apps/app12/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
     { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-    { title: "My Wallet", description: "初の本格ウェブアプリ。PWA対応", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
+    { title: "My Wallet", description: "初の本格ウェブアプリ。", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
 ];
 
-// ===============================================
-// 簡単更新エリアここまで
-// ===============================================
-
 document.addEventListener('DOMContentLoaded', function() {
-    // --- 要素取得 ---
     const loader = document.getElementById('loader');
     const siteWrapper = document.getElementById('site-wrapper');
+    const banScreen = document.getElementById('ban-screen');
     const themeToggle = document.getElementById('theme-toggle');
     const staffRollContainer = document.getElementById('staffRollContainer');
     const creditsPre = document.getElementById('credits-text');
     const welcomeContainer = document.getElementById('welcome-animation-container');
+    
+    // ローディングUI要素
+    const loadingStatusContainer = document.getElementById('loading-status-container');
+    const loadingText = document.getElementById('loading-text');
+    const progressBarFill = document.getElementById('progress-bar-fill');
 
     let staffRollTimer, countdownInterval, typingInterval, adTimer;
-    const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-
-    // --- オンライン状態管理 ---
+    const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15);
     const INACTIVITY_TIMEOUT = 3600 * 1000;
     let inactivityTimer;
     let isOnline = false;
@@ -109,16 +74,16 @@ document.addEventListener('DOMContentLoaded', function() {
         return userId;
     }
     const userId = getUserId();
+    const headerUserIdEl = document.getElementById('header-user-id');
+    if (headerUserIdEl) headerUserIdEl.textContent = `ID: ${userId}`;
 
     async function callGas(action, payload = {}) {
         try {
-            if (!GAS_URL || GAS_URL.includes('貼り付け')) throw new Error('GASのURLが設定されていません。');
+            if (!GAS_URL || GAS_URL.includes('貼り付け')) throw new Error('GASのURL設定エラー');
             const response = await fetch(GAS_URL, { 
                 method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify({ action, payload }),
-                keepalive: action === 'accessEnd' 
+                body: JSON.stringify({ action, payload })
             });
-            if (!response.ok) throw new Error(`サーバーエラー: ${response.status}`);
             const result = await response.json();
             if (result.status === 'error') throw new Error(result.message);
             return result.data;
@@ -127,51 +92,278 @@ document.addEventListener('DOMContentLoaded', function() {
             throw error;
         }
     }
+
     function goOnline() {
         if (isOnline) return;
         isOnline = true;
         resetInactivityTimer();
-        console.log("Status: Online");
     }
     function goOffline() {
         if (!isOnline) return;
         isOnline = false;
         clearTimeout(inactivityTimer);
-        callGas('accessEnd', { userId, clientId });
-        console.log("Status: Offline");
+        callGas('accessEnd', { userId, clientId }).catch(()=>{});
     }
     function resetInactivityTimer() {
         clearTimeout(inactivityTimer);
         inactivityTimer = setTimeout(() => goOffline(), INACTIVITY_TIMEOUT);
     }
     function handleVisibilityChange() {
-        if (document.hidden) {
-            goOffline();
-        } else {
-            goOnline();
+        if (document.hidden) goOffline(); else goOnline();
+    }
+
+    function showBanScreen(adminMessage) {
+        siteWrapper.style.display = 'none';
+        siteWrapper.classList.remove('visible');
+        banScreen.classList.add('visible');
+        document.getElementById('ban-user-id-display').textContent = userId;
+        document.getElementById('ban-admin-message').innerHTML = adminMessage ? adminMessage.replace(/\n/g, '<br>') : 'メッセージはありません。';
+        document.getElementById('ban-feedback-btn').addEventListener('click', () => {
+            document.getElementById('fb-ban-appeal').checked = true;
+            openFeedbackModal();
+        });
+    }
+
+    // プログレスバーの更新関数
+    function updateLoadingStatus(message, percent) {
+        loadingText.textContent = message;
+        progressBarFill.style.width = percent + '%';
+    }
+
+    // 初期データの取得と反映
+    async function fetchAndApplySiteData() {
+        try {
+            const data = await callGas('getSiteData');
+            
+            notificationData.title = data.config.notificationTitle || "";
+            notificationData.text = data.config.notificationText || "";
+            notificationData.active = (String(data.config.notificationActive).toLowerCase() === 'true');
+            
+            surveyData.id = data.config.surveyId || ("survey_" + Date.now()); 
+            surveyData.question = data.config.surveyQuestion || "";
+            surveyData.options = data.config.surveyOptions ? data.config.surveyOptions.split(',').map(s => s.trim()) : [];
+
+            updateInfoData.history = data.updates || [];
+            scheduleData = data.schedule || [];
+
+            populateDynamicContent();
+
+        } catch (e) {
+            console.warn("設定データの取得に失敗。デフォルト値を使用します。", e);
         }
     }
-    function showAdminMessage(title, text) {
-        const modal = document.getElementById("notification-modal");
+
+    function populateDynamicContent() {
+        const notificationTitle = document.getElementById('notification-title');
+        const notificationText = document.getElementById('notification-text');
+        if (notificationTitle) notificationTitle.textContent = notificationData.title;
+        if (notificationText) notificationText.innerHTML = notificationData.text;
+
+        const updateContentContainer = document.getElementById('update-info-content');
+        if (updateContentContainer) {
+            updateContentContainer.innerHTML = '';
+            updateInfoData.history.forEach(update => {
+                const item = document.createElement('div'); item.className = 'update-item';
+                const detailsHtml = update.details.map(detail => `<li>${detail}</li>`).join('');
+                const videoHtml = update.video ? `<video class="update-video" src="${update.video}" autoplay muted loop playsinline></video>` : '';
+                item.innerHTML = `<div class="update-header"><span class="update-version">${update.version}</span><h4 class="update-title">${update.title}</h4><span class="update-date">${update.date}</span></div><ul class="update-details">${detailsHtml}</ul>${videoHtml}`;
+                updateContentContainer.appendChild(item);
+            });
+        }
+
+        const scheduleList = document.getElementById('schedule-list');
+        if (scheduleList) {
+            scheduleList.innerHTML = '';
+            scheduleData.forEach(item => {
+                const li = document.createElement('li');
+                li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--border-color);";
+                li.innerHTML = `<span>${item.name}</span> <span style="color: var(--text-secondary);">${item.date}</span>`;
+                scheduleList.appendChild(li);
+            });
+        }
+
+        const gameSelect = document.getElementById('fb-game');
+        if (gameSelect) {
+            gameSelect.innerHTML = '<option value="なし">特になし</option>';
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.title;
+                option.textContent = item.title;
+                gameSelect.appendChild(option);
+            });
+        }
+    }
+
+    // オンライン人数更新ロジック
+    async function updateOnlineCount() {
+        try {
+            const data = await callGas('getOnlineCount');
+            const display = document.getElementById('online-count-display');
+            if (display) {
+                display.textContent = (data && typeof data.onlineCount === 'number') ? `${data.onlineCount} 人` : '-- 人';
+            }
+        } catch (e) {
+            // エラー時は何もしない（前回の値を維持）
+        }
+    }
+
+    // サイト開始フロー (プログレスバー対応)
+    async function afterStaffRoll() {
+        // ローダーはまだ消さないが、スタッフロールとスキップボタンを消し、進行バーを表示
+        staffRollContainer.style.display = 'none';
+        document.getElementById('skipBtn').style.display = 'none';
+        welcomeContainer.style.display = 'none'; // welcomeアニメーションも一応消す
+        loadingStatusContainer.style.display = 'flex';
+
+        try {
+            updateLoadingStatus("サーバーに接続中...", 10);
+            
+            // 設定データの取得
+            updateLoadingStatus("設定データを取得中...", 40);
+            await fetchAndApplySiteData();
+
+            // ユーザー認証とアクセスログ
+            updateLoadingStatus("ユーザーデータを照会中...", 70);
+            const accessData = await callGas('accessStart', { userId, clientId });
+            
+            updateLoadingStatus("準備完了", 100);
+
+            // 少し待ってからフェードアウト
+            setTimeout(() => {
+                loader.classList.add('fade-out');
+                
+                if (accessData.status === 'BANNED') { 
+                    showBanScreen(accessData.message); 
+                    return; 
+                }
+                
+                document.body.classList.remove("no-scroll");
+                siteWrapper.classList.add("visible");
+                goOnline();
+                
+                // 【修正】ここで確実にフィルターを実行し、「楽しいやつ」だけにする
+                const activeCategoryBtn = document.querySelector('.category-btn.active');
+                if (activeCategoryBtn) {
+                    filterItems(activeCategoryBtn.dataset.category);
+                } else {
+                    filterItems('fun');
+                }
+                
+                const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+                const afterTutorial = () => checkTermsAndStart(() => {
+                    if (accessData.message) {
+                        showNotification("管理者からのお知らせ", accessData.message);
+                    } else if (notificationData.active) {
+                        showNotification(notificationData.title, notificationData.text);
+                    }
+                    checkAndShowSurvey();
+                });
+
+                if (!tutorialCompleted) runTutorial(afterTutorial); else afterTutorial();
+
+                // オンライン人数の定期更新開始 (60秒ごと)
+                updateOnlineCount();
+                setInterval(updateOnlineCount, 60000);
+
+            }, 500); // 100%表示を少し見せる
+            
+        } catch (error) {
+            console.error("Init Error:", error);
+            alert("通信エラーが発生しました。再読み込みしてください。");
+            loadingText.textContent = "エラーが発生しました";
+        }
+    }
+
+    function showNotification(title, text) {
+        if(!title && !text) return;
         document.getElementById('notification-title').textContent = title;
         document.getElementById('notification-text').innerHTML = text;
-        const closeBtn = document.getElementById("notification-close-btn");
-        closeBtn.disabled = false;
-        closeBtn.textContent = "閉じる";
-        modal.classList.add("visible");
-        return true; 
+        document.getElementById("notification-modal").classList.add("visible");
     }
-    
-    // 【修正】BAN画面にユーザーIDを表示
-    function showBanScreen() {
-        document.body.innerHTML = `
-            <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; background-color:var(--bg-color); color:var(--text-primary); font-family:var(--font-family-sans); text-align:center; padding: 2rem;">
-                <h1 style="font-size:2rem; color: #ff4d4d;">アクセスが制限されています</h1>
-                <p style="font-size:1.1rem; max-width: 600px;">あなたはこのサイトへのアクセスが管理者によって制限されています。<br>心当たりがない場合は、サイト管理者にお問い合わせください。</p>
-                <p style="margin-top: 2rem; font-size: 0.9rem; color: var(--text-secondary); font-family: monospace;">User ID: ${userId}</p>
-            </div>
-        `;
+
+    function checkAndShowSurvey() {
+        if (!surveyData.question || surveyData.options.length === 0) return;
+        const key = 'surveyAnswered-' + surveyData.id;
+        if (localStorage.getItem(key) === 'true') return;
+
+        const modal = document.getElementById("survey-modal");
+        document.getElementById("survey-question").textContent = surveyData.question;
+        const container = document.getElementById("survey-options-container");
+        container.innerHTML = '';
+        surveyData.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'survey-option-btn';
+            btn.textContent = opt;
+            btn.onclick = () => {
+                modal.classList.remove('visible');
+                document.body.classList.remove("no-scroll");
+                showToast('送信しました。');
+                localStorage.setItem(key, 'true');
+                callGas('submitSurvey', { userId, surveyId: surveyData.id, question: surveyData.question, answer: opt });
+            };
+            container.appendChild(btn);
+        });
+        modal.classList.add('visible');
+        document.body.classList.add("no-scroll");
     }
+
+    const feedbackModal = document.getElementById('feedback-modal');
+    const feedbackForm = document.getElementById('feedback-form');
+    const stars = document.querySelectorAll('#fb-rating span');
+    const ratingInput = document.getElementById('fb-rating-value');
+
+    function openFeedbackModal() {
+        document.getElementById('fb-userid').value = userId;
+        feedbackModal.classList.add('visible');
+    }
+
+    document.getElementById('open-feedback-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('fb-ban-appeal').checked = false;
+        openFeedbackModal();
+    });
+
+    stars.forEach(star => {
+        star.addEventListener('click', () => {
+            const val = star.dataset.value;
+            ratingInput.value = val;
+            stars.forEach(s => s.classList.toggle('active', s.dataset.value <= val));
+        });
+    });
+
+    document.getElementById('fb-submit-btn').addEventListener('click', async () => {
+        if(!feedbackForm.checkValidity()) {
+            feedbackForm.reportValidity();
+            return;
+        }
+        const submitBtn = document.getElementById('fb-submit-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = '送信中...';
+
+        const payload = {
+            userId: document.getElementById('fb-userid').value,
+            name: document.getElementById('fb-name').value,
+            type: document.getElementById('fb-type').value,
+            game: document.getElementById('fb-game').value,
+            rating: ratingInput.value,
+            banAppeal: document.getElementById('fb-ban-appeal').checked,
+            content: document.getElementById('fb-content').value
+        };
+
+        try {
+            await callGas('submitFeedback', payload);
+            showToast('フィードバックを送信しました！');
+            feedbackModal.classList.remove('visible');
+            feedbackForm.reset();
+            stars.forEach(s => s.classList.add('active'));
+            ratingInput.value = 5;
+        } catch (err) {
+            alert('送信に失敗しました: ' + err.message);
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = '送信';
+        }
+    });
 
     function generateCountdownCards() {
         const container = document.getElementById('countdown-container');
@@ -183,7 +375,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (config.span === 'full') card.classList.add('main');
             let valueHtml = '';
             if (config.type === 'life') {
-                valueHtml = `<div id="countdown-timer" class="countdown-value-large">--</div><div id="countdown-message" class="countdown-sub-label"></div>`;
+                valueHtml = `<div id="countdown-timer" class="countdown-value-large">--</div>`;
             } else if (config.type === 'online') {
                 valueHtml = `<div id="online-count-display" class="countdown-value">-- 人</div>`;
             } else {
@@ -195,69 +387,24 @@ document.addEventListener('DOMContentLoaded', function() {
             container.appendChild(card);
         });
     }
-    function populateDynamicContent() {
-        const notificationTitle = document.getElementById('notification-title');
-        const notificationText = document.getElementById('notification-text');
-        if (notificationTitle) notificationTitle.textContent = notificationData.title;
-        if (notificationText) notificationText.innerHTML = notificationData.text.replace(/#(.*?)#/g, '<strong style="color: var(--accent-color);">$1</strong>');
-        const updateContentContainer = document.getElementById('update-info-content');
-        const futureListContainer = document.getElementById('update-info-future-list');
-        if (updateContentContainer) {
-            updateContentContainer.innerHTML = '';
-            updateInfoData.history.forEach(update => {
-                const item = document.createElement('div'); item.className = 'update-item';
-                const detailsHtml = update.details.map(detail => `<li>${detail}</li>`).join('');
-                const videoHtml = update.video ? `<video class="update-video" src="${update.video}" autoplay muted loop playsinline onerror="this.style.display='none';"></video>` : '';
-                item.innerHTML = `<div class="update-header"><span class="update-version">${update.version}</span><h4 class="update-title">${update.title}</h4><span class="update-date">${update.date}</span></div><ul class="update-details">${detailsHtml}</ul>${videoHtml}`;
-                updateContentContainer.appendChild(item);
-            });
-        }
-        if (futureListContainer) {
-            futureListContainer.innerHTML = '';
-            updateInfoData.future.forEach(itemText => { const li = document.createElement('li'); li.textContent = itemText; futureListContainer.appendChild(li); });
-        }
-        const scheduleList = document.getElementById('schedule-list');
-        if (scheduleList) {
-            scheduleList.innerHTML = '';
-            scheduleData.forEach(item => { const li = document.createElement('li'); li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--border-color);"; li.innerHTML = `<span>${item.name}</span> <span style="color: var(--text-secondary);">${item.date}</span>`; scheduleList.appendChild(li); });
-        }
-    }
+
     function applyTheme(theme) {
         document.body.dataset.theme = theme;
         themeToggle.checked = theme === 'light';
     }
+    
     function initSiteFlow() {
         const savedTheme = localStorage.getItem('theme') || 'dark';
         applyTheme(savedTheme);
         playStaffRoll();
     }
+    
     themeToggle.addEventListener('change', () => {
         const newTheme = themeToggle.checked ? 'light' : 'dark';
         localStorage.setItem('theme', newTheme);
         applyTheme(newTheme);
     });
-    async function afterStaffRoll() {
-        try {
-            const accessData = await callGas('accessStart', { userId, clientId });
-            if (accessData.status === 'BANNED') { showBanScreen(); return; }
-            if (accessData.action === 'REFRESH') { showToast("サイトが更新されました。"); setTimeout(() => location.reload(true), 1000); return; }
-            document.body.classList.remove("no-scroll");
-            siteWrapper.classList.add("visible");
-            goOnline();
-            const tutorialCompleted = localStorage.getItem('tutorialCompleted');
-            const afterTutorial = () => checkTermsAndStart(() => {
-                let adminMessageShown = false;
-                if (accessData.message) {
-                    adminMessageShown = showAdminMessage("管理者からのお知らせ", accessData.message);
-                }
-                showMainContent(adminMessageShown); 
-            });
-            if (!tutorialCompleted) { runTutorial(afterTutorial); } else { afterTutorial(); }
-        } catch (error) {
-            console.error("初期化に失敗しました:", error);
-            showAdminMessage("接続エラー", "サーバーとの通信に失敗しました。時間をおいて再度お試しください。");
-        }
-    }
+
     function runTutorial(callback) {
         const modal = document.getElementById("tutorial-modal"); const steps = modal.querySelectorAll(".tutorial-step");
         const nextBtn = document.getElementById("tutorial-next-btn"); const prevBtn = document.getElementById("tutorial-prev-btn");
@@ -292,71 +439,61 @@ document.addEventListener('DOMContentLoaded', function() {
     function promptForAgeAndStart(callback) {
         let age = localStorage.getItem('userAge');
         if (!age) {
-            let userInput = prompt("あなたの年齢を半角数字で入力してください。\nこの情報は「人生終了まで」の時間を計算するためにのみ使用されます。", "14");
-            if (userInput === null || isNaN(parseInt(userInput)) || parseInt(userInput) <= 0 || parseInt(userInput) > 89) {
-                age = 14; alert("入力が無効か、範囲外です。デフォルトの年齢 (14歳) で設定します。");
-            } else { age = parseInt(userInput); }
+            let userInput = prompt("あなたの年齢を半角数字で入力してください。\n「人生終了まで」の計算に使用されます。", "14");
+            if (userInput === null || isNaN(parseInt(userInput))) age = 14; else age = parseInt(userInput);
             localStorage.setItem('userAge', age);
         }
-        startSite(parseInt(age)); if (callback) callback();
+        startCountdown(parseInt(age)); if (callback) callback();
     }
-    async function updateOnlineCount() {
-        try {
-            const data = await callGas('getOnlineCount');
-            const display = document.getElementById('online-count-display');
-            if (display) display.textContent = (data && typeof data.onlineCount === 'number') ? `${data.onlineCount} 人` : '-- 人';
-        } catch (error) { 
-            const display = document.getElementById('online-count-display');
-            if (display) display.textContent = 'エラー';
-        }
-    }
-    function startSite(age) {
-        startCountdown(age); updateOnlineCount(); setInterval(updateOnlineCount, 30000);
-    }
-    const countdownMessages = ["この時間の何時間を遊びに使うのでしょうか？", "残り時間は、わずかです。", "時は金なり。有効に使おう。", "今日という日は、残りの人生の最初の一日。"];
+
     function startCountdown(age) {
         const birthYear = new Date().getFullYear() - age;
         const lifeTargetDate = new Date(birthYear + 90, new Date().getMonth(), new Date().getDate());
-        const updateFunctions = []; const lifeTimerEl = document.getElementById('countdown-timer');
+        const updateFunctions = []; 
+        const lifeTimerEl = document.getElementById('countdown-timer');
         if (lifeTimerEl) {
             updateFunctions.push(() => {
-                const rem = lifeTargetDate - new Date(); if (rem < 0) { lifeTimerEl.textContent = "目標達成！"; return; }
+                const rem = lifeTargetDate - new Date(); 
+                if (rem < 0) { lifeTimerEl.textContent = "目標達成！"; return; }
                 const s = Math.floor(rem / 1000 % 60), m = Math.floor(rem / 60000 % 60), h = Math.floor(rem / 3600000 % 24), d = Math.floor(rem / 86400000), w = Math.floor(d / 7);
                 lifeTimerEl.innerHTML = `${w}<span>週</span> ${d % 7}<span>日</span> ${h}<span>時間</span> ${m}<span>分</span> ${s}<span>秒</span>`;
             });
-            const lifeMessageEl = document.getElementById('countdown-message');
-            if(lifeMessageEl){
-                lifeMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)];
-                setInterval(() => { lifeMessageEl.textContent = countdownMessages[Math.floor(Math.random() * countdownMessages.length)]; }, 10000);
-            }
         }
         countdownConfig.forEach((config, index) => {
             if (!config.date) return;
             const el = document.querySelector(`#countdown-card-${index} .countdown-value`);
-            if(!el) return; let targetDate; const now = new Date();
+            if(!el) return; 
+            let targetDate; const now = new Date();
             const [month, day] = config.date.split('/').slice(-2).map(Number);
             if (config.date.includes('/')) {
-                 if (config.date.split('/').length === 3) { targetDate = new Date(config.date); }
-                 else { targetDate = new Date(now.getFullYear(), month - 1, day); if (now > targetDate) { targetDate.setFullYear(now.getFullYear() + 1); } }
+                 targetDate = new Date(now.getFullYear(), month - 1, day); 
+                 if (now > targetDate) targetDate.setFullYear(now.getFullYear() + 1);
             }
             updateFunctions.push(() => {
-                const now = new Date(); if (now > targetDate) { el.textContent = "終了"; el.classList.remove('warning'); return; }
-                const days = Math.ceil((targetDate - now) / 86400000); el.textContent = `${days} 日`;
+                const now = new Date(); 
+                const days = Math.ceil((targetDate - now) / 86400000); 
+                el.textContent = `${days} 日`;
                 el.classList.toggle('warning', days > 0 && days <= 30);
             });
         });
         const updateAll = () => updateFunctions.forEach(fn => fn());
         updateAll(); clearInterval(countdownInterval); countdownInterval = setInterval(updateAll, 1000);
     }
+
     const originalCreditsText = creditsPre.innerHTML;
     function playStaffRoll() {
         const creditsContainer = staffRollContainer.querySelector(".credits-list");
         if (creditsContainer) { creditsContainer.style.animation = 'none'; void creditsContainer.offsetHeight; creditsContainer.style.animation = ''; }
         creditsPre.innerHTML = ''; document.body.classList.add("no-scroll");
-        loader.classList.remove("fade-out"); staffRollContainer.style.opacity = '1';
-        welcomeContainer.style.display = 'none'; const skipBtn = document.getElementById('skipBtn');
-        skipBtn.style.display = 'block'; const onSkip = () => { clearTimeout(staffRollTimer); clearInterval(typingInterval); onStaffRollEnd(); };
-        skipBtn.onclick = onSkip; siteWrapper.classList.remove("visible"); clearTimeout(staffRollTimer); clearInterval(typingInterval);
+        loader.classList.remove("fade-out"); 
+        loadingStatusContainer.style.display = 'none'; // スタッフロール中は進行バー非表示
+        staffRollContainer.style.display = 'block'; // 表示
+        staffRollContainer.style.opacity = '1';
+        welcomeContainer.style.display = 'none'; 
+        const skipBtn = document.getElementById('skipBtn');
+        skipBtn.style.display = 'block'; 
+        const onSkip = () => { clearTimeout(staffRollTimer); clearInterval(typingInterval); onStaffRollEnd(); };
+        skipBtn.onclick = onSkip; siteWrapper.classList.remove("visible"); 
         let charIndex = 0; const textToType = originalCreditsText.trim(); const cursor = '<span class="typing-cursor">█</span>';
         typingInterval = setInterval(() => {
             if (charIndex < textToType.length) { charIndex++; creditsPre.innerHTML = textToType.substring(0, charIndex) + cursor; }
@@ -364,34 +501,37 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 30);
         staffRollTimer = setTimeout(onStaffRollEnd, 40000);
     }
+    
     function onStaffRollEnd() {
         if (loader.classList.contains('fade-out')) return;
         const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+        
+        // スタッフロールが終わったら、またはスキップしたら
+        // まずスタッフロール関係を消す
+        staffRollContainer.style.opacity = '0'; 
+        document.getElementById('skipBtn').style.opacity = '0';
+        clearInterval(typingInterval);
+
         if (!tutorialCompleted) {
-            staffRollContainer.style.transition = 'opacity 0.5s'; staffRollContainer.style.opacity = '0';
-            document.getElementById('skipBtn').style.opacity = '0';
-            setTimeout(() => {
-                welcomeContainer.style.display = 'flex'; welcomeContainer.innerHTML = ''; const text = "こんにちは";
-                text.split('').forEach((char, index) => {
+            // 初回ならWelcomeアニメーション
+             setTimeout(() => {
+                staffRollContainer.style.display = 'none';
+                welcomeContainer.style.display = 'flex'; welcomeContainer.innerHTML = ''; 
+                "こんにちは".split('').forEach((char, i) => {
                     const span = document.createElement('span'); span.textContent = char; span.className = 'welcome-char';
-                    span.style.animationDelay = `${index * 100}ms`; welcomeContainer.appendChild(span);
+                    span.style.animationDelay = `${i * 100}ms`; welcomeContainer.appendChild(span);
                     setTimeout(() => span.classList.add('animate'), 50);
                 });
-                setTimeout(() => { loader.classList.add('fade-out'); afterStaffRoll(); }, text.length * 100 + 2000);
+                // アニメーション後にデータ読み込み開始
+                setTimeout(() => { afterStaffRoll(); }, 2000);
             }, 500);
-        } else { loader.classList.add('fade-out'); afterStaffRoll(); }
-    }
-    function showMainContent(adminMessageShown = false) {
-        if (!adminMessageShown && notificationData.text) {
-            const lastShown = localStorage.getItem("notificationLastShown");
-            const today = new Date().toISOString().slice(0, 10);
-            if (!notificationData.showOncePerDay || lastShown !== today) {
-                showAdminMessage(notificationData.title, notificationData.text);
-                 if (notificationData.showOncePerDay) { localStorage.setItem("notificationLastShown", today); }
-            }
+        } else { 
+            // 2回目以降ならすぐにデータ読み込み画面（プログレスバー）へ
+            setTimeout(() => { afterStaffRoll(); }, 500);
         }
-        checkAndShowSurvey();
     }
+    document.getElementById('replay-staffroll').addEventListener('click', playStaffRoll);
+
     let toastTimer;
     function showToast(message) {
         const toast = document.getElementById('toast-notification');
@@ -399,52 +539,23 @@ document.addEventListener('DOMContentLoaded', function() {
         toast.classList.add('show');
         toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
     }
-    function checkAndShowSurvey() {
-        if (!surveyData || !surveyData.id || !surveyData.options || surveyData.options.length < 2) return;
-        const hasAnswered = localStorage.getItem('surveyAnswered-' + surveyData.id);
-        if (hasAnswered !== 'true') { showSurveyModal(); }
-    }
-    function showSurveyModal() {
-        const modal = document.getElementById("survey-modal");
-        const questionEl = document.getElementById("survey-question");
-        const optionsContainer = document.getElementById("survey-options-container");
-        questionEl.textContent = surveyData.question; optionsContainer.innerHTML = '';
-        surveyData.options.forEach(optionText => {
-            const button = document.createElement('button'); button.className = 'survey-option-btn';
-            button.textContent = optionText;
-            button.onclick = () => {
-                modal.classList.remove('visible'); document.body.classList.remove("no-scroll");
-                showToast('ご協力ありがとうございました。'); localStorage.setItem('surveyAnswered-' + surveyData.id, 'true');
-                callGas('submitSurvey', { userId: userId, surveyId: surveyData.id, question: surveyData.question, answer: optionText })
-                .catch(error => { console.error("アンケートのバックグラウンド送信に失敗:", error); });
-            };
-            optionsContainer.appendChild(button);
-        });
-        modal.classList.add('visible'); document.body.classList.add("no-scroll");
-    }
-    document.getElementById('replay-staffroll').addEventListener('click', playStaffRoll);
-    let cheatCodeBuffer = null, cheatTimeout;
+
     document.addEventListener("keydown", e => {
-        if (e.target.closest("input, textarea") || document.querySelector(".modal-overlay.visible")) return;
-        if (e.key === "Enter") { e.preventDefault(); document.getElementById('fake-translator').classList.toggle("hidden"); cheatCodeBuffer = null; return; }
-        if (e.key === " " || e.code === "Space") { e.preventDefault(); cheatCodeBuffer = ""; clearTimeout(cheatTimeout); cheatTimeout = setTimeout(() => { cheatCodeBuffer = null; }, 3000); return; }
-        if (null !== cheatCodeBuffer) {
-            if (e.key.length === 1) { cheatCodeBuffer += e.key.toLowerCase(); }
-            if ("reset" === cheatCodeBuffer) {
-                if (confirm("設定をリセットしますか？ (年齢設定や利用規約の同意状況などが初期化されます)")) {
-                    ["tutorialCompleted", "termsAgreed", "notificationLastShown", "sokohara-site-user-id", "theme", "userAge"].forEach(e => localStorage.removeItem(e));
-                    Object.keys(localStorage).forEach(key => { if (key.startsWith('surveyAnswered-')) { localStorage.removeItem(key); } });
-                    alert("リセットしました。ページをリロードします。"); window.location.reload();
-                }
-                cheatCodeBuffer = null; clearTimeout(cheatTimeout);
-            }
+        if (e.target.closest("input, textarea") || document.querySelector(".modal-overlay.visible:not(#ban-screen)")) return;
+        if (e.key === "Enter") { 
+            e.preventDefault(); 
+            document.getElementById('fake-translator').classList.toggle("hidden"); 
         }
     });
-    window.addEventListener("beforeunload", goOffline);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    ['mousemove', 'keydown', 'scroll', 'touchstart'].forEach(event => document.addEventListener(event, resetInactivityTimer));
-    document.getElementById('translator-input').addEventListener("input",(e)=>{document.getElementById('translator-output').value=e.target.value.toLowerCase().split("").map(c=>({a:"あ",i:"い",u:"う",e:"え",o:"お"," ":"　"})[c]||c).join("")});
-    document.querySelectorAll('nav a[data-target]').forEach(link => { link.addEventListener('click', (event) => { const targetId = event.currentTarget.dataset.target; document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); document.getElementById(`content-${targetId}`).classList.add('active'); }); });
+
+    document.querySelectorAll('nav a[data-target]').forEach(link => { 
+        link.addEventListener('click', (event) => { 
+            const targetId = event.currentTarget.dataset.target; 
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
+            document.getElementById(`content-${targetId}`).classList.add('active'); 
+        }); 
+    });
+
     const itemListContainer = document.getElementById('item-list');
     function generateItemCards() {
         itemListContainer.innerHTML = '';
@@ -453,115 +564,70 @@ document.addEventListener('DOMContentLoaded', function() {
             itemElement.className = 'item-card'; itemElement.dataset.itemId = index; itemElement.dataset.category = item.category;
             const recommendBadge = item.recommend ? `<div class="recommend-badge">${item.recommend}</div>` : '';
             const ribbon = `<div class="ribbon ${item.category}">${item.category==='fun'?'楽しいやつ':item.category==='study'?'学習':'その他'}</div>`;
-            itemElement.innerHTML = `${recommendBadge}<div class="thumbnail-container"><img src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML = '<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);\'>画像なし</div>';"></div>${ribbon}<div class="item-card-content"><h3 class="item-card-title">${item.title}</h3><p class="item-card-desc">${item.description}</p></div>`;
+            itemElement.innerHTML = `${recommendBadge}<div class="thumbnail-container"><img src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML = '<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);\'>No Image</div>';"></div>${ribbon}<div class="item-card-content"><h3 class="item-card-title">${item.title}</h3><p class="item-card-desc">${item.description}</p></div>`;
             itemListContainer.appendChild(itemElement);
         });
     }
-    const filterButtons = document.querySelectorAll('.category-btn');
+    
+    // 【修正】フィルター関数：確実にフィルタリングするように修正
     function filterItems(category) {
         document.querySelectorAll('.item-card').forEach((card, index) => {
             const shouldShow = category === 'all' || card.dataset.category === category;
             card.style.display = shouldShow ? 'flex' : 'none';
-            if (shouldShow) {
-                card.style.animation = 'none'; void card.offsetHeight;
-                card.style.animation = `card-appear 0.5s ease-out ${index * 50}ms forwards`;
+            if (shouldShow) { 
+                card.style.animation = 'none'; 
+                void card.offsetHeight; 
+                card.style.animation = `card-appear 0.5s ease-out ${index * 50}ms forwards`; 
             }
         });
     }
-    filterButtons.forEach(button => { button.addEventListener('click', () => { filterButtons.forEach(btn => btn.classList.remove('active')); button.classList.add('active'); filterItems(button.dataset.category); }); });
-    const allModals = { details: document.getElementById('details-modal'), share: document.getElementById('share-modal'), update: document.getElementById('update-info-modal'), schedule: document.getElementById('schedule-modal'), notification: document.getElementById('notification-modal') };
+
+    const filterButtons = document.querySelectorAll('.category-btn');
+    filterButtons.forEach(button => { 
+        button.addEventListener('click', () => { 
+            filterButtons.forEach(btn => btn.classList.remove('active')); 
+            button.classList.add('active'); 
+            filterItems(button.dataset.category);
+        }); 
+    });
+
+    const allModals = { details: document.getElementById('details-modal'), share: document.getElementById('share-modal'), update: document.getElementById('update-info-modal'), schedule: document.getElementById('schedule-modal') };
     document.getElementById('show-update-info-btn').addEventListener('click',()=>allModals.update.classList.add('visible'));
     document.getElementById('show-schedule-btn').addEventListener('click',()=>allModals.schedule.classList.add('visible'));
+    
     let currentItemUrl = '';
     itemListContainer.addEventListener('click', function(e) {
         const card = e.target.closest('.item-card');
         if (card) {
             const item = items[card.dataset.itemId];
-            if (item.url==='#'){alert('この作品は現在作成中です。お楽しみに！');return}
+            if (item.url==='#'){alert('作成中');return}
             currentItemUrl = item.url;
             document.getElementById('details-modal-title').textContent = item.title;
             document.getElementById('details-modal-img').src = item.thumbnail;
             document.getElementById('details-modal-desc').textContent = item.description;
             const launchBtn = document.getElementById('details-modal-launch-btn');
             launchBtn.href = item.url;
-            const newLaunchBtn = launchBtn.cloneNode(true);
-            launchBtn.parentNode.replaceChild(newLaunchBtn, launchBtn);
-            newLaunchBtn.addEventListener('click', () => {
-                callGas('logGamePlay', { userId, gameTitle: item.title });
-            });
+            launchBtn.onclick = () => callGas('logGamePlay', { userId, gameTitle: item.title }).catch(()=>{});
             allModals.details.classList.add('visible');
         }
     });
+
     function openShareModal(title, url) {
         document.getElementById("share-modal-title").textContent = title;
         document.getElementById("share-url-input").value = url;
-        const qrContainer = document.getElementById("qrcode");
-        qrContainer.innerHTML = "";
-        if (typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(url, { width: 220, errorCorrectionLevel: "H" }, (error, canvas) => {
-                if (error) { console.error(error); qrContainer.innerHTML = "<p>QRコード生成失敗</p>"; }
-                else { qrContainer.appendChild(canvas); }
-            });
-        } else { console.warn("QRCode library not found."); qrContainer.innerHTML = "<p>QRコード機能は利用できません</p>"; }
+        const qrContainer = document.getElementById("qrcode"); qrContainer.innerHTML = "";
+        if (typeof QRCode !== 'undefined') QRCode.toCanvas(url, { width: 220 }, (e, c) => { if(!e) qrContainer.appendChild(c); });
         allModals.share.classList.add("visible");
     }
-    document.getElementById("details-modal-share-btn").addEventListener("click", () => { const absoluteUrl = new URL(currentItemUrl, window.location.href).href; openShareModal("作品を共有", absoluteUrl); allModals.details.classList.remove("visible"); });
-    document.getElementById("share-site-btn").addEventListener("click", () => { openShareModal("このサイトを共有", window.location.href); });
-    document.getElementById("copy-url-btn").addEventListener("click", e => { navigator.clipboard.writeText(document.getElementById('share-url-input').value).then(() => { e.target.textContent = "コピー完了!"; setTimeout(() => { e.target.textContent = "コピー" }, 2000); }); });
+    document.getElementById("details-modal-share-btn").addEventListener("click", () => { openShareModal("作品を共有", new URL(currentItemUrl, window.location.href).href); allModals.details.classList.remove("visible"); });
+    document.getElementById("share-site-btn").addEventListener("click", () => openShareModal("このサイトを共有", window.location.href));
+    document.getElementById("copy-url-btn").addEventListener("click", e => { navigator.clipboard.writeText(document.getElementById('share-url-input').value).then(() => { e.target.textContent = "完了!"; setTimeout(() => e.target.textContent = "コピー", 2000); }); });
     document.querySelectorAll("[data-close-modal]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal-overlay").classList.remove("visible")));
-    document.querySelectorAll(".modal-overlay").forEach(modal => modal.addEventListener("click", e => { if (e.target === modal && modal.id !== 'survey-modal') { modal.classList.remove("visible"); } }));
+    document.querySelectorAll(".modal-overlay").forEach(modal => modal.addEventListener("click", e => { if (e.target === modal && modal.id !== 'ban-screen') modal.classList.remove("visible"); }));
 
-    // --- 広告バナー初期化・制御 ---
-    let currentAdIndex = 0;
-    function updateAdBanner() {
-        if (!adBanners || adBanners.length === 0) return;
-        const adContainer = document.getElementById('ad-banner-container');
-        if (!adContainer) return;
-        const currentAd = adBanners[currentAdIndex];
-        const nextAdIndex = (currentAdIndex + 1) % adBanners.length;
-        const nextAd = adBanners[nextAdIndex];
-        const currentImg = adContainer.querySelector('img:not(.hidden)');
-        if(currentImg) currentImg.classList.remove('visible');
-        const nextLink = document.createElement('a');
-        nextLink.href = nextAd.link; nextLink.target = '_blank'; nextLink.rel = 'noopener noreferrer';
-        const nextImg = document.createElement('img');
-        nextImg.src = nextAd.image; nextImg.alt = 'Advertisement';
-        nextImg.onload = () => {
-            nextLink.appendChild(nextImg); adContainer.appendChild(nextLink);
-            if(currentImg) { setTimeout(() => currentImg.parentElement.remove(), 800); }
-            setTimeout(() => nextImg.classList.add('visible'), 50);
-        };
-        nextImg.onerror = () => { nextLink.remove(); }
-        currentAdIndex = nextAdIndex;
-    }
-    function initAdBanner() {
-        const adContainer = document.getElementById('ad-banner-container');
-        if (!adBanners || adBanners.length === 0 || !adContainer) return;
-        const firstAd = adBanners[0];
-        const firstLink = document.createElement('a');
-        firstLink.href = firstAd.link; firstLink.target = '_blank'; firstLink.rel = 'noopener noreferrer';
-        const firstImg = document.createElement('img');
-        firstImg.src = firstAd.image; firstImg.alt = 'Advertisement';
-        firstImg.onload = () => {
-            firstLink.appendChild(firstImg); adContainer.appendChild(firstLink);
-            adContainer.classList.add('visible');
-            setTimeout(() => firstImg.classList.add('visible'), 50);
-        };
-        currentAdIndex = 0;
-        if (adBanners.length > 1) { clearInterval(adTimer); adTimer = setInterval(updateAdBanner, 60000); }
-    }
-    
-    // --- 【新規追加】ユーザーIDをヘッダーに表示 ---
-    const headerUserIdEl = document.getElementById('header-user-id');
-    if (headerUserIdEl) {
-        headerUserIdEl.textContent = `ID: ${userId}`;
-    }
+    document.getElementById('translator-input').addEventListener("input",(e)=>{document.getElementById('translator-output').value=e.target.value.toLowerCase().split("").map(c=>({a:"あ",i:"い",u:"う",e:"え",o:"お"," ":"　"})[c]||c).join("")});
 
-    // --- サイト起動 ---
     generateCountdownCards();
-    populateDynamicContent();
     generateItemCards();
-    filterItems('fun');
-    initAdBanner();
     initSiteFlow();
 });
