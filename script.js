@@ -38,10 +38,11 @@ const notificationData = {
 // --- アップデート情報の設定 ---
 const updateInfoData = {
     history: [
-        { version: "v13.5", date: "2025-11-22", title: "アプリを追加", details: ["ジオメタリートレーニング(BETA)、My Walletを追加しました。", "その他のアプリを更新しました", "パフォーマンスの改善を行いました。"], video: null }
-        { version: "v13.4", date: "2025-11-20", title: "カウントダウン更新、バックグラウンド更新", details: ["カウントダウンを更新しました。", "バック処理を変更しました。", "パフォーマンスの改善を行いました。"], video: null }
-        { version: "v13.3", date: "2025-11-01", title: "Study planner(BETA)を公開", details: ["study Plannnerを追加しました。", "学習を更新しました。", "パフォーマンスの改善を行いました。"], video: null }
-        { version: "v13.2", date: "2025-10-31", title: "7番出口の基礎を開発", details: ["7番出口を開発中", "カウントダウンが一部更新。", "パフォーマンスの改善を行いました。"], video: null }
+        // 【修正】ここから下の行の末尾にカンマ(,)を追加しました
+        { version: "v13.5", date: "2025-11-22", title: "アプリを追加", details: ["ジオメタリートレーニング(BETA)、My Walletを追加しました。", "その他のアプリを更新しました", "パフォーマンスの改善を行いました。"], video: null },
+        { version: "v13.4", date: "2025-11-20", title: "カウントダウン更新、バックグラウンド更新", details: ["カウントダウンを更新しました。", "バック処理を変更しました。", "パフォーマンスの改善を行いました。"], video: null },
+        { version: "v13.3", date: "2025-11-01", title: "Study planner(BETA)を公開", details: ["study Plannnerを追加しました。", "学習を更新しました。", "パフォーマンスの改善を行いました。"], video: null },
+        { version: "v13.2", date: "2025-10-31", title: "7番出口の基礎を開発", details: ["7番出口を開発中", "カウントダウンが一部更新。", "パフォーマンスの改善を行いました。"], video: null },
         { version: "v13.1", date: "2025-10-21", title: "大規模アップデート", details: ["サイトのデザインを全面的にリニューアルしました。", "各種カウントダウン機能を追加しました。", "パフォーマンスの改善を行いました。"], video: "cpu.mp4" },
         { version: "v13.0", date: "2025-10-15", title: "CPUシステムを開発", details: ["ブロック落としのCPUを開発しました。", "ブロックトレーニングのCPUを追加しました", "諸々のバグを修正しました"], video: null }
     ],
@@ -625,10 +626,16 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById("share-url-input").value = url;
         const qrContainer = document.getElementById("qrcode");
         qrContainer.innerHTML = "";
-        QRCode.toCanvas(url, { width: 220, errorCorrectionLevel: "H" }, (error, canvas) => {
-            if (error) { console.error(error); qrContainer.innerHTML = "<p>QRコード生成失敗</p>"; }
-            else { qrContainer.appendChild(canvas); }
-        });
+        // QRCodeライブラリの存在確認を追加
+        if (typeof QRCode !== 'undefined') {
+            QRCode.toCanvas(url, { width: 220, errorCorrectionLevel: "H" }, (error, canvas) => {
+                if (error) { console.error(error); qrContainer.innerHTML = "<p>QRコード生成失敗</p>"; }
+                else { qrContainer.appendChild(canvas); }
+            });
+        } else {
+            console.warn("QRCode library not found.");
+            qrContainer.innerHTML = "<p>QRコード機能は利用できません</p>";
+        }
         allModals.share.classList.add("visible");
     }
 
