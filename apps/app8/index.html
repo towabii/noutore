@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>8番出口風ゲーム (修正版)</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- スタート画面 -->
+    <div id="start-screen">
+        <div id="start-screen-content">
+            <h1>地下通路</h1>
+            <p>クリックして業務開始</p>
+            <div class="instructions">
+                異変を見逃さないこと。<br>
+                異変があればすぐに引き返すこと。<br>
+                異変がなければ進むこと。<br>
+                <small>移動: WASD / ダッシュ: Shift / 視点: マウス</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲーム中UI -->
+    <div id="ui-container" class="hidden">
+        <div id="crosshair"></div>
+        <!-- 出口番号表示（常に画面右下に表示させても良いが、今回は看板のみ） -->
+        <div id="debug-info"></div>
+        <div id="blackout-curtain"></div>
+    </div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js"
+            }
+        }
+    </script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>
