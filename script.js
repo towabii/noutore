@@ -23,7 +23,7 @@ const countdownConfig = [
     { label: "クリスマスまで", date: "2025/12/25" },
     { label: "修学旅行まで", date: "2026/01/16" },
     { label: "修了式まで", date: "2026/03/19" },
-    { label: "底原永和の誕生日まで", date: "04/06" },
+    { label: "とわの誕生日まで", date: "04/06" },
     { label: "現在のアクセス人数", type: "online" } // これが動くようになります
 ];
 
