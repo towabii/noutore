@@ -8,8 +8,8 @@ const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJSO_Bq80Qc1UI8RNyKBJ2
 // ===============================================
 
 const adBanners = [
-    { image: '広告枠/image1.jpeg', link: 'https://ocearyagroup.vercel.app/' },
-    { image: '広告枠/image2.jpeg', link: 'https://example.com/2' }
+    { image: '/広告枠/image1.jpeg', link: 'https://ocearyagroup.vercel.app/' },
+    { image: '/広告枠/image2.jpeg', link: 'https://example.com/2' }
 ];
 
 let notificationData = { title: "", text: "", active: false };
