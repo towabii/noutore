@@ -24,7 +24,7 @@ const countdownConfig = [
     { label: "修学旅行まで", date: "2026/01/16" },
     { label: "修了式まで", date: "2026/03/19" },
     { label: "とわの誕生日まで", date: "04/06" },
-    { label: "現在のアクセス人数", type: "online" } // これが動くようになります
+    { label: "現在のアクセス人数", type: "online" }
 ];
 
 const items = [
@@ -126,13 +126,11 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // プログレスバーの更新関数
     function updateLoadingStatus(message, percent) {
         loadingText.textContent = message;
         progressBarFill.style.width = percent + '%';
     }
 
-    // 初期データの取得と反映
     async function fetchAndApplySiteData() {
         try {
             const data = await callGas('getSiteData');
@@ -196,7 +194,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // オンライン人数更新ロジック
     async function updateOnlineCount() {
         try {
             const data = await callGas('getOnlineCount');
@@ -204,33 +201,23 @@ document.addEventListener('DOMContentLoaded', function() {
             if (display) {
                 display.textContent = (data && typeof data.onlineCount === 'number') ? `${data.onlineCount} 人` : '-- 人';
             }
-        } catch (e) {
-            // エラー時は何もしない（前回の値を維持）
-        }
+        } catch (e) {}
     }
 
-    // サイト開始フロー (プログレスバー対応)
     async function afterStaffRoll() {
-        // ローダーはまだ消さないが、スタッフロールとスキップボタンを消し、進行バーを表示
         staffRollContainer.style.display = 'none';
         document.getElementById('skipBtn').style.display = 'none';
-        welcomeContainer.style.display = 'none'; // welcomeアニメーションも一応消す
+        welcomeContainer.style.display = 'none'; 
         loadingStatusContainer.style.display = 'flex';
 
         try {
             updateLoadingStatus("サーバーに接続中...", 10);
-            
-            // 設定データの取得
             updateLoadingStatus("設定データを取得中...", 40);
             await fetchAndApplySiteData();
-
-            // ユーザー認証とアクセスログ
             updateLoadingStatus("ユーザーデータを照会中...", 70);
             const accessData = await callGas('accessStart', { userId, clientId });
-            
             updateLoadingStatus("準備完了", 100);
 
-            // 少し待ってからフェードアウト
             setTimeout(() => {
                 loader.classList.add('fade-out');
                 
@@ -243,10 +230,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 siteWrapper.classList.add("visible");
                 goOnline();
                 
-                // 【修正】ここで確実にフィルターを実行し、「楽しいやつ」だけにする
-                const activeCategoryBtn = document.querySelector('.category-btn.active');
-                if (activeCategoryBtn) {
-                    filterItems(activeCategoryBtn.dataset.category);
+                // 強制的に「楽しいやつ」でフィルタリング
+                const allBtns = document.querySelectorAll('.category-btn');
+                const funBtn = document.querySelector('.category-btn[data-category="fun"]');
+                allBtns.forEach(btn => btn.classList.remove('active'));
+                if (funBtn) {
+                    funBtn.classList.add('active');
+                    filterItems('fun');
                 } else {
                     filterItems('fun');
                 }
@@ -263,11 +253,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (!tutorialCompleted) runTutorial(afterTutorial); else afterTutorial();
 
-                // オンライン人数の定期更新開始 (60秒ごと)
                 updateOnlineCount();
                 setInterval(updateOnlineCount, 60000);
 
-            }, 500); // 100%表示を少し見せる
+            }, 500);
             
         } catch (error) {
             console.error("Init Error:", error);
@@ -488,8 +477,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (creditsContainer) { creditsContainer.style.animation = 'none'; void creditsContainer.offsetHeight; creditsContainer.style.animation = ''; }
         creditsPre.innerHTML = ''; document.body.classList.add("no-scroll");
         loader.classList.remove("fade-out"); 
-        loadingStatusContainer.style.display = 'none'; // スタッフロール中は進行バー非表示
-        staffRollContainer.style.display = 'block'; // 表示
+        loadingStatusContainer.style.display = 'none';
+        staffRollContainer.style.display = 'block'; 
         staffRollContainer.style.opacity = '1';
         welcomeContainer.style.display = 'none'; 
         const skipBtn = document.getElementById('skipBtn');
@@ -508,14 +497,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (loader.classList.contains('fade-out')) return;
         const tutorialCompleted = localStorage.getItem('tutorialCompleted');
         
-        // スタッフロールが終わったら、またはスキップしたら
-        // まずスタッフロール関係を消す
         staffRollContainer.style.opacity = '0'; 
         document.getElementById('skipBtn').style.opacity = '0';
         clearInterval(typingInterval);
 
         if (!tutorialCompleted) {
-            // 初回ならWelcomeアニメーション
              setTimeout(() => {
                 staffRollContainer.style.display = 'none';
                 welcomeContainer.style.display = 'flex'; welcomeContainer.innerHTML = ''; 
@@ -524,11 +510,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     span.style.animationDelay = `${i * 100}ms`; welcomeContainer.appendChild(span);
                     setTimeout(() => span.classList.add('animate'), 50);
                 });
-                // アニメーション後にデータ読み込み開始
                 setTimeout(() => { afterStaffRoll(); }, 2000);
             }, 500);
         } else { 
-            // 2回目以降ならすぐにデータ読み込み画面（プログレスバー）へ
             setTimeout(() => { afterStaffRoll(); }, 500);
         }
     }
@@ -571,15 +555,16 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // 【修正】フィルター関数：確実にフィルタリングするように修正
     function filterItems(category) {
-        document.querySelectorAll('.item-card').forEach((card, index) => {
+        let visibleCount = 0;
+        document.querySelectorAll('.item-card').forEach((card) => {
             const shouldShow = category === 'all' || card.dataset.category === category;
             card.style.display = shouldShow ? 'flex' : 'none';
             if (shouldShow) { 
                 card.style.animation = 'none'; 
                 void card.offsetHeight; 
-                card.style.animation = `card-appear 0.5s ease-out ${index * 50}ms forwards`; 
+                card.style.animation = `card-appear 0.5s ease-out ${visibleCount * 50}ms forwards`; 
+                visibleCount++;
             }
         });
     }
@@ -614,15 +599,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    function openShareModal(title, url) {
+    // 【修正】画像パスを受け取れるように拡張
+    function openShareModal(title, url, imagePath = null) {
         document.getElementById("share-modal-title").textContent = title;
         document.getElementById("share-url-input").value = url;
         const qrContainer = document.getElementById("qrcode"); qrContainer.innerHTML = "";
-        if (typeof QRCode !== 'undefined') QRCode.toCanvas(url, { width: 220 }, (e, c) => { if(!e) qrContainer.appendChild(c); });
+        
+        if (imagePath) {
+            // 画像指定がある場合は画像を表示 (QR.jpegなど)
+            const img = document.createElement('img');
+            img.src = imagePath;
+            img.style.width = '220px';
+            img.style.height = 'auto';
+            img.alt = 'QR Code';
+            qrContainer.appendChild(img);
+        } else {
+            // 画像指定がない場合（個別作品など）は動的にQRコードを生成
+            if (typeof QRCode !== 'undefined') QRCode.toCanvas(url, { width: 220 }, (e, c) => { if(!e) qrContainer.appendChild(c); });
+        }
+        
         allModals.share.classList.add("visible");
     }
+
     document.getElementById("details-modal-share-btn").addEventListener("click", () => { openShareModal("作品を共有", new URL(currentItemUrl, window.location.href).href); allModals.details.classList.remove("visible"); });
-    document.getElementById("share-site-btn").addEventListener("click", () => openShareModal("このサイトを共有", window.location.href));
+    
+    // 【修正】サイト共有ボタンは QR.jpeg を表示するように変更
+    document.getElementById("share-site-btn").addEventListener("click", () => openShareModal("このサイトを共有", window.location.href, "QR.jpeg"));
+    
     document.getElementById("copy-url-btn").addEventListener("click", e => { navigator.clipboard.writeText(document.getElementById('share-url-input').value).then(() => { e.target.textContent = "完了!"; setTimeout(() => e.target.textContent = "コピー", 2000); }); });
     document.querySelectorAll("[data-close-modal]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal-overlay").classList.remove("visible")));
     document.querySelectorAll(".modal-overlay").forEach(modal => modal.addEventListener("click", e => { if (e.target === modal && modal.id !== 'ban-screen') modal.classList.remove("visible"); }));
