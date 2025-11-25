@@ -8,7 +8,7 @@ const ROTATION_SPEED = 0.13;
 const GROUND_HEIGHT = 2; 
 
 // 物理演算 (2.5ブロック調整版)
-const GRAVITY_CUBE = 0.95; 
+const GRAVITY_CUBE = 0.50; 
 const JUMP_CUBE = -18.5;
 const JUMP_ORB = -16.0;
 const JUMP_PAD = -23.0;
@@ -496,3 +496,4 @@ function draw() {
     ctx.restore();
 
 }
+
