@@ -8,10 +8,10 @@ const ROTATION_SPEED = 0.13;
 const GROUND_HEIGHT = 2; 
 
 // 物理演算 (2.5ブロック調整版)
-const GRAVITY_CUBE = 0.85; 
-const JUMP_CUBE = -16.5;
-const JUMP_ORB = -14.0;
-const JUMP_PAD = -21.0;
+const GRAVITY_CUBE = 0.95; 
+const JUMP_CUBE = -18.5;
+const JUMP_ORB = -16.0;
+const JUMP_PAD = -23.0;
 
 const GRAVITY_SHIP = 0.4;
 const SHIP_THRUST = -0.8; 
@@ -494,4 +494,5 @@ function draw() {
         ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 6, 6); ctx.globalAlpha = 1.0;
     }
     ctx.restore();
+
 }
