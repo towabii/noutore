@@ -2,10 +2,10 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
 // --- 設定 ---
-const TILE_SIZE = 64;
+const TILE_SIZE = 50;
 const SPEED = 9.0; 
 const ROTATION_SPEED = 0.13;
-const GROUND_HEIGHT = 2; 
+const GROUND_HEIGHT = 4; 
 
 // 物理演算 (2.5ブロック調整版)
 const GRAVITY_CUBE = 0.50; 
@@ -496,4 +496,5 @@ function draw() {
     ctx.restore();
 
 }
+
 
