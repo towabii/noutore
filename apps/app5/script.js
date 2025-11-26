@@ -1,17 +1,17 @@
 const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d'); // --- 修正点: 'd' を '2d' に修正 ---
 
 // --- 設定 ---
-const TILE_SIZE = 50;
-const SPEED = 9.0; 
+const TILE_SIZE = 64;
+const SPEED = 9.5; 
 const ROTATION_SPEED = 0.13;
-const GROUND_HEIGHT = 4; 
+const GROUND_HEIGHT = 2; 
 
 // 物理演算 (2.5ブロック調整版)
-const GRAVITY_CUBE = 0.50; 
-const JUMP_CUBE = -18.5;
-const JUMP_ORB = -16.0;
-const JUMP_PAD = -23.0;
+const GRAVITY_CUBE = 1.1; 
+const JUMP_CUBE = -17.0;
+const JUMP_ORB = -14.0;
+const JUMP_PAD = -21.0;
 
 const GRAVITY_SHIP = 0.4;
 const SHIP_THRUST = -0.8; 
@@ -89,6 +89,7 @@ let player = {
     dy: 0, angle: 0, 
     isGrounded: false, dead: false, 
     mode: 'CUBE', 
+    gravity: 1, // 重力の向き (1:正常, -1:反転)
     trail: [] 
 };
 let input = { holding: false };
@@ -178,10 +179,19 @@ function resetLevel() {
                 b.dx = bx; b.dy = by; 
                 blocks.push(b);
             }
+            else if(ch === 'v') {
+                b.type = 'SPIKE_DOWN';
+                b.w = TILE_SIZE-32; b.h = TILE_SIZE-16;
+                b.x += 16; b.y += 0;
+                b.dx = bx; b.dy = by;
+                blocks.push(b);
+            }
             else if(ch === 'J') { b.type = 'PAD'; b.h = 20; b.y = by + TILE_SIZE - 20; b.x += 10; b.w -= 20; triggers.push(b); }
             else if(ch === 'O') { b.type = 'ORB'; b.w = 40; b.h = 40; b.x += 12; b.y += 12; triggers.push(b); }
             else if(ch === 'S') { b.type = 'PORTAL_SHIP'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
             else if(ch === 'C') { b.type = 'PORTAL_CUBE'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
+            else if(ch === 'V') { b.type = 'PORTAL_GRAVITY_REVERSE'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
+            else if(ch === 'N') { b.type = 'PORTAL_GRAVITY_NORMAL'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
             else if(ch === 'G') { b.type = 'GOAL'; b.y = floorY - TILE_SIZE*20; b.h = TILE_SIZE*20; triggers.push(b); }
         }
     }
@@ -192,6 +202,7 @@ function resetLevel() {
     player.angle = 0;
     player.dead = false;
     player.mode = 'CUBE';
+    player.gravity = 1; 
     player.trail = [];
     input.holding = false;
     camera.x = 0;
@@ -224,39 +235,54 @@ function update() {
     player.x += SPEED;
 
     if (player.mode === 'CUBE') {
-        player.dy += GRAVITY_CUBE;
+        player.dy += GRAVITY_CUBE * player.gravity;
         player.y += player.dy;
         
-        if (!player.isGrounded) player.angle += ROTATION_SPEED;
+        if (!player.isGrounded) player.angle += ROTATION_SPEED * player.gravity;
         else {
             const target = Math.round(player.angle / (Math.PI/2)) * (Math.PI/2);
             player.angle += (target - player.angle) * 0.3;
         }
     } else if (player.mode === 'SHIP') {
-        if (input.holding) player.dy += SHIP_THRUST; 
-        player.dy += GRAVITY_SHIP;
-        if(player.dy < SHIP_MAX_UP) player.dy = SHIP_MAX_UP;
-        if(player.dy > SHIP_MAX_DOWN) player.dy = SHIP_MAX_DOWN;
+        if (input.holding) player.dy += SHIP_THRUST * player.gravity; 
+        player.dy += GRAVITY_SHIP * player.gravity;
+        
+        const maxUp = player.gravity > 0 ? SHIP_MAX_UP : SHIP_MAX_DOWN * -1;
+        const maxDown = player.gravity > 0 ? SHIP_MAX_DOWN : SHIP_MAX_UP * -1;
+
+        if (player.gravity > 0) {
+            if(player.dy < maxUp) player.dy = maxUp;
+            if(player.dy > maxDown) player.dy = maxDown;
+        } else {
+            if(player.dy > maxUp) player.dy = maxUp;
+            if(player.dy < maxDown) player.dy = maxDown;
+        }
+
         player.y += player.dy;
         
-        let targetAngle = player.dy * 0.05;
+        let targetAngle = player.dy * 0.05 * player.gravity;
         player.angle += (targetAngle - player.angle) * 0.1;
     }
 
     player.isGrounded = false;
-    if (player.y + player.h >= floorY) {
+    if (player.gravity > 0 && player.y + player.h >= floorY) {
         player.y = floorY - player.h;
         player.dy = 0;
         player.isGrounded = true;
         if(player.mode === 'CUBE') player.angle = Math.round(player.angle / (Math.PI/2)) * (Math.PI/2);
     }
-    
-    if (player.y < -500 && player.mode === 'SHIP') player.dy = 1;
+    if (player.gravity < 0 && player.y <= 0) {
+        player.y = 0;
+        player.dy = 0;
+        player.isGrounded = true;
+        if(player.mode === 'CUBE') player.angle = Math.round(player.angle / (Math.PI/2)) * (Math.PI/2);
+    }
 
-    checkTriggers();
     checkSolids();
+    if(player.dead) return;
+    checkTriggers();
 
-    camera.x = player.x - 300;
+    camera.x = player.x - 150;
 
     const pct = Math.min(100, Math.floor((player.x / mapWidth) * 100));
     document.getElementById('current-progress').innerText = `${pct}%`;
@@ -275,7 +301,7 @@ function checkTriggers() {
         if (px + pw > t.x && px < t.x + t.w && py + ph > t.y && py < t.y + t.h) {
             if (t.type === 'PAD') {
                 playSound('pad');
-                player.dy = JUMP_PAD;
+                player.dy = JUMP_PAD * player.gravity;
                 player.isGrounded = false;
                 createParticles(t.x + t.w/2, t.y, 10, '#ffff00');
                 return;
@@ -288,6 +314,18 @@ function checkTriggers() {
             else if (t.type === 'PORTAL_CUBE') {
                 if(player.mode !== 'CUBE') {
                     player.mode = 'CUBE'; player.angle = 0; playSound('portal'); createParticles(player.x, player.y, 20, '#ff8800');
+                }
+            }
+            else if (t.type === 'PORTAL_GRAVITY_REVERSE') {
+                if (player.gravity > 0) {
+                    player.gravity = -1;
+                    playSound('portal'); createParticles(player.x, player.y, 20, '#a020f0');
+                }
+            }
+            else if (t.type === 'PORTAL_GRAVITY_NORMAL') {
+                if (player.gravity < 0) {
+                    player.gravity = 1;
+                    playSound('portal'); createParticles(player.x, player.y, 20, '#ffffff');
                 }
             }
             else if (t.type === 'GOAL') {
@@ -308,28 +346,35 @@ function checkSolids() {
         if (b.x > player.x + canvas.width || b.x + b.w < player.x - 100) continue;
 
         if (px + pw > b.x && px < b.x + b.w && py + ph > b.y && py < b.y + b.h) {
-            
-            if (b.type === 'SPIKE') { die(); return; }
+            if (b.type === 'SPIKE' || b.type === 'SPIKE_DOWN') {
+                die();
+                return;
+            }
 
             if (b.type === 'BLOCK') {
-                const blockTop = b.y;
-                const penetrationY = (player.y + player.h) - blockTop;
-                
-                // 吸い付き判定
-                if (penetrationY < 40 && player.dy > -8) {
-                    player.y = blockTop - player.h;
+                const playerPrevY = player.y - player.dy;
+
+                if (player.gravity > 0 && player.dy >= 0 && playerPrevY + ph <= b.y) {
+                    player.y = b.y - ph;
                     player.dy = 0;
                     player.isGrounded = true;
-                    if(player.mode === 'SHIP') player.angle = 0;
-                } else {
-                    const headDist = (player.y) - (b.y + b.h);
-                    if (Math.abs(headDist) < 20 && player.dy < 0) {
-                        player.y = b.y + b.h;
-                        player.dy = 0;
-                    } else {
-                        die();
-                        return;
-                    }
+                }
+                else if (player.gravity < 0 && player.dy <= 0 && playerPrevY >= b.y + b.h) {
+                    player.y = b.y + b.h;
+                    player.dy = 0;
+                    player.isGrounded = true;
+                }
+                else if (player.gravity > 0 && player.dy < 0 && playerPrevY >= b.y + b.h) {
+                    player.y = b.y + b.h;
+                    player.dy = 0;
+                }
+                else if (player.gravity < 0 && player.dy > 0 && playerPrevY + ph <= b.y) {
+                    player.y = b.y - ph;
+                    player.dy = 0;
+                }
+                else {
+                    die();
+                    return;
                 }
             }
         }
@@ -352,7 +397,7 @@ function handleInputStart() {
         for(let t of triggers) {
             if(t.type === 'ORB' && cx > t.x && cx < t.x + t.w && cy > t.y && cy < t.y + t.h) {
                 playSound('orb');
-                player.dy = JUMP_ORB;
+                player.dy = JUMP_ORB * player.gravity;
                 player.isGrounded = false;
                 createParticles(t.x+t.w/2, t.y+t.h/2, 10, '#00ffff');
                 hitOrb = true;
@@ -361,7 +406,7 @@ function handleInputStart() {
         }
         if (!hitOrb && player.isGrounded) {
             playSound('jump');
-            player.dy = JUMP_CUBE;
+            player.dy = JUMP_CUBE * player.gravity;
             player.isGrounded = false;
             createParticles(player.x + player.w/2, player.y + player.h, 5, '#fff');
         }
@@ -429,11 +474,13 @@ function draw() {
     ctx.save();
     ctx.translate(-camera.x, 0);
 
-    // Floor
     ctx.fillStyle = '#000';
     ctx.fillRect(camera.x, floorY, canvas.width, canvas.height-floorY);
+    ctx.fillRect(camera.x, 0, canvas.width, -GROUND_HEIGHT * TILE_SIZE);
     ctx.strokeStyle = `hsl(${bgHue}, 100%, 50%)`; ctx.lineWidth = 3;
     ctx.beginPath(); ctx.moveTo(camera.x, floorY); ctx.lineTo(camera.x+canvas.width, floorY); ctx.stroke();
+    ctx.strokeStyle = `hsl(${(bgHue+120)%360}, 100%, 50%)`;
+    ctx.beginPath(); ctx.moveTo(camera.x, 0); ctx.lineTo(camera.x+canvas.width, 0); ctx.stroke();
 
     for(let b of blocks) {
         if(b.x+b.w < camera.x || b.x > camera.x+canvas.width) continue;
@@ -448,6 +495,16 @@ function draw() {
             ctx.beginPath(); ctx.moveTo(b.dx, b.dy+TILE_SIZE); ctx.lineTo(b.dx+TILE_SIZE/2, b.dy); ctx.lineTo(b.dx+TILE_SIZE, b.dy+TILE_SIZE); ctx.fill();
             ctx.strokeStyle = '#f00'; ctx.lineWidth=2; ctx.stroke();
         }
+        else if(b.type === 'SPIKE_DOWN') {
+            ctx.fillStyle = '#000'; 
+            ctx.beginPath();
+            ctx.moveTo(b.dx, b.dy);
+            ctx.lineTo(b.dx + TILE_SIZE, b.dy);
+            ctx.lineTo(b.dx + TILE_SIZE / 2, b.dy + TILE_SIZE);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#f00'; ctx.lineWidth=2; ctx.stroke();
+        }
     }
     
     for(let t of triggers) {
@@ -457,6 +514,8 @@ function draw() {
         else if(t.type === 'ORB') { ctx.fillStyle = 'rgba(255,255,0,0.3)'; ctx.beginPath(); ctx.arc(t.x+t.w/2, t.y+t.h/2, t.w/2, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = '#ff0'; ctx.lineWidth=3; ctx.stroke(); }
         else if(t.type === 'PORTAL_SHIP') { ctx.fillStyle = 'rgba(0,255,0,0.5)'; ctx.fillRect(t.x, t.y, t.w, t.h); ctx.strokeStyle = '#0f0'; ctx.strokeRect(t.x, t.y, t.w, t.h); }
         else if(t.type === 'PORTAL_CUBE') { ctx.fillStyle = 'rgba(255,128,0,0.5)'; ctx.fillRect(t.x, t.y, t.w, t.h); ctx.strokeStyle = '#f80'; ctx.strokeRect(t.x, t.y, t.w, t.h); }
+        else if(t.type === 'PORTAL_GRAVITY_REVERSE') { ctx.fillStyle = 'rgba(160, 32, 240, 0.5)'; ctx.fillRect(t.x, t.y, t.w, t.h); ctx.strokeStyle = '#a020f0'; ctx.strokeRect(t.x, t.y, t.w, t.h); }
+        else if(t.type === 'PORTAL_GRAVITY_NORMAL') { ctx.fillStyle = 'rgba(255, 255, 255, 0.5)'; ctx.fillRect(t.x, t.y, t.w, t.h); ctx.strokeStyle = '#fff'; ctx.strokeRect(t.x, t.y, t.w, t.h); }
         else if(t.type === 'GOAL') { ctx.fillStyle = 'rgba(255,255,0,0.2)'; ctx.fillRect(t.x, t.y, t.w, t.h); }
     }
 
@@ -470,7 +529,11 @@ function draw() {
         }
         player.trail = player.trail.filter(t => t.alpha > 0);
 
-        ctx.save(); ctx.translate(player.x+player.w/2, player.y+player.h/2); ctx.rotate(player.angle);
+        ctx.save();
+        ctx.translate(player.x+player.w/2, player.y+player.h/2);
+        ctx.rotate(player.angle);
+        ctx.scale(1, player.gravity);
+        
         if(player.mode === 'SHIP') {
             ctx.shadowBlur = 10; ctx.shadowColor = '#ff0'; ctx.fillStyle = '#ff4444';
             ctx.beginPath(); ctx.moveTo(player.w/2 + 10, 0); ctx.lineTo(-player.w/2, player.h/2); ctx.lineTo(-player.w/2 + 5, 0); ctx.lineTo(-player.w/2, -player.h/2); ctx.fill();
@@ -494,7 +557,4 @@ function draw() {
         ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 6, 6); ctx.globalAlpha = 1.0;
     }
     ctx.restore();
-
 }
-
-
