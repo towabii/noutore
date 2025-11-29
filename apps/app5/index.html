@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MetaDash</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- スタッフロール画面 -->
+    <div id="staff-roll-screen">
+        <div id="staffRollContainer">
+            <div class="credits-list">
+                <pre>
+プロデューサー .................. とわ
+ディレクター .................... とわ
+エグゼクティブプロデューサー .... とわ
+アシスタントプロデューサー ...... とわ
+
+デザイン ........................ とわ
+シナリオ ........................ とわ
+レベルデザイン .................. とわ
+バランス調整 .................... とわ
+UI/UXデザイン ................... とわ
+
+プログラムリード ................ とわ
+エンジンプログラマー ............ とわ
+ネットワークプログラマー ........ とわ
+AIプログラマー .................. とわ
+ツールプログラマー .............. とわ
+サウンドプログラマー ............ とわ
+グラフィックプログラマー ........ とわ
+
+アートディレクター .............. とわ
+キャラクターデザイナー .......... とわ
+モンスターデザイナー ............ とわ
+背景デザイナー .................. とわ
+UIデザイナー .................... とわ
+2Dアーティスト .................. とわ
+3Dモデラー ...................... とわ
+リガー .......................... とわ
+アニメーター .................... とわ
+モーションキャプチャー .......... とわ
+VFXアーティスト ................ とわ
+ライティングアーティスト ........ とわ
+テクスチャーアーティスト ........ とわ
+
+サウンドディレクター ............ とわ
+作曲 ............................ とわ
+効果音制作 ...................... とわ
+ボイス収録 ...................... とわ
+ミキシング ...................... とわ
+
+QAマネージャー .................. とわ
+QAリーダー ...................... とわ
+QAテスター ...................... とわ
+
+ローカライズディレクター ........ とわ
+翻訳 ............................ とわ
+ローカライズテスター ............ とわ
+
+マーケティングマネージャー ...... とわ
+PR .............................. とわ
+コミュニティマネージャー ........ とわ
+公式サイト運営 .................. とわ
+
+スペシャルサンクス .............. とわ
+                </pre>
+            </div>
+        </div>
+        <button id="skipBtn">SKIP >>></button>
+    </div>
+
+    <!-- ゲームUI -->
+    <div id="ui-layer">
+        <div id="current-progress" class="hud-text">0%</div>
+        <div id="high-score" class="hud-text">自己ベスト: 0%</div>
+        <div id="level-indicator" class="hud-text">LEVEL 1</div>
+        <div id="message"></div>
+    </div>
+
+    <!-- メニュー画面 -->
+    <div id="menu-screen">
+        <h1>MetaDash<br><span class="subtitle">メタ ダッシュ</span></h1>
+        <div class="level-container">
+            <div class="level-btn" id="btn-lvl1" onclick="initGame(1)">
+                LEVEL 1
+                <span class="sub-text">出撃可能</span>
+            </div>
+            <div class="level-btn" id="btn-lvl2" onclick="initGame(2)">
+                LEVEL 2
+                <span class="sub-text">出撃可能</span>
+            </div>
+            <div class="level-btn" id="btn-lvl3" onclick="initGame(3)">
+                LEVEL 3
+                <span class="sub-text">開発中</span>
+            </div>
+            <div class="level-btn" id="btn-lvl4" onclick="initGame(4)">
+                LEVEL 4
+                <span class="sub-text">開発中</span>
+            </div>
+            <div class="level-btn" id="btn-lvl5" onclick="initGame(5)">
+                LEVEL 5
+                <span class="sub-text">開発中</span>
+            </div>
+        </div>
+        <p class="instructions">スペースキー / クリック : ジャンプ (長押しで飛行)<br>ESCキー : メニューに戻る</p>
+    </div>
+
+    <script src="levels.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

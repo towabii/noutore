@@ -1,0 +1,52 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #000;
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    font-family: 'Orbitron', 'Noto Sans JP', sans-serif;
+    color: #fff;
+    user-select: none;
+}
+
+canvas { 
+    display: block; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- スタッフロール画面のスタイル --- */
+#staff-roll-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #000; z-index: 100; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+#staffRollContainer { width: 80%; max-width: 800px; height: 100%; position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%); mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%); }
+.credits-list { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); animation: scroll 40s linear forwards; width: 100%; }
+.credits-list pre { font-family: 'Noto Sans JP', sans-serif; font-size: 1rem; color: #ccc; text-align: center; line-height: 1.8; white-space: pre; }
+@keyframes scroll { from { top: 100%; } to { top: -150%; } }
+#skipBtn { position: fixed; bottom: 30px; right: 30px; background-color: rgba(255, 255, 255, 0.1); border: 2px solid #fff; color: #fff; padding: 10px 20px; font-family: 'Orbitron', sans-serif; font-size: 16px; cursor: pointer; transition: all 0.3s ease; z-index: 110; box-shadow: 0 0 15px rgba(0, 255, 255, 0.5); }
+#skipBtn:hover { background-color: #0ff; color: #000; box-shadow: 0 0 25px #0ff; }
+
+/* --- UIデザイン --- */
+#ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: none; z-index: 10; }
+.hud-text { position: absolute; color: white; font-weight: 700; font-size: clamp(16px, 2.5vw, 28px); text-shadow: 2px 2px 0 #000; }
+#current-progress { top: 20px; left: 20px; }
+#high-score { top: 20px; right: 20px; color: #ffd700; }
+#level-indicator { bottom: 20px; left: 20px; font-size: clamp(14px, 2vw, 20px); color: #aaa; }
+#message { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: clamp(32px, 6vw, 60px); font-weight: 700; text-align: center; display: none; text-shadow: 3px 3px 0 #000, 0 0 10px rgba(0,0,0,0.8); z-index: 10; white-space: nowrap; }
+#menu-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #0a001a 0%, #000 80%); display: none; flex-direction: column; justify-content: center; align-items: center; pointer-events: auto; z-index: 20; }
+#menu-screen h1 { color: #fff; text-shadow: 4px 4px 0 #000; font-size: clamp(40px, 8vw, 90px); margin-bottom: 40px; letter-spacing: 2px; text-align: center; line-height: 1.1; font-weight: 700; }
+#menu-screen .subtitle { font-family: 'Noto Sans JP', sans-serif; font-size: clamp(16px, 2.5vw, 24px); color: #0ff; letter-spacing: 5px; text-shadow: 2px 2px 0 #000; }
+.level-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; max-width: 800px; }
+.level-btn { position: relative; background: linear-gradient(145deg, #222, #111); color: white; border: 3px solid #fff; padding: 20px 0; width: 200px; font-size: 24px; font-weight: 700; cursor: pointer; text-align: center; transition: all 0.2s ease-in-out; box-shadow: 0 5px 15px rgba(0,0,0,0.8), inset 0 0 5px rgba(255,255,255,0.1); }
+.level-btn:hover { transform: translateY(-5px) scale(1.05); box-shadow: 0 10px 20px rgba(0,0,0,0.7); }
+.level-btn:active { transform: translateY(2px); }
+#btn-lvl1 { border-color: #0f0; color: #0f0; }
+#btn-lvl1:hover { box-shadow: 0 0 15px #0f0; }
+#btn-lvl2 { border-color: #ff0; color: #ff0; }
+#btn-lvl2:hover { box-shadow: 0 0 15px #ff0; }
+#btn-lvl3, #btn-lvl4, #btn-lvl5 { border-color: #f00; color: #f00; opacity: 0.6; cursor: not-allowed; }
+#btn-lvl3:hover, #btn-lvl4:hover, #btn-lvl5:hover { box-shadow: 0 0 15px #f00; }
+.sub-text { font-family: 'Noto Sans JP', sans-serif; font-size: 14px; color: #888; margin-top: 5px; display: block; }
+.instructions { color: #aaa; margin-top: 40px; font-size: 14px; text-align: center; line-height: 1.8;}
