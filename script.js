@@ -30,7 +30,7 @@ const countdownConfig = [
 const items = [
 { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "一番頑張った", category: "fun" },
 { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "一番人気！", category: "fun" },
-{ title: "7番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "試験運用中", category: "fun" },
+{ title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "試験運用中", category: "fun" },
 { title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/index.html", recommend: "作るの頑張った", category: "fun" },
 { title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
 { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
