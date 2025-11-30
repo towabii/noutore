@@ -3,29 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>8番出口風ゲーム (修正版)</title>
-    <link rel="stylesheet" href="style.css">
+    <title>17番出口</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            overflow: hidden;
+            user-select: none;
+            font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+        }
+
+        #start-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #111;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            z-index: 200;
+            cursor: pointer;
+        }
+
+        #start-screen-content { text-align: center; }
+
+        #start-screen-content h1 {
+            font-size: 80px;
+            margin: 0 0 10px 0;
+            color: #ffd700;
+            font-weight: 900;
+            letter-spacing: 10px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .instructions {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 4px;
+            line-height: 2.0;
+            font-size: 18px;
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+            border: 1px solid #444;
+        }
+
+        #ui-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #crosshair {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 4px white;
+        }
+
+        #blackout-curtain {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 999;
+        }
+
+        #debug-info {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            color: #ffd700;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #000;
+        }
+
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
-    <!-- スタート画面 -->
     <div id="start-screen">
         <div id="start-screen-content">
-            <h1>地下通路</h1>
-            <p>クリックして業務開始</p>
+            <h1>(とわ作BETA版)17番出口</h1>
+            <p>クリックして開始</p>
             <div class="instructions">
                 異変を見逃さないこと。<br>
                 異変があればすぐに引き返すこと。<br>
                 異変がなければ進むこと。<br>
-                <small>移動: WASD / ダッシュ: Shift / 視点: マウス</small>
+                <small>目指せ 17番出口</small><br>
+                <small style="color:#aaa;">移動: WASD / 視点: マウス・矢印 / ダッシュ: Shift</small>
             </div>
         </div>
     </div>
 
-    <!-- ゲーム中UI -->
     <div id="ui-container" class="hidden">
         <div id="crosshair"></div>
-        <!-- 出口番号表示（常に画面右下に表示させても良いが、今回は看板のみ） -->
-        <div id="debug-info"></div>
+        <div id="debug-info">出口 0</div>
         <div id="blackout-curtain"></div>
     </div>
 
@@ -36,6 +123,849 @@
             }
         }
     </script>
-    <script type="module" src="main.js"></script>
+    <script type="module">
+        import * as THREE from 'three';
+
+        // --- 設定値 ---
+        const CONFIG = {
+            walkSpeed: 4.5,
+            runSpeed: 9.0,
+            mouseSensitivity: 0.002,
+            keyRotationSpeed: 1.5,
+            
+            pathWidth: 6.0,       
+            pathHeight: 3.8,      
+            straightLen: 60.0,    
+            backLen: 30.0,        
+            turnLen: 48.0,        
+            
+            spawnZ: 12.0,         
+            loopTriggerX: -24.0,  
+            backTriggerZ: 16.0,   
+            
+            goalExit: 17
+        };
+
+        // --- グローバル変数 ---
+        let scene, camera, renderer, clock;
+        let mats = {}; 
+        
+        let npcGroup, npcLimbs = {};
+        let npcGroup2, npcLimbs2 = {}; 
+        let posters = []; 
+        let vents = []; 
+        let lights = [];
+        let smokeParticles = []; 
+        let rightWallGroup; 
+        let doorMesh;       
+        let securityCamera, cameraLight, cameraLensMesh;
+        let brailleBlocks = []; 
+        let waveMesh; 
+        let fireHydrant; 
+        let securityPosterGroup, eyePupilMesh;
+
+        let exitSignCanvas, exitSignTexture;
+        let yellowSignMesh;
+
+        let currentExit = 0;
+        let anomalyType = 'NONE'; 
+        let gameActive = false;
+        let isTransitioning = false;
+        let waveAnimTime = 0; 
+        let lightFlickerTimer = 0;
+        let npcState = { z: 0, speed: 2.2, animTime: 0 }; 
+
+        const keys = {};
+        const startScreen = document.getElementById('start-screen');
+        const uiContainer = document.getElementById('ui-container');
+        const curtain = document.getElementById('blackout-curtain');
+        const debugInfo = document.getElementById('debug-info');
+
+        const textureLoader = new THREE.TextureLoader();
+
+        // --- テクスチャ自動生成 ---
+        function createTileTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#b0b0b0'; ctx.fillRect(0,0,512,512);
+            const size = 128; const gap = 4;
+            for(let y=0; y<4; y++){
+                for(let x=0; x<4; x++){
+                    const noise = Math.random() * 10;
+                    ctx.fillStyle = `rgb(${245-noise}, ${245-noise}, ${240-noise})`;
+                    ctx.fillRect(x*size + gap, y*size + gap, size - gap*2, size - gap*2);
+                }
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function createConcreteTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#777'; ctx.fillRect(0,0,512,512);
+            for(let i=0; i<40000; i++){
+                ctx.fillStyle = Math.random() < 0.5 ? '#666' : '#888';
+                ctx.fillRect(Math.random()*512, Math.random()*512, 2, 2);
+            }
+            const tex = new THREE.CanvasTexture(canvas);
+            tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+            return tex;
+        }
+
+        function createSteelDoorTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#8899a6'; ctx.fillRect(0,0,256,512);
+            ctx.fillStyle = 'rgba(0,0,0,0.05)';
+            for(let i=0; i<1000; i++) ctx.fillRect(Math.random()*256, Math.random()*512, 2, 2);
+            ctx.strokeStyle = '#556677'; ctx.lineWidth = 12; ctx.strokeRect(6,6,244,500);
+            ctx.fillStyle = '#cccccc'; ctx.fillRect(20, 250, 216, 20);
+            ctx.fillStyle = '#999999'; ctx.fillRect(20, 250, 10, 20); ctx.fillRect(226, 250, 10, 20);
+            ctx.fillStyle = '#224422'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
+            ctx.fillText("非常口", 128, 150); ctx.font = '14px sans-serif'; ctx.fillText("EMERGENCY EXIT", 128, 170);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createBrailleTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#FDD000'; ctx.fillRect(0,0,256,256); 
+            ctx.strokeStyle = '#DAA520'; ctx.lineWidth=4; ctx.strokeRect(0,0,256,256);
+            const rows = 3; const cols = 3; const step = 256/3;
+            for(let y=0; y<rows; y++) {
+                for(let x=0; x<cols; x++) {
+                    const cx = x*step + step/2; const cy = y*step + step/2;
+                    ctx.fillStyle = '#B8860B'; ctx.beginPath(); ctx.arc(cx+3, cy+3, 20, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#FFFACD'; ctx.beginPath(); ctx.arc(cx-2, cy-2, 20, 0, Math.PI*2); ctx.fill();
+                    ctx.fillStyle = '#FDD000'; ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI*2); ctx.fill();
+                }
+            }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createSecurityPosterTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 350;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#EEEEEE'; ctx.fillRect(0,0,256,350);
+            ctx.strokeStyle = '#333'; ctx.lineWidth = 10; ctx.strokeRect(5,5,246,340);
+            ctx.fillStyle = '#FFFFFF'; ctx.strokeStyle = '#000'; ctx.lineWidth=2;
+            ctx.beginPath();
+            ctx.ellipse(128, 150, 80, 50, 0, 0, Math.PI*2);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#cc0000'; ctx.textAlign = 'center'; 
+            ctx.font = 'bold 30px sans-serif';
+            ctx.fillText("防犯カメラ", 128, 250);
+            ctx.fillText("作動中", 128, 290);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createFallbackPoster(text, color) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 256; canvas.height = 350;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = color; ctx.fillRect(0,0,256,350);
+            ctx.fillStyle = 'white'; ctx.textAlign = 'center'; ctx.font = 'bold 80px sans-serif';
+            ctx.fillText(text, 128, 200);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // --- 初期化 ---
+        function init() {
+            clock = new THREE.Clock();
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xd0d0d0);
+            scene.fog = new THREE.Fog(0xd0d0d0, 10, 45); 
+
+            camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.rotation.order = 'YXZ'; 
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.0;
+            document.body.appendChild(renderer.domElement);
+
+            loadMaterials();
+            createMap();
+            createProps(); 
+            createBrailleBlocks(); 
+            createNPCModel();      
+            createWaveMesh(); 
+            setupEvents();
+
+            animate();
+        }
+
+        // --- マテリアル ---
+        function loadMaterials() {
+            const tileTex = createTileTexture();
+            const floorTex = createConcreteTexture();
+            const doorTex = createSteelDoorTexture();
+            const brailleTex = createBrailleTexture();
+            brailleTex.wrapS = brailleTex.wrapT = THREE.RepeatWrapping;
+
+            mats.wall = new THREE.MeshStandardMaterial({ map: tileTex, roughness: 0.3, metalness: 0.1 });
+            mats.floor = new THREE.MeshStandardMaterial({ map: floorTex, roughness: 0.8 });
+            mats.ceil = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 0.9 });
+            mats.door = new THREE.MeshStandardMaterial({ map: doorTex });
+            mats.braille = new THREE.MeshStandardMaterial({ map: brailleTex, roughness: 0.6, metalness: 0.1 });
+
+            mats.lightMesh = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            mats.ventFrame = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5, metalness: 0.6 });
+            mats.ventHole = new THREE.MeshBasicMaterial({ color: 0x444444 });
+            mats.smoke = new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0.6 });
+            
+            mats.wave = new THREE.MeshStandardMaterial({ 
+                color: 0x880000, roughness: 0.2, metalness: 0.4, transparent: true, opacity: 0.9 
+            });
+
+            mats.npcSkin = new THREE.MeshStandardMaterial({ color: 0xffccaa });
+            mats.npcSuit = new THREE.MeshStandardMaterial({ color: 0x333344 });
+            mats.npcShirt = new THREE.MeshStandardMaterial({ color: 0xffffff });
+            mats.npcPants = new THREE.MeshStandardMaterial({ color: 0x222233 });
+
+            mats.secPoster = new THREE.MeshStandardMaterial({ map: createSecurityPosterTexture(), roughness: 0.5 });
+            mats.pupil = new THREE.MeshBasicMaterial({ color: 0x000000 });
+
+            mats.hydrantRed = new THREE.MeshStandardMaterial({ color: 0xcc0000, roughness: 0.3, metalness: 0.2 });
+            mats.hydrantYellow = new THREE.MeshStandardMaterial({ color: 0xffcc00, roughness: 0.3, metalness: 0.2 });
+
+            mats.posters = [];
+            mats.postersAnomaly = [];
+            for(let i=1; i<=6; i++) {
+                mats.posters[i-1] = new THREE.MeshBasicMaterial({ map: createFallbackPoster(i.toString(), '#003366') });
+                mats.postersAnomaly[i-1] = new THREE.MeshBasicMaterial({ map: createFallbackPoster("異変"+i, '#660000') });
+            }
+            for(let i=1; i<=6; i++) {
+                textureLoader.load(`jpg/${i}.jpg`, (tex) => { 
+                    mats.posters[i-1].map = tex; mats.posters[i-1].needsUpdate = true;
+                });
+                textureLoader.load(`jpg/i${i}.jpg`, (tex) => { 
+                    mats.postersAnomaly[i-1].map = tex; mats.postersAnomaly[i-1].needsUpdate = true;
+                });
+            }
+        }
+
+        // --- マップ作成 ---
+        function createMap() {
+            const W = CONFIG.pathWidth;
+            const H = CONFIG.pathHeight;
+            const L1 = CONFIG.straightLen; 
+            const LBack = CONFIG.backLen;
+            const L2 = CONFIG.turnLen;     
+
+            if(mats.wall.map) mats.wall.map.repeat.set(L1/4, H/2);
+            if(mats.floor.map) mats.floor.map.repeat.set(4, L1/4);
+
+            const createBox = (w, h, d, x, y, z, mat) => {
+                const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+                mesh.position.set(x, y, z);
+                scene.add(mesh);
+                return mesh;
+            };
+
+            const zStart = CONFIG.spawnZ + LBack; 
+            const zEnd = -L1;
+            const lenZ = zStart - zEnd;
+            const centerZ = zEnd + lenZ/2;
+
+            createBox(W, 0.1, lenZ, 0, -0.05, centerZ, mats.floor); 
+            createBox(W, 0.1, lenZ, 0, H + 0.05, centerZ, mats.ceil);
+            const leftWallLen = zStart - (-L1 + W);
+            const leftWallCenter = zStart - leftWallLen/2;
+            createBox(0.2, H, leftWallLen, -W/2 - 0.1, H/2, leftWallCenter, mats.wall); 
+
+            createBox(L2, 0.1, W, -L2/2 - W/2, -0.05, -L1 + W/2, mats.floor);
+            createBox(L2, 0.1, W, -L2/2 - W/2, H + 0.05, -L1 + W/2, mats.ceil);
+            createBox(W + L2, H, 0.2, -L2/2 + W/2, H/2, -L1 - 0.1, mats.wall); 
+            createBox(L2, H, 0.2, -L2/2 - W/2, H/2, -L1 + W + 0.1, mats.wall); 
+
+            const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambient);
+            
+            const createLight = (x, z, rotate) => {
+                const group = new THREE.Group();
+                group.position.set(x, H - 0.05, z);
+                if(rotate) group.rotation.y = Math.PI / 2;
+                const body = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.1, 1.2), new THREE.MeshBasicMaterial({color:0xaaaaaa}));
+                group.add(body);
+                const bulb = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.05, 1.0), mats.lightMesh);
+                bulb.position.y = -0.05;
+                group.add(bulb);
+                const pt = new THREE.PointLight(0xffffff, 0.5, 12);
+                pt.position.y = -1.0;
+                group.add(pt);
+                lights.push(pt); 
+                scene.add(group);
+            };
+            
+            for(let z = 20; z > -L1; z -= 8.0) createLight(0, z, false);
+            for(let x = -W; x > -L2; x -= 8.0) createLight(x, -L1 + W/2, true);
+        }
+
+        // --- 小物配置 ---
+        function createProps() {
+            const W = CONFIG.pathWidth;
+            const H = CONFIG.pathHeight;
+            const L1 = CONFIG.straightLen;
+            const LBack = CONFIG.backLen;
+
+            for(let i=0; i<6; i++) {
+                const p = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.8), mats.posters[i]);
+                p.position.set(-W/2 + 0.05, 2.0, -2 - (i * 6));
+                p.rotation.y = Math.PI / 2;
+                scene.add(p);
+                posters.push(p);
+            }
+
+            rightWallGroup = new THREE.Group();
+            scene.add(rightWallGroup);
+            const zStart = CONFIG.spawnZ + LBack; 
+            const zEnd = -L1;
+            const lenZ = zStart - zEnd;
+            const centerZ = zEnd + lenZ/2;
+            const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, H, lenZ), mats.wall);
+            rWall.position.set(0.1, H/2, centerZ); 
+            rightWallGroup.add(rWall);
+            
+            doorMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 3.5), mats.door);
+            doorMesh.position.set(-0.05, 1.75, -10); 
+            doorMesh.rotation.y = -Math.PI / 2; 
+            rightWallGroup.add(doorMesh);
+            
+            for(let i=0; i<3; i++) {
+                const v = createVentMesh();
+                v.position.set(-0.06, 3.2, -5 - (i * 10));
+                v.rotation.y = -Math.PI / 2;
+                rightWallGroup.add(v);
+                vents.push(v);
+            }
+
+            fireHydrant = createFireHydrant();
+            fireHydrant.position.set(-0.3, 0, 5); 
+            rightWallGroup.add(fireHydrant);
+
+            rightWallGroup.position.x = W/2;
+
+            createExitSign();
+
+            // 監視カメラと看板（左壁の奥、Z=-35付近）
+            const camZ = -35.0;
+            
+            securityCamera = createCameraMesh();
+            // 左壁から突き出す
+            securityCamera.position.set(-W/2 + 0.3, H - 0.5, camZ);
+            securityCamera.lookAt(0, 1.5, camZ + 5); // 手前を見る
+            scene.add(securityCamera);
+
+            securityPosterGroup = new THREE.Group();
+            // 看板本体（厚みあり）
+            const spMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.05), mats.secPoster);
+            securityPosterGroup.add(spMesh);
+            
+            // 目玉
+            eyePupilMesh = new THREE.Mesh(new THREE.CircleGeometry(0.06, 16), mats.pupil);
+            eyePupilMesh.position.set(0, 0.16, 0.03); // ボードの表面より手前
+            securityPosterGroup.add(eyePupilMesh);
+
+            // 配置 (左壁、カメラの下)
+            securityPosterGroup.position.set(-W/2 + 0.05, 2.0, camZ);
+            securityPosterGroup.rotation.y = Math.PI / 2;
+            scene.add(securityPosterGroup);
+        }
+
+        // --- 点字ブロック ---
+        function createBrailleBlocks() {
+            const W = CONFIG.pathWidth;
+            const L1 = CONFIG.straightLen;
+            const LBack = CONFIG.backLen;
+            const L2 = CONFIG.turnLen;
+            
+            const blockSize = 0.5;
+            const blockY = 0.015;
+
+            const zStart = CONFIG.spawnZ + LBack;
+            const zEnd = -L1 + W/2;
+            const zCount = Math.floor((zStart - zEnd) / blockSize);
+            
+            for(let i=0; i<zCount; i++) {
+                const b = new THREE.Mesh(new THREE.BoxGeometry(blockSize * 0.95, 0.02, blockSize * 0.95), mats.braille);
+                const z = zStart - i * blockSize - blockSize/2;
+                b.position.set(0, blockY, z);
+                b.userData = { orgPos: b.position.clone(), orgRot: b.rotation.clone() };
+                scene.add(b);
+                brailleBlocks.push(b);
+            }
+            
+            const xCount = Math.floor((L2 - blockSize/2) / blockSize);
+            for(let i=0; i<xCount; i++) {
+                const b = new THREE.Mesh(new THREE.BoxGeometry(blockSize * 0.95, 0.02, blockSize * 0.95), mats.braille);
+                const x = -blockSize - i * blockSize;
+                b.position.set(x, blockY, -L1 + W/2);
+                b.userData = { orgPos: b.position.clone(), orgRot: b.rotation.clone() };
+                scene.add(b);
+                brailleBlocks.push(b);
+            }
+        }
+
+        function createExitSign() {
+            exitSignCanvas = document.createElement('canvas');
+            exitSignCanvas.width = 512; exitSignCanvas.height = 256;
+            exitSignTexture = new THREE.CanvasTexture(exitSignCanvas);
+            const mat = new THREE.MeshBasicMaterial({ map: exitSignTexture });
+            yellowSignMesh = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.8, 0.1), mat);
+            const zPos = -CONFIG.straightLen + 0.15;
+            yellowSignMesh.position.set(0, 2.5, zPos);
+            scene.add(yellowSignMesh);
+            updateExitSign();
+        }
+
+        function updateExitSign() {
+            const ctx = exitSignCanvas.getContext('2d');
+            ctx.fillStyle = '#FFD700'; ctx.fillRect(0,0,512,256);
+            ctx.lineWidth=15; ctx.strokeStyle='#000'; ctx.strokeRect(0,0,512,256);
+            ctx.fillStyle='#000'; ctx.textAlign='center';
+            ctx.font='bold 160px sans-serif'; ctx.fillText(currentExit.toString(), 150, 190);
+            ctx.font='bold 50px sans-serif'; ctx.fillText('出口', 350, 100);
+            ctx.font='bold 40px sans-serif'; ctx.fillText('Exit', 350, 150);
+            exitSignTexture.needsUpdate = true;
+            debugInfo.innerText = `出口 ${currentExit}`;
+        }
+
+        function createVentMesh() {
+            const group = new THREE.Group();
+            const frame = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.1), mats.ventFrame);
+            group.add(frame);
+            const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.6), mats.ventHole);
+            hole.position.z = 0.06;
+            group.add(hole);
+            for(let y=-0.25; y<=0.25; y+=0.15) {
+                const bar = new THREE.Mesh(new THREE.BoxGeometry(1.0, 0.05, 0.05), mats.ventFrame);
+                bar.position.set(0, y, 0.06);
+                group.add(bar);
+            }
+            return group;
+        }
+
+        function createFireHydrant() {
+            const group = new THREE.Group();
+            const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.7, 16), mats.hydrantRed);
+            body.position.y = 0.35; group.add(body);
+            const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 16), mats.hydrantRed);
+            cap.position.y = 0.7; group.add(cap);
+            const connector = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.3, 16), mats.hydrantRed);
+            connector.rotation.z = Math.PI / 2; connector.position.set(0.1, 0.5, 0); group.add(connector);
+            return group;
+        }
+
+        function createCameraMesh() {
+            const group = new THREE.Group();
+            const base = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.2, 0.1), new THREE.MeshStandardMaterial({color:0xdddddd}));
+            group.add(base);
+            const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.03, 0.3), new THREE.MeshStandardMaterial({color:0xaaaaaa}));
+            arm.rotation.x = Math.PI/2; arm.position.z = 0.15; group.add(arm);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.25, 0.6), new THREE.MeshStandardMaterial({color:0xffffff}));
+            body.position.z = 0.4; body.rotation.x = Math.PI / 6; group.add(body);
+            const lensGeo = new THREE.CylinderGeometry(0.08, 0.08, 0.05);
+            lensGeo.rotateX(Math.PI/2);
+            cameraLensMesh = new THREE.Mesh(lensGeo, new THREE.MeshStandardMaterial({color:0x111111, emissive:0x000000}));
+            cameraLensMesh.position.set(0, -0.05, 0.31); body.add(cameraLensMesh);
+            cameraLight = new THREE.PointLight(0xff0000, 0, 5); 
+            cameraLight.position.set(0, -0.1, 0.4); body.add(cameraLight);
+            return group;
+        }
+
+        function createNPCModel(isTwin=false) {
+            const grp = new THREE.Group();
+            const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 0.25), mats.npcSkin);
+            head.position.y = 1.65; grp.add(head);
+            const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), mats.npcSuit);
+            body.position.y = 1.15; grp.add(body);
+            const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.31), mats.npcShirt);
+            shirt.position.set(0, 1.3, 0.01); grp.add(shirt);
+
+            const limbs = {};
+            limbs.legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.8, 0.2), mats.npcPants);
+            limbs.legL.position.set(-0.13, 0.4, 0); grp.add(limbs.legL);
+            limbs.legR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.8, 0.2), mats.npcPants);
+            limbs.legR.position.set(0.13, 0.4, 0); grp.add(limbs.legR);
+            limbs.armL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.12), mats.npcSuit);
+            limbs.armL.position.set(-0.32, 1.2, 0); grp.add(limbs.armL);
+            limbs.armR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.12), mats.npcSuit);
+            limbs.armR.position.set(0.32, 1.2, 0); grp.add(limbs.armR);
+
+            scene.add(grp);
+            
+            if(!isTwin) { npcGroup = grp; npcLimbs = limbs; }
+            else { npcGroup2 = grp; npcLimbs2 = limbs; }
+        }
+
+        function createWaveMesh() {
+            const geo = new THREE.BoxGeometry(6, 0.8, 2, 20, 1, 5);
+            waveMesh = new THREE.Mesh(geo, mats.wave);
+            waveMesh.visible = false;
+            scene.add(waveMesh);
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            uiContainer.classList.remove('hidden');
+            document.body.requestPointerLock();
+            gameActive = true;
+            currentExit = 0;
+            resetRound(true);
+        }
+
+        function resetRound(firstTime = false) {
+            camera.position.set(0, 1.6, CONFIG.spawnZ); 
+            camera.rotation.set(0, 0, 0); 
+            setupNextRound(firstTime);
+        }
+
+        function setupNextRound(firstTime) {
+            const npcStartZ = CONFIG.spawnZ - 30.0;
+            npcState = { z: npcStartZ, speed: 2.2, animTime: 0 };
+            npcGroup.position.set(1.5, 0, npcStartZ);
+            npcGroup.rotation.y = 0; 
+            npcGroup.visible = true;
+            if(npcGroup2) npcGroup2.visible = false;
+
+            vents.forEach(v => { v.rotation.z = 0; v.position.y = 3.2; v.position.x = -0.06; });
+            smokeParticles.forEach(p => scene.remove(p.mesh));
+            smokeParticles = [];
+            lights.forEach(l => l.intensity = 0.5);
+            rightWallGroup.position.x = CONFIG.pathWidth/2;
+            doorMesh.rotation.y = -Math.PI / 2;
+            doorMesh.rotation.z = 0;
+            cameraLight.intensity = 0;
+            cameraLensMesh.material.emissive.setHex(0x000000);
+            yellowSignMesh.rotation.z = 0;
+            
+            fireHydrant.children.forEach(c => c.material = mats.hydrantRed);
+
+            brailleBlocks.forEach(b => {
+                b.visible = true;
+                b.position.copy(b.userData.orgPos);
+                b.rotation.copy(b.userData.orgRot);
+            });
+            posters.forEach((p, i) => {
+                p.scale.set(1,1,1);
+                p.material = (mats.posters[i]) ? mats.posters[i] : new THREE.MeshBasicMaterial({color:0xffffff});
+            });
+            
+            waveMesh.visible = false;
+            waveAnimTime = 0;
+            eyePupilMesh.position.set(0, 0.16, 0.03); 
+
+            anomalyType = 'NONE';
+            
+            // 異変確率 10/17 (約58.8%)
+            if (!firstTime && Math.random() < 10/17) { 
+                const types = [
+                    'POSTER',           // 1
+                    'VENT_SHIFT',       // 2 (微細)
+                    'VENT_SMOKE',       // 3
+                    'DOOR_OPEN',        // 4 (微細)
+                    'DOOR_TILT',        // 5
+                    'RED_CAMERA',       // 6
+                    'BRAILLE_MISSING',  // 7 
+                    'NPC_CHASE',        // 8
+                    'TSUNAMI',          // 9
+                    'WALL_CLOSE',       // 10
+                    'LIGHT_FLICKER',    // 11
+                    'ALL_ADS_1',        // 12
+                    'POSTER_GROW',      // 13 
+                    'POSTER_EYE',       // 14 
+                    'SIGN_INVERT',      // 15 
+                    'NPC_TWINS',        // 16 
+                    'HYDRANT_COLOR'     // 17
+                ];
+                const randIndex = Math.floor(Math.random() * types.length);
+                anomalyType = types[randIndex];
+
+                if(anomalyType === 'POSTER') {
+                    const idx = Math.floor(Math.random() * 6);
+                    if(mats.postersAnomaly[idx]) posters[idx].material = mats.postersAnomaly[idx];
+                }
+                else if(anomalyType === 'VENT_SHIFT') {
+                    vents[1].rotation.z = Math.PI / 16; 
+                    vents[1].position.y -= 0.1; 
+                }
+                else if(anomalyType === 'DOOR_OPEN') {
+                    doorMesh.rotation.y = -Math.PI / 2 + 0.15;
+                }
+                else if(anomalyType === 'DOOR_TILT') {
+                    doorMesh.rotation.z = 0.1;
+                }
+                else if(anomalyType === 'ALL_ADS_1') {
+                    posters.forEach(p => {
+                        if(mats.posters[0]) p.material = mats.posters[0];
+                    });
+                }
+                else if(anomalyType === 'RED_CAMERA') {
+                    cameraLight.intensity = 2.0;
+                    cameraLensMesh.material.emissive.setHex(0xff0000);
+                }
+                else if(anomalyType === 'BRAILLE_MISSING') {
+                    brailleBlocks.forEach(b => b.visible = false);
+                }
+                else if(anomalyType === 'TSUNAMI') {
+                    waveMesh.visible = true;
+                    waveMesh.position.set(0, 0.4, -CONFIG.straightLen + 2.0);
+                }
+                else if(anomalyType === 'SIGN_INVERT') {
+                    yellowSignMesh.rotation.z = Math.PI;
+                }
+                else if(anomalyType === 'NPC_TWINS') {
+                    if(!npcGroup2) createNPCModel(true);
+                    npcGroup2.visible = true;
+                    npcGroup2.position.copy(npcGroup.position);
+                    npcGroup2.position.z -= 1.5; 
+                }
+                else if(anomalyType === 'HYDRANT_COLOR') {
+                    fireHydrant.children.forEach(c => c.material = mats.hydrantYellow);
+                }
+            }
+            console.log("Current Anomaly:", anomalyType);
+        }
+
+        function spawnSmoke() {
+            const v = vents[1];
+            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.3), mats.smoke);
+            const worldX = rightWallGroup.position.x + v.position.x - 0.5;
+            const worldY = v.position.y;
+            const worldZ = v.position.z; 
+            mesh.position.set(worldX, worldY, worldZ);
+            mesh.rotation.copy(camera.rotation);
+            mesh.position.x += (Math.random()-0.5)*0.5;
+            mesh.position.y += (Math.random()-0.5)*0.2;
+            scene.add(mesh);
+            smokeParticles.push({ mesh: mesh, life: 1.0, velY: 0.02 + Math.random()*0.02 });
+        }
+
+        function handleSeamlessReset(isSuccess) {
+            if(isSuccess) {
+                currentExit++;
+            } else {
+                currentExit = 0;
+            }
+            updateExitSign();
+            
+            if (currentExit >= CONFIG.goalExit) {
+                alert(`脱出成功！${CONFIG.goalExit}番出口へ到達しました。`);
+                location.reload();
+                return;
+            }
+            
+            if (camera.position.x < CONFIG.loopTriggerX) {
+                resetRound(); 
+            } 
+            else if (camera.position.z > CONFIG.backTriggerZ) {
+                resetRound();
+            }
+        }
+        
+        function handleGameOver() {
+            if(isTransitioning) return;
+            isTransitioning = true;
+            curtain.style.opacity = 1;
+            setTimeout(() => {
+                currentExit = 0;
+                updateExitSign();
+                resetRound();
+                setTimeout(() => {
+                    curtain.style.opacity = 0;
+                    isTransitioning = false;
+                }, 500);
+            }, 600);
+        }
+
+        function updateNPC(delta) {
+            npcState.animTime += delta * 12; 
+            const legOffset = Math.sin(npcState.animTime) * 0.2;
+            
+            const applyAnim = (limbs) => {
+                limbs.legL.position.z = legOffset;
+                limbs.legR.position.z = -legOffset;
+                limbs.armL.position.z = -legOffset; 
+                limbs.armR.position.z = legOffset;
+            };
+            applyAnim(npcLimbs);
+            if(npcGroup2 && npcGroup2.visible) applyAnim(npcLimbs2);
+
+            if (anomalyType === 'NPC_CHASE') {
+                const speed = 5.0 * delta; 
+                npcGroup.lookAt(camera.position.x, 0, camera.position.z);
+                const dir = new THREE.Vector3().subVectors(camera.position, npcGroup.position);
+                dir.y = 0; dir.normalize();
+                npcGroup.position.add(dir.multiplyScalar(speed));
+                
+                if (camera.position.distanceTo(npcGroup.position) < 0.8) {
+                    handleGameOver();
+                }
+            } else {
+                npcState.z += npcState.speed * delta;
+                if (npcState.z < CONFIG.spawnZ + 10.0) { 
+                    npcGroup.position.set(1.5, 0, npcState.z);
+                    npcGroup.rotation.y = 0; 
+                    
+                    if(anomalyType === 'NPC_TWINS' && npcGroup2) {
+                        npcGroup2.position.set(1.5, 0, npcState.z - 1.5);
+                        npcGroup2.rotation.y = 0;
+                    }
+                }
+            }
+        }
+
+        function updateWave(delta) {
+            waveMesh.position.z += delta * 5.0;
+            waveAnimTime += delta * 5.0;
+            const posAttr = waveMesh.geometry.attributes.position;
+            for(let i=0; i<posAttr.count; i++){
+                const x = posAttr.getX(i);
+                const y = posAttr.getY(i);
+                if(y > 0) {
+                    const waveY = 0.4 + Math.sin(x * 0.5 + waveAnimTime) * 0.2;
+                    posAttr.setY(i, waveY);
+                }
+            }
+            posAttr.needsUpdate = true;
+        }
+
+        function updateProps(delta) {
+            if (anomalyType === 'POSTER_GROW') {
+                posters.forEach(p => {
+                    p.scale.multiplyScalar(1.0 + delta * 0.05); 
+                });
+            }
+            if (anomalyType === 'POSTER_EYE') {
+                const relZ = camera.position.z - securityPosterGroup.position.z;
+                const lookX = Math.max(-0.03, Math.min(0.03, relZ * 0.01));
+                const lookY = Math.max(-0.02, Math.min(0.02, (camera.position.y - 2.0) * 0.02));
+                eyePupilMesh.position.x = lookX;
+                eyePupilMesh.position.y = 0.16 + lookY;
+            }
+        }
+
+        function update(delta) {
+            if (isTransitioning) return;
+
+            updateNPC(delta);
+            updateProps(delta);
+            if (anomalyType === 'TSUNAMI') updateWave(delta);
+
+            if (anomalyType === 'WALL_CLOSE') {
+                if (rightWallGroup.position.x > 1.0) rightWallGroup.position.x -= delta * 0.3;
+            }
+            if (anomalyType === 'VENT_SMOKE') {
+                if (Math.random() < 0.1) spawnSmoke();
+            }
+            for (let i = smokeParticles.length - 1; i >= 0; i--) {
+                const p = smokeParticles[i];
+                p.life -= delta * 0.5;
+                p.mesh.position.y += p.velY;
+                p.mesh.lookAt(camera.position); 
+                p.mesh.material.opacity = p.life * 0.6;
+                if (p.life <= 0) {
+                    scene.remove(p.mesh);
+                    smokeParticles.splice(i, 1);
+                }
+            }
+            if (anomalyType === 'LIGHT_FLICKER') {
+                lightFlickerTimer += delta;
+                if(lightFlickerTimer > 0.05) {
+                    lightFlickerTimer = 0;
+                    const flicker = Math.random() > 0.3 ? 0.5 : 0.1;
+                    lights.forEach(l => l.intensity = flicker);
+                }
+            }
+
+            updatePlayer(delta);
+
+            const p = camera.position;
+            
+            if (p.x < CONFIG.loopTriggerX) {
+                if (anomalyType === 'NONE') handleSeamlessReset(true);
+                else handleSeamlessReset(false); 
+            }
+            if (p.z > CONFIG.backTriggerZ) {
+                if (anomalyType !== 'NONE') handleSeamlessReset(true);
+                else handleSeamlessReset(false);
+            }
+        }
+
+        function updatePlayer(delta) {
+            const speed = keys['ShiftLeft'] ? CONFIG.runSpeed : CONFIG.walkSpeed;
+            const dist = speed * delta;
+            
+            const fwd = new THREE.Vector3();
+            camera.getWorldDirection(fwd);
+            fwd.y = 0; fwd.normalize();
+            const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
+
+            const move = new THREE.Vector3();
+            if (keys['KeyW']) move.add(fwd);
+            if (keys['KeyS']) move.sub(fwd);
+            if (keys['KeyD']) move.add(right);
+            if (keys['KeyA']) move.sub(right);
+            
+            if (keys['ArrowLeft']) camera.rotation.y += CONFIG.keyRotationSpeed * delta;
+            if (keys['ArrowRight']) camera.rotation.y -= CONFIG.keyRotationSpeed * delta;
+            if (keys['ArrowUp']) camera.rotation.x += CONFIG.keyRotationSpeed * delta;
+            if (keys['ArrowDown']) camera.rotation.x -= CONFIG.keyRotationSpeed * delta;
+            camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
+
+            if (move.length() > 0) {
+                move.normalize().multiplyScalar(dist);
+                const next = camera.position.clone().add(move);
+
+                const W = CONFIG.pathWidth;
+                const L1 = CONFIG.straightLen;
+                const m = 0.4; 
+                const currentRightWallX = rightWallGroup.position.x - m;
+                const leftWallX = -W/2 + m;
+                
+                if (next.z > -L1 + W) {
+                    next.x = Math.max(leftWallX, Math.min(currentRightWallX, next.x));
+                } else if (next.x < -W/2) {
+                    const farWallZ = -L1 + m;
+                    const nearWallZ = -L1 + W - m;
+                    next.z = Math.max(farWallZ, Math.min(nearWallZ, next.z));
+                } else {
+                    next.z = Math.max(-L1 + m, next.z); 
+                    next.x = Math.min(currentRightWallX, next.x); 
+                }
+                camera.position.copy(next);
+            }
+        }
+
+        function setupEvents() {
+            startScreen.addEventListener('click', startGame);
+            document.addEventListener('keydown', e => keys[e.code] = true);
+            document.addEventListener('keyup', e => keys[e.code] = false);
+            document.addEventListener('mousemove', e => {
+                if (!gameActive || document.pointerLockElement !== document.body) return;
+                camera.rotation.y -= e.movementX * CONFIG.mouseSensitivity;
+                camera.rotation.x -= e.movementY * CONFIG.mouseSensitivity;
+                camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
+            });
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (gameActive) update(clock.getDelta());
+            renderer.render(scene, camera);
+        }
+
+        init();
+    </script>
 </body>
 </html>
