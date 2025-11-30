@@ -1,0 +1,239 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #0b1026; /* 深い夜空の色 */
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+    /* クリスマスっぽいフォントに変更 */
+    font-family: 'Mountains of Christmas', 'Noto Sans JP', serif; 
+    color: #fff;
+    user-select: none;
+}
+
+canvas {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+/* --- スタッフロール画面 --- */
+#staff-roll-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: #050a14;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+#staffRollContainer {
+    width: 80%;
+    max-width: 800px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
+}
+
+.credits-list {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    animation: scroll 40s linear forwards;
+    width: 100%;
+}
+
+.credits-list pre {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 1rem;
+    color: #e0e0e0;
+    text-align: center;
+    line-height: 1.8;
+    white-space: pre;
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+}
+
+@keyframes scroll {
+    from { top: 100%; }
+    to { top: -150%; }
+}
+
+#skipBtn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background-color: #c41e3a; /* クリスマスレッド */
+    border: 2px solid #fff;
+    color: #fff;
+    padding: 10px 20px;
+    font-family: 'Mountains of Christmas', serif;
+    font-weight: bold;
+    font-size: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    z-index: 110;
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+    border-radius: 20px;
+}
+
+#skipBtn:hover {
+    background-color: #fff;
+    color: #c41e3a;
+    box-shadow: 0 0 25px #fff;
+}
+
+/* --- UIデザイン --- */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+}
+
+.hud-text {
+    position: absolute;
+    color: white;
+    font-weight: 700;
+    font-size: clamp(20px, 3vw, 32px);
+    text-shadow: 2px 2px 0 #005f00, 0 0 10px #fff; /* 緑の影 */
+    font-family: 'Mountains of Christmas', cursive;
+}
+
+#current-progress { top: 20px; left: 20px; }
+#high-score { top: 20px; right: 20px; color: #ffd700; text-shadow: 2px 2px 0 #000; }
+#level-indicator { bottom: 20px; left: 20px; font-size: clamp(18px, 2.5vw, 24px); color: #ddd; }
+
+#message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: clamp(32px, 6vw, 70px);
+    font-weight: 700;
+    text-align: center;
+    display: none;
+    text-shadow: 4px 4px 0 #c41e3a, 0 0 20px rgba(255,255,255,0.8);
+    z-index: 10;
+    white-space: nowrap;
+    font-family: 'Mountains of Christmas', cursive;
+}
+
+#menu-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* 背景をクリスマスっぽいグラデーションに */
+    background: radial-gradient(circle, #1a2a4f 0%, #000000 90%);
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: auto;
+    z-index: 20;
+}
+
+#menu-screen h1 {
+    color: #fff;
+    text-shadow: 4px 4px 0 #c41e3a, 0 0 15px #ffd700; /* 赤い影と金の光 */
+    font-size: clamp(50px, 10vw, 100px);
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+    text-align: center;
+    line-height: 1.1;
+    font-weight: 700;
+}
+
+#menu-screen .subtitle {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: clamp(16px, 2.5vw, 24px);
+    color: #2ecc71; /* 緑 */
+    letter-spacing: 5px;
+    text-shadow: 1px 1px 0 #000;
+    font-weight: bold;
+}
+
+.level-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    max-width: 800px;
+}
+
+.level-btn {
+    position: relative;
+    /* ボタンをプレゼントボックス風に */
+    background: linear-gradient(145deg, #c41e3a, #8b0000);
+    color: white;
+    border: 3px solid #ffd700; /* 金の縁取り */
+    border-radius: 10px;
+    padding: 20px 0;
+    width: 200px;
+    font-size: 28px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.5), inset 0 0 10px rgba(255,255,0,0.2);
+    font-family: 'Mountains of Christmas', cursive;
+}
+
+.level-btn:hover {
+    transform: translateY(-5px) scale(1.05);
+    box-shadow: 0 10px 20px rgba(255, 0, 0, 0.4);
+    background: linear-gradient(145deg, #e02f4f, #a00000);
+}
+
+.level-btn:active { transform: translateY(2px); }
+
+#btn-lvl1 { border-color: #2ecc71; color: #fff; } /* 緑枠 */
+#btn-lvl1:hover { box-shadow: 0 0 20px #2ecc71; }
+
+#btn-lvl2 { border-color: #ffd700; color: #fff; } /* 金枠 */
+#btn-lvl2:hover { box-shadow: 0 0 20px #ffd700; }
+
+#btn-lvl3, #btn-lvl4, #btn-lvl5 {
+    border-color: #555;
+    background: #333;
+    color: #888;
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#btn-lvl3:hover, #btn-lvl4:hover, #btn-lvl5:hover { box-shadow: none; transform: none; }
+
+.sub-text {
+    font-family: 'Noto Sans JP', sans-serif;
+    font-size: 12px;
+    color: #eee;
+    margin-top: 5px;
+    display: block;
+    font-weight: normal;
+}
+
+.instructions {
+    color: #88ccee;
+    margin-top: 40px;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.8;
+    text-shadow: 0 0 5px rgba(136, 204, 238, 0.5);
+}
