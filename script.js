@@ -229,9 +229,9 @@ async function afterStaffRoll() {
 
     try {
         updateLoadingStatus("ソリを準備中...", 10);
-        updateLoadingStatus("プレゼントを積込中...", 40);
+        updateLoadingStatus("プレゼントをロード中...", 40);
         await fetchAndApplySiteData();
-        updateLoadingStatus("良い子リストを確認中...", 70);
+        updateLoadingStatus("ブラックリストを確認中...", 70);
         const accessData = await callGas('accessStart', { userId, clientId });
         updateLoadingStatus("メリークリスマス！", 100);
 
