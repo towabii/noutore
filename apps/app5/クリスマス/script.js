@@ -1,664 +1,518 @@
-// ===============================================
-// ▲▲▲ 必ず設定してください ▲▲▲
-// ===============================================
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJSO_Bq80Qc1UI8RNyKBJ2Az81QfFkqdO-0j9nLglrEkirg-69sxYfPdGMbq9l30AO/exec';
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-// ===============================================
-// データ定義
-// ===============================================
+// =================================================================
+// --- ゲーム設定 ---
+// =================================================================
+const MAX_PLAYABLE_LEVEL = 5; 
 
-const adBanners = [
-{ image: './広告枠/image1.jpeg', link: 'https://ocearyagroup.vercel.app/' },
-{ image: './広告枠/image2.jpeg', link: 'https://example.com/2' }
-];
+// --- 画面設定 ---
+const VIRTUAL_WIDTH = 1500;
+const VIRTUAL_HEIGHT = 860;
 
-let notificationData = { title: "", text: "", active: false };
-let updateInfoData = { history: [], future: [] };
-let scheduleData = [];
-let surveyData = { id: "default_survey", question: "", options: [] };
+// --- 物理演算・挙動設定 (変更なし) ---
+const TILE_SIZE = 64;
+const BASE_SPEED = 9.5;
+const ROTATION_SPEED = 0.13;
+const GROUND_HEIGHT = 2;
 
-// 【修正】配列順序を変更し、レイアウト用に span プロパティを調整して分割を実現
-const countdownConfig = [
-{ label: "人生終了まで", type: "life", span: "half-left" }, // spanをhalf-leftに変更
-{ label: "クリスマスまで", date: "2025/12/25", span: "half-right" }, // dateを設定し、spanをhalf-rightに変更
-{ label: "期末テストまで", date: "2026/02/16" },
-{ label: "修学旅行まで", date: "2026/01/16" },
-{ label: "修了式まで", date: "2026/03/19" },
-{ label: "とわの誕生日まで", date: "04/06" },
-];
+const GRAVITY_CUBE = 1.1;
+const JUMP_CUBE = -17.5; 
+const JUMP_ORB = -14.0;
+const JUMP_PAD = -21.0;
 
-const items = [
-{ title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "一番頑張った", category: "fun" },
-{ title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "一番人気！", category: "fun" },
-{ title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "試験運用中", category: "fun" },
-{ title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/選択.html", recommend: "作るの頑張った", category: "fun" },
-{ title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
-{ title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
-{ title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
-{ title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
-{ title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "./apps/app4/index.html", recommend: null, category: "fun" },
-{ title: "3Dトレーニング", description: "三次元空間で頭を鍛える新しい体験。", thumbnail: "./apps/app7/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-{ title: "砂ブロック落とし", description: "最近流行ってるあれ", thumbnail: "./apps/app12/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-{ title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-{ title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-{ title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-{ title: "My Wallet", description: "初の本格ウェブアプリ。", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
-{ title: "管理パネル", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/kanri/", recommend: "管理者のみ", category: "other" },
-{ title: "トワの部屋BOX検索", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/SmartBOX/", recommend: "管理者のみ", category: "other" },
-];
+const GRAVITY_SHIP = 0.4;
+const SHIP_THRUST = -0.8;
+const SHIP_MAX_UP = -9.0;
+const SHIP_MAX_DOWN = 10.0;
 
-document.addEventListener('DOMContentLoaded', function() {
-const loader = document.getElementById('loader');
-const siteWrapper = document.getElementById('site-wrapper');
-const banScreen = document.getElementById('ban-screen');
-const themeToggle = document.getElementById('theme-toggle');
-const staffRollContainer = document.getElementById('staffRollContainer');
-const creditsPre = document.getElementById('credits-text');
-const welcomeContainer = document.getElementById('welcome-animation-container');
+// --- Audio (変更なし) ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+const SOUNDS = { jump: { freq: 400, type: 'square', decay: 0.1 }, die: { freq: 150, type: 'sawtooth', decay: 0.5 }, pad: { freq: 600, type: 'sine', decay: 0.2 }, orb: { freq: 700, type: 'sine', decay: 0.1 }, portal: { freq: 200, type: 'square', decay: 0.3 }, win: { freq: 880, type: 'triangle', decay: 1.0 } };
+function playSound(name) { if (!audioCtx) return; const s = SOUNDS[name]; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.type = s.type; osc.frequency.setValueAtTime(s.freq, audioCtx.currentTime); if (name === 'jump') osc.frequency.exponentialRampToValueAtTime(s.freq + 200, audioCtx.currentTime + 0.1); if (name === 'die') osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3); if (name === 'portal') osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.3); if (name === 'pad') osc.frequency.exponentialRampToValueAtTime(s.freq + 300, audioCtx.currentTime + 0.2); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + s.decay); osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + s.decay); }
+let bgmInterval;
+function startBGM() { if (bgmInterval) clearInterval(bgmInterval); if (!audioCtx) return; let beat = 0; bgmInterval = setInterval(() => { if(gameState !== 'PLAYING') return; const osc = audioCtx.createOscillator(); const gain = audioCtx.createGain(); osc.connect(gain); gain.connect(audioCtx.destination); const baseFreq = player.mode === 'SHIP' ? 55 : 45; const freq = (beat % 4 === 0) ? baseFreq * 2 : (beat % 8 === 6 ? baseFreq * 1.5 : baseFreq); osc.frequency.setValueAtTime(freq, audioCtx.currentTime); osc.type = 'triangle'; gain.gain.setValueAtTime(0.08, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2); osc.start(); osc.stop(audioCtx.currentTime + 0.2); beat++; }, 150); }
 
-// ローディングUI要素
-const loadingStatusContainer = document.getElementById('loading-status-container');
-const loadingText = document.getElementById('loading-text');
-const progressBarFill = document.getElementById('progress-bar-fill');
+// --- 変数 ---
+let currentLevel = 1;
+let gameState = 'STAFF_ROLL';
+let animationFrameId = null;
+let player = { x: 0, y: 0, w: TILE_SIZE-14, h: TILE_SIZE-14, dy: 0, angle: 0, isGrounded: false, dead: false, mode: 'CUBE', gravity: 1, trail: [] };
+let input = { holding: false };
+let camera = { x: 0 };
+let blocks = [];
+let triggers = [];
+let decorations = [];
+let particles = [];
+let mapWidth = 0;
+// 雪のエフェクト用配列
+let snowflakes = [];
+let floorY = VIRTUAL_HEIGHT - (TILE_SIZE * GROUND_HEIGHT);
 
-let staffRollTimer, countdownInterval, typingInterval, adTimer;
-const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15);
-const INACTIVITY_TIMEOUT = 3600 * 1000;
-let inactivityTimer;
-let isOnline = false;
-
-// 【追加】雪を降らせる処理（見た目のみ、機能変更なし）
-function createSnowflakes() {
-    const snowContainer = document.getElementById('snow-container');
-    if(!snowContainer) return;
-    const snowflakeCount = 50;
-    for(let i=0; i<snowflakeCount; i++){
-        const snowflake = document.createElement('div');
-        snowflake.classList.add('snowflake');
-        snowflake.style.left = Math.random() * 100 + 'vw';
-        snowflake.style.width = snowflake.style.height = (Math.random() * 5 + 2) + 'px';
-        snowflake.style.animationDuration = (Math.random() * 5 + 5) + 's';
-        snowflake.style.animationDelay = Math.random() * 5 + 's';
-        snowContainer.appendChild(snowflake);
-    }
+// --- 画面リサイズ処理 ---
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    canvas.style.width = '';
+    canvas.style.height = '';
+    canvas.style.position = '';
+    canvas.style.left = '';
+    canvas.style.top = '';
 }
-createSnowflakes();
+window.addEventListener('resize', resize);
+resize();
 
-function getUserId() {
-    let userId = localStorage.getItem('sokohara-site-user-id');
-    if (!userId) {
-        userId = 'user_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 15);
-        localStorage.setItem('sokohara-site-user-id', userId);
-    }
-    return userId;
-}
-const userId = getUserId();
-const headerUserIdEl = document.getElementById('header-user-id');
-if (headerUserIdEl) headerUserIdEl.textContent = `ID: ${userId}`;
+function getHighScore(lvl) { return localStorage.getItem('xmasdash_hs_'+lvl) || 0; }
+function saveHighScore(lvl, sc) { if(sc > getHighScore(lvl)) localStorage.setItem('xmasdash_hs_'+lvl, sc); }
 
-async function callGas(action, payload = {}) {
-    try {
-        if (!GAS_URL || GAS_URL.includes('貼り付け')) throw new Error('GASのURL設定エラー');
-        const response = await fetch(GAS_URL, { 
-            method: 'POST', mode: 'cors', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify({ action, payload })
-        });
-        const result = await response.json();
-        if (result.status === 'error') throw new Error(result.message);
-        return result.data;
-    } catch (error) { 
-        console.error('GAS通信エラー:', error);
-        throw error;
-    }
-}
-
-function goOnline() {
-    if (isOnline) return;
-    isOnline = true;
-    resetInactivityTimer();
-}
-function goOffline() {
-    if (!isOnline) return;
-    isOnline = false;
-    clearTimeout(inactivityTimer);
-    callGas('accessEnd', { userId, clientId }).catch(()=>{});
-}
-function resetInactivityTimer() {
-    clearTimeout(inactivityTimer);
-    inactivityTimer = setTimeout(() => goOffline(), INACTIVITY_TIMEOUT);
-}
-function handleVisibilityChange() {
-    if (document.hidden) goOffline(); else goOnline();
-}
-
-function showBanScreen(adminMessage) {
-    siteWrapper.style.display = 'none';
-    siteWrapper.classList.remove('visible');
-    banScreen.classList.add('visible');
-    document.getElementById('ban-user-id-display').textContent = userId;
-    document.getElementById('ban-admin-message').innerHTML = adminMessage ? adminMessage.replace(/\n/g, '<br>') : 'メッセージはありません。';
-    document.getElementById('ban-feedback-btn').addEventListener('click', () => {
-        document.getElementById('fb-ban-appeal').checked = true;
-        openFeedbackModal();
-    });
-}
-
-function updateLoadingStatus(message, percent) {
-    loadingText.textContent = message;
-    progressBarFill.style.width = percent + '%';
-}
-
-async function fetchAndApplySiteData() {
-    try {
-        const data = await callGas('getSiteData');
-        
-        notificationData.title = data.config.notificationTitle || "";
-        notificationData.text = data.config.notificationText || "";
-        notificationData.active = (String(data.config.notificationActive).toLowerCase() === 'true');
-        
-        surveyData.id = data.config.surveyId || ("survey_" + Date.now()); 
-        surveyData.question = data.config.surveyQuestion || "";
-        surveyData.options = data.config.surveyOptions ? data.config.surveyOptions.split(',').map(s => s.trim()) : [];
-
-        updateInfoData.history = data.updates || [];
-        scheduleData = data.schedule || [];
-
-        populateDynamicContent();
-
-    } catch (e) {
-        console.warn("設定データの取得に失敗。デフォルト値を使用します。", e);
-    }
-}
-
-function populateDynamicContent() {
-    const notificationTitle = document.getElementById('notification-title');
-    const notificationText = document.getElementById('notification-text');
-    if (notificationTitle) notificationTitle.textContent = notificationData.title;
-    if (notificationText) notificationText.innerHTML = notificationData.text;
-
-    const updateContentContainer = document.getElementById('update-info-content');
-    if (updateContentContainer) {
-        updateContentContainer.innerHTML = '';
-        updateInfoData.history.forEach(update => {
-            const item = document.createElement('div'); item.className = 'update-item';
-            const detailsHtml = update.details.map(detail => `<li>${detail}</li>`).join('');
-            const videoHtml = update.video ? `<video class="update-video" src="${update.video}" autoplay muted loop playsinline></video>` : '';
-            item.innerHTML = `<div class="update-header"><span class="update-version">${update.version}</span><h4 class="update-title">${update.title}</h4><span class="update-date">${update.date}</span></div><ul class="update-details">${detailsHtml}</ul>${videoHtml}`;
-            updateContentContainer.appendChild(item);
-        });
-    }
-
-    const scheduleList = document.getElementById('schedule-list');
-    if (scheduleList) {
-        scheduleList.innerHTML = '';
-        scheduleData.forEach(item => {
-            const li = document.createElement('li');
-            li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--border-color);";
-            li.innerHTML = `<span>${item.name}</span> <span style="color: var(--text-secondary);">${item.date}</span>`;
-            scheduleList.appendChild(li);
-        });
-    }
-
-    const gameSelect = document.getElementById('fb-game');
-    if (gameSelect) {
-        gameSelect.innerHTML = '<option value="なし">特になし</option>';
-        items.forEach(item => {
-            const option = document.createElement('option');
-            option.value = item.title;
-            option.textContent = item.title;
-            gameSelect.appendChild(option);
+// 雪の初期化
+function initSnow() {
+    snowflakes = [];
+    for(let i=0; i<100; i++) {
+        snowflakes.push({
+            x: Math.random() * VIRTUAL_WIDTH,
+            y: Math.random() * VIRTUAL_HEIGHT,
+            r: Math.random() * 3 + 1,
+            speed: Math.random() * 2 + 0.5,
+            wobble: Math.random() * Math.PI * 2
         });
     }
 }
 
-async function updateOnlineCount() {
-    try {
-        const data = await callGas('getOnlineCount');
-        const display = document.getElementById('online-count-display');
-        if (display) {
-            display.textContent = (data && typeof data.onlineCount === 'number') ? `${data.onlineCount} 人` : '-- 人';
-        }
-    } catch (e) {}
-}
-
-async function afterStaffRoll() {
-    staffRollContainer.style.display = 'none';
-    document.getElementById('skipBtn').style.display = 'none';
-    welcomeContainer.style.display = 'none'; 
-    loadingStatusContainer.style.display = 'flex';
-
-    try {
-        updateLoadingStatus("ソリを準備中...", 10);
-        updateLoadingStatus("プレゼントをロード中...", 40);
-        await fetchAndApplySiteData();
-        updateLoadingStatus("ブラックリストを確認中...", 70);
-        const accessData = await callGas('accessStart', { userId, clientId });
-        updateLoadingStatus("メリークリスマス！", 100);
-
-        setTimeout(() => {
-            loader.classList.add('fade-out');
-            
-            if (accessData.status === 'BANNED') { 
-                showBanScreen(accessData.message); 
-                return; 
-            }
-            
-            document.body.classList.remove("no-scroll");
-            siteWrapper.classList.add("visible");
-            goOnline();
-            
-            // 強制的に「楽しいやつ」でフィルタリング
-            const allBtns = document.querySelectorAll('.category-btn');
-            const funBtn = document.querySelector('.category-btn[data-category="fun"]');
-            allBtns.forEach(btn => btn.classList.remove('active'));
-            if (funBtn) {
-                funBtn.classList.add('active');
-                filterItems('fun');
-            } else {
-                filterItems('fun');
-            }
-            
-            const tutorialCompleted = localStorage.getItem('tutorialCompleted');
-            const afterTutorial = () => checkTermsAndStart(() => {
-                if (accessData.message) {
-                    showNotification("サンタからのお知らせ", accessData.message);
-                } else if (notificationData.active) {
-                    showNotification(notificationData.title, notificationData.text);
-                }
-                checkAndShowSurvey();
-            });
-
-            if (!tutorialCompleted) runTutorial(afterTutorial); else afterTutorial();
-
-            updateOnlineCount();
-            setInterval(updateOnlineCount, 60000);
-
-        }, 500);
-        
-    } catch (error) {
-        console.error("Init Error:", error);
-        alert("通信エラーが発生しました。再読み込みしてください。");
-        loadingText.textContent = "エラーが発生しました";
-    }
-}
-
-function showNotification(title, text) {
-    if(!title && !text) return;
-    document.getElementById('notification-title').textContent = title;
-    document.getElementById('notification-text').innerHTML = text;
-    document.getElementById("notification-modal").classList.add("visible");
-}
-
-function checkAndShowSurvey() {
-    if (!surveyData.question || surveyData.options.length === 0) return;
-    const key = 'surveyAnswered-' + surveyData.id;
-    if (localStorage.getItem(key) === 'true') return;
-
-    const modal = document.getElementById("survey-modal");
-    document.getElementById("survey-question").textContent = surveyData.question;
-    const container = document.getElementById("survey-options-container");
-    container.innerHTML = '';
-    surveyData.options.forEach(opt => {
-        const btn = document.createElement('button');
-        btn.className = 'survey-option-btn';
-        btn.textContent = opt;
-        btn.onclick = () => {
-            modal.classList.remove('visible');
-            document.body.classList.remove("no-scroll");
-            showToast('送信しました。');
-            localStorage.setItem(key, 'true');
-            callGas('submitSurvey', { userId, surveyId: surveyData.id, question: surveyData.question, answer: opt });
-        };
-        container.appendChild(btn);
-    });
-    modal.classList.add('visible');
-    document.body.classList.add("no-scroll");
-}
-
-const feedbackModal = document.getElementById('feedback-modal');
-const feedbackForm = document.getElementById('feedback-form');
-const stars = document.querySelectorAll('#fb-rating span');
-const ratingInput = document.getElementById('fb-rating-value');
-
-function openFeedbackModal() {
-    document.getElementById('fb-userid').value = userId;
-    feedbackModal.classList.add('visible');
-}
-
-document.getElementById('open-feedback-btn').addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('fb-ban-appeal').checked = false;
-    openFeedbackModal();
-});
-
-stars.forEach(star => {
-    star.addEventListener('click', () => {
-        const val = star.dataset.value;
-        ratingInput.value = val;
-        stars.forEach(s => s.classList.toggle('active', s.dataset.value <= val));
-    });
-});
-
-document.getElementById('fb-submit-btn').addEventListener('click', async () => {
-    if(!feedbackForm.checkValidity()) {
-        feedbackForm.reportValidity();
-        return;
-    }
-    const submitBtn = document.getElementById('fb-submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.textContent = '送信中...';
-
-    const payload = {
-        userId: document.getElementById('fb-userid').value,
-        name: document.getElementById('fb-name').value,
-        type: document.getElementById('fb-type').value,
-        game: document.getElementById('fb-game').value,
-        rating: ratingInput.value,
-        banAppeal: document.getElementById('fb-ban-appeal').checked,
-        content: document.getElementById('fb-content').value
-    };
-
-    try {
-        await callGas('submitFeedback', payload);
-        showToast('フィードバックを送信しました！');
-        feedbackModal.classList.remove('visible');
-        feedbackForm.reset();
-        stars.forEach(s => s.classList.add('active'));
-        ratingInput.value = 5;
-    } catch (err) {
-        alert('送信に失敗しました: ' + err.message);
-    } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = '送信';
-    }
-});
-
-// 【修正】生成ロジックを変更して分割レイアウトに対応
-function generateCountdownCards() {
-    const container = document.getElementById('countdown-container');
-    if (!container) return;
-    container.innerHTML = '';
-    countdownConfig.forEach((config, index) => {
-        const card = document.createElement('div');
-        card.className = 'countdown-card';
-        
-        // 分割レイアウトの適用 (span指定がある場合)
-        if (config.span === 'half-left') card.classList.add('half-left');
-        if (config.span === 'half-right') card.classList.add('half-right');
-        
-        // 既存ロジック：fullの場合の処理
-        if (config.span === 'full') card.classList.add('main');
-        
-        let valueHtml = '';
-        if (config.type === 'life') {
-            valueHtml = `<div id="countdown-timer" class="countdown-value-large">--</div>`;
-        } else if (config.type === 'online') {
-            valueHtml = `<div id="online-count-display" class="countdown-value">-- 人</div>`;
-        } else {
-            card.id = `countdown-card-${index}`;
-            valueHtml = `<div class="countdown-value">--</div>`;
-        }
-        card.innerHTML = `<div class="countdown-header">${config.label}</div>${valueHtml}`;
-        card.style.animationDelay = `${index * 80}ms`;
-        container.appendChild(card);
-    });
-}
-
-function applyTheme(theme) {
-    document.body.dataset.theme = theme;
-    themeToggle.checked = theme === 'light';
-}
-
-function initSiteFlow() {
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    applyTheme(savedTheme);
-    playStaffRoll();
-}
-
-themeToggle.addEventListener('change', () => {
-    const newTheme = themeToggle.checked ? 'light' : 'dark';
-    localStorage.setItem('theme', newTheme);
-    applyTheme(newTheme);
-});
-
-function runTutorial(callback) {
-    const modal = document.getElementById("tutorial-modal"); const steps = modal.querySelectorAll(".tutorial-step");
-    const nextBtn = document.getElementById("tutorial-next-btn"); const prevBtn = document.getElementById("tutorial-prev-btn");
-    const skipBtn = document.getElementById("tutorial-skip-btn"); const indicator = document.getElementById("tutorial-step-indicator");
-    let currentStep = 0; const totalSteps = steps.length;
-    function updateStep() {
-        steps.forEach((step, index) => { step.classList.toggle("active", index === currentStep); });
-        indicator.textContent = `${currentStep + 1} / ${totalSteps}`;
-        prevBtn.style.visibility = (currentStep === 0) ? "hidden" : "visible";
-        nextBtn.textContent = (currentStep === totalSteps - 1) ? "完了" : "次へ";
-    }
-    function completeTutorial() {
-        localStorage.setItem("tutorialCompleted", "true"); modal.classList.remove("visible");
-        document.body.classList.remove("no-scroll"); if (callback) callback();
-    }
-    nextBtn.addEventListener("click", () => { if (currentStep < totalSteps - 1) { currentStep++; updateStep(); } else { completeTutorial(); } });
-    prevBtn.addEventListener("click", () => { if (currentStep > 0) { currentStep--; updateStep(); } });
-    skipBtn.addEventListener("click", completeTutorial);
-    modal.classList.add("visible"); document.body.classList.add("no-scroll"); updateStep();
-}
-function checkTermsAndStart(callback) {
-    const termsAgreed = localStorage.getItem("termsAgreed");
-    if (!termsAgreed) {
-        const termsModal = document.getElementById("terms-modal");
-        termsModal.classList.add("visible"); document.body.classList.add("no-scroll");
-        document.getElementById("terms-agree-btn").addEventListener("click", () => {
-            localStorage.setItem("termsAgreed", "true"); termsModal.classList.remove("visible");
-            document.body.classList.remove("no-scroll"); promptForAgeAndStart(callback);
-        }, { once: true });
-    } else { promptForAgeAndStart(callback); }
-}
-function promptForAgeAndStart(callback) {
-    let age = localStorage.getItem('userAge');
-    if (!age) {
-        let userInput = prompt("あなたの年齢を半角数字で入力してください。\n「人生終了まで」の計算に使用されます。", "14");
-        if (userInput === null || isNaN(parseInt(userInput))) age = 14; else age = parseInt(userInput);
-        localStorage.setItem('userAge', age);
-    }
-    startCountdown(parseInt(age)); if (callback) callback();
-}
-
-function startCountdown(age) {
-    const birthYear = new Date().getFullYear() - age;
-    const lifeTargetDate = new Date(birthYear + 90, new Date().getMonth(), new Date().getDate());
-    const updateFunctions = []; 
-    const lifeTimerEl = document.getElementById('countdown-timer');
-    if (lifeTimerEl) {
-        updateFunctions.push(() => {
-            const rem = lifeTargetDate - new Date(); 
-            if (rem < 0) { lifeTimerEl.textContent = "目標達成！"; return; }
-            const s = Math.floor(rem / 1000 % 60), m = Math.floor(rem / 60000 % 60), h = Math.floor(rem / 3600000 % 24), d = Math.floor(rem / 86400000), w = Math.floor(d / 7);
-            lifeTimerEl.innerHTML = `${w}<span>週</span> ${d % 7}<span>日</span> ${h}<span>時間</span> ${m}<span>分</span> ${s}<span>秒</span>`;
-        });
-    }
-    countdownConfig.forEach((config, index) => {
-        if (!config.date) return;
-        const el = document.querySelector(`#countdown-card-${index} .countdown-value`);
-        if(!el) return; 
-        let targetDate; const now = new Date();
-        const [month, day] = config.date.split('/').slice(-2).map(Number);
-        if (config.date.includes('/')) {
-             targetDate = new Date(now.getFullYear(), month - 1, day); 
-             if (now > targetDate) targetDate.setFullYear(now.getFullYear() + 1);
-        }
-        updateFunctions.push(() => {
-            const now = new Date(); 
-            const days = Math.ceil((targetDate - now) / 86400000); 
-            el.textContent = `${days} 日`;
-            // クリスマスなどは特別な色にする
-            if(config.label.includes("クリスマス")) {
-                 el.style.color = "var(--christmas-red)";
-            }
-            el.classList.toggle('warning', days > 0 && days <= 30);
-        });
-    });
-    const updateAll = () => updateFunctions.forEach(fn => fn());
-    updateAll(); clearInterval(countdownInterval); countdownInterval = setInterval(updateAll, 1000);
-}
-
-const originalCreditsText = creditsPre.innerHTML;
-function playStaffRoll() {
-    const creditsContainer = staffRollContainer.querySelector(".credits-list");
-    if (creditsContainer) { creditsContainer.style.animation = 'none'; void creditsContainer.offsetHeight; creditsContainer.style.animation = ''; }
-    creditsPre.innerHTML = ''; document.body.classList.add("no-scroll");
-    loader.classList.remove("fade-out"); 
-    loadingStatusContainer.style.display = 'none';
-    staffRollContainer.style.display = 'block'; 
-    staffRollContainer.style.opacity = '1';
-    welcomeContainer.style.display = 'none'; 
+window.onload = function() {
+    const staffRollScreen = document.getElementById('staff-roll-screen');
     const skipBtn = document.getElementById('skipBtn');
-    skipBtn.style.display = 'block'; 
-    const onSkip = () => { clearTimeout(staffRollTimer); clearInterval(typingInterval); onStaffRollEnd(); };
-    skipBtn.onclick = onSkip; siteWrapper.classList.remove("visible"); 
-    let charIndex = 0; const textToType = originalCreditsText.trim(); const cursor = '<span class="typing-cursor">█</span>';
-    typingInterval = setInterval(() => {
-        if (charIndex < textToType.length) { charIndex++; creditsPre.innerHTML = textToType.substring(0, charIndex) + cursor; }
-        else { clearInterval(typingInterval); creditsPre.innerHTML = textToType + cursor; }
-    }, 30);
-    staffRollTimer = setTimeout(onStaffRollEnd, 40000);
+    const creditsList = document.querySelector('.credits-list');
+    function transitionToMenu() {
+        if (gameState !== 'STAFF_ROLL') return;
+        gameState = 'MENU';
+        staffRollScreen.style.display = 'none';
+        document.getElementById('menu-screen').style.display = 'flex';
+        skipBtn.removeEventListener('click', transitionToMenu);
+        creditsList.removeEventListener('animationend', transitionToMenu);
+        resize(); 
+        initSnow(); // メニューでも雪を降らせるため初期化
+        draw();
+    }
+    skipBtn.addEventListener('click', transitionToMenu);
+    creditsList.addEventListener('animationend', transitionToMenu);
+};
+
+function initGame(lvl) {
+    if (lvl > MAX_PLAYABLE_LEVEL) return;
+    if (!audioCtx) audioCtx = new AudioContext();
+    else if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (animationFrameId) { cancelAnimationFrame(animationFrameId); animationFrameId = null; }
+    currentLevel = lvl;
+    gameState = 'PLAYING';
+    document.getElementById('menu-screen').style.display = 'none';
+    document.getElementById('ui-layer').style.display = 'block';
+    document.getElementById('message').style.display = 'none';
+    document.getElementById('level-indicator').innerText = "LEVEL " + lvl;
+    resetLevel();
+    startBGM();
+    loop();
 }
 
-function onStaffRollEnd() {
-    if (loader.classList.contains('fade-out')) return;
-    const tutorialCompleted = localStorage.getItem('tutorialCompleted');
+function resetLevel() {
+    blocks = []; triggers = []; decorations = [];
+    const layout = getLevelMap(currentLevel);
+    if(!layout || layout.length === 0) return;
+    const rows = layout.length; const cols = layout[0].length;
+    mapWidth = cols * TILE_SIZE;
+    const bottomRowY = floorY - TILE_SIZE;
+    for (let r = 0; r < rows; r++) {
+        const rowStr = layout[r]; const by = bottomRowY - ((rows - 1 - r) * TILE_SIZE);
+        for (let c = 0; c < rowStr.length; c++) {
+            const ch = rowStr[c]; const bx = c * TILE_SIZE;
+            if(ch === ' ') continue;
+            let b = {x:bx, y:by, w:TILE_SIZE, h:TILE_SIZE, type:''};
+            if ('o>|'.includes(ch)) {
+                if (ch === 'o') b.type = 'DECO_CIRCLE'; if (ch === '>') b.type = 'DECO_ARROW'; if (ch === '|') b.type = 'DECO_CHAIN';
+                decorations.push(b);
+            } else if(ch === '#') { b.type = 'BLOCK'; blocks.push(b); }
+            else if(ch === '^') { b.type = 'SPIKE'; b.dx = bx; b.dy = by; blocks.push(b); }
+            else if(ch === 'v') { b.type = 'SPIKE_DOWN'; b.dx = bx; b.dy = by; blocks.push(b); }
+            else if(ch === 'J') { b.type = 'PAD'; b.h = 20; b.y = by + TILE_SIZE - 20; b.w -= 20; b.x +=10; triggers.push(b); }
+            else if(ch === 'O') { b.type = 'ORB'; b.w = 40; b.h = 40; b.x += 12; b.y += 12; triggers.push(b); }
+            else if(ch === 'S') { b.type = 'PORTAL_SHIP'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
+            else if(ch === 'C') { b.type = 'PORTAL_CUBE'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
+            else if(ch === 'V') { b.type = 'PORTAL_GRAVITY_REVERSE'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
+            else if(ch === 'N') { b.type = 'PORTAL_GRAVITY_NORMAL'; b.w = 50; b.h = TILE_SIZE*2; triggers.push(b); }
+            else if(ch === 'G') { b.type = 'GOAL'; b.y = 0; b.h = VIRTUAL_HEIGHT; triggers.push(b); }
+        }
+    }
+    player.x = 0; player.y = floorY - player.h; player.dy = 0; player.angle = 0;
+    player.dead = false; player.mode = 'CUBE'; player.gravity = 1;
+    player.trail = []; input.holding = false; camera.x = 0; particles = []; 
+    initSnow(); // レベル開始時に雪をリセット
+}
+
+function loop() {
+    update();
+    draw();
+    if(gameState !== 'MENU' && gameState !== 'STAFF_ROLL') {
+        animationFrameId = requestAnimationFrame(loop);
+    } else if (gameState === 'MENU') {
+        // メニュー画面でも雪を降らせるため描画ループだけ回す
+        draw();
+        animationFrameId = requestAnimationFrame(loop);
+    }
+}
+
+function update() {
+    if (gameState !== 'PLAYING' || player.dead) return;
     
-    staffRollContainer.style.opacity = '0'; 
-    document.getElementById('skipBtn').style.opacity = '0';
-    clearInterval(typingInterval);
-
-    if (!tutorialCompleted) {
-         setTimeout(() => {
-            staffRollContainer.style.display = 'none';
-            welcomeContainer.style.display = 'flex'; welcomeContainer.innerHTML = ''; 
-            "MERRY CHRISTMAS".split('').forEach((char, i) => {
-                const span = document.createElement('span'); span.textContent = char; span.className = 'welcome-char';
-                span.style.animationDelay = `${i * 100}ms`; welcomeContainer.appendChild(span);
-                setTimeout(() => span.classList.add('animate'), 50);
-            });
-            setTimeout(() => { afterStaffRoll(); }, 2000);
-        }, 500);
-    } else { 
-        setTimeout(() => { afterStaffRoll(); }, 500);
-    }
-}
-document.getElementById('replay-staffroll').addEventListener('click', playStaffRoll);
-
-let toastTimer;
-function showToast(message) {
-    const toast = document.getElementById('toast-notification');
-    if (!toast) return; clearTimeout(toastTimer); toast.textContent = message;
-    toast.classList.add('show');
-    toastTimer = setTimeout(() => { toast.classList.remove('show'); }, 3000);
-}
-
-document.addEventListener("keydown", e => {
-    if (e.target.closest("input, textarea") || document.querySelector(".modal-overlay.visible:not(#ban-screen)")) return;
-    if (e.key === "Enter") { 
-        e.preventDefault(); 
-        document.getElementById('fake-translator').classList.toggle("hidden"); 
-    }
-});
-
-document.querySelectorAll('nav a[data-target]').forEach(link => { 
-    link.addEventListener('click', (event) => { 
-        const targetId = event.currentTarget.dataset.target; 
-        document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active')); 
-        document.getElementById(`content-${targetId}`).classList.add('active'); 
-    }); 
-});
-
-const itemListContainer = document.getElementById('item-list');
-function generateItemCards() {
-    itemListContainer.innerHTML = '';
-    items.forEach((item, index) => {
-        const itemElement = document.createElement('div');
-        itemElement.className = 'item-card'; itemElement.dataset.itemId = index; itemElement.dataset.category = item.category;
-        const recommendBadge = item.recommend ? `<div class="recommend-badge">${item.recommend}</div>` : '';
-        const ribbon = `<div class="ribbon ${item.category}">${item.category==='fun'?'楽しいやつ':item.category==='study'?'学習':'その他'}</div>`;
-        itemElement.innerHTML = `${recommendBadge}<div class="thumbnail-container"><img src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML = '<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);\'>No Image</div>';"></div>${ribbon}<div class="item-card-content"><h3 class="item-card-title">${item.title}</h3><p class="item-card-desc">${item.description}</p></div>`;
-        itemListContainer.appendChild(itemElement);
+    // 雪のアニメーション更新（ロジックに影響しない演出）
+    snowflakes.forEach(s => {
+        s.y += s.speed;
+        s.wobble += 0.05;
+        s.x += Math.sin(s.wobble) * 0.5;
+        // カメラに合わせて雪も少し動かす（パララックス）
+        s.x -= BASE_SPEED * 0.1; 
+        
+        if (s.y > VIRTUAL_HEIGHT) s.y = -10;
+        // カメラの範囲外に出たら反対側へループ（画面内維持）
+        let screenX = s.x - camera.x;
+        // 簡易的なループ処理：カメラ基準で管理するのは複雑なので、
+        // 描画時にカメラ位置を加算して描画する方式をとるため、ここでは相対座標っぽく扱う
     });
+
+    if (Date.now() % 3 === 0) { player.trail.push({x: player.x, y: player.y, angle: player.angle, alpha: 0.6, mode: player.mode}); if(player.trail.length > 10) player.trail.shift(); }
+    player.x += BASE_SPEED;
+    if (player.mode === 'CUBE') {
+        player.dy += GRAVITY_CUBE * player.gravity; player.y += player.dy;
+        if (!player.isGrounded) player.angle += ROTATION_SPEED * player.gravity;
+        else { const target = Math.round(player.angle / (Math.PI/2)) * (Math.PI/2); player.angle += (target - player.angle) * 0.3; }
+    } else if (player.mode === 'SHIP') {
+        if (input.holding) player.dy += SHIP_THRUST * player.gravity;
+        player.dy += GRAVITY_SHIP * player.gravity;
+        const maxUp = player.gravity > 0 ? SHIP_MAX_UP : SHIP_MAX_DOWN * -1;
+        const maxDown = player.gravity > 0 ? SHIP_MAX_DOWN : SHIP_MAX_UP * -1;
+        if (player.gravity > 0) { if(player.dy < maxUp) player.dy = maxUp; if(player.dy > maxDown) player.dy = maxDown; }
+        else { if(player.dy > maxUp) player.dy = maxUp; if(player.dy < maxDown) player.dy = maxDown; }
+        player.y += player.dy;
+        let targetAngle = player.dy * 0.05 * player.gravity;
+        player.angle += (targetAngle - player.angle) * 0.1;
+    }
+    player.isGrounded = false;
+    if (player.gravity > 0 && player.y + player.h >= floorY) { player.y = floorY - player.h; player.dy = 0; player.isGrounded = true; if(player.mode === 'CUBE') player.angle = Math.round(player.angle / (Math.PI/2)) * (Math.PI/2); }
+    if (player.gravity < 0 && player.y <= TILE_SIZE) { player.y = TILE_SIZE; player.dy = 0; player.isGrounded = true; if(player.mode === 'CUBE') player.angle = Math.round(player.angle / (Math.PI/2)) * (Math.PI/2); }
+    checkSolids();
+    if(player.dead) return;
+    checkTriggers();
+    
+    // カメラ追従
+    camera.x = player.x - (VIRTUAL_WIDTH / 3);
+
+    const pct = Math.min(100, Math.floor((player.x / mapWidth) * 100));
+    document.getElementById('current-progress').innerText = `${pct}%`;
+    document.getElementById('high-score').innerText = `Best Gift: ${getHighScore(currentLevel)}%`;
 }
 
-function filterItems(category) {
-    let visibleCount = 0;
-    document.querySelectorAll('.item-card').forEach((card) => {
-        const shouldShow = category === 'all' || card.dataset.category === category;
-        card.style.display = shouldShow ? 'flex' : 'none';
-        if (shouldShow) { 
-            card.style.animation = 'none'; 
-            void card.offsetHeight; 
-            card.style.animation = `card-appear 0.5s ease-out ${visibleCount * 50}ms forwards`; 
-            visibleCount++;
+function checkTriggers() {
+    const px = player.x + 10, py = player.y + 5, pw = player.w - 20, ph = player.h - 10;
+    for (let t of triggers) {
+        if (px + pw > t.x && px < t.x + t.w && py + ph > t.y && py < t.y + t.h) {
+            if (t.type === 'PAD') { playSound('pad'); player.dy = JUMP_PAD * player.gravity; player.isGrounded = false; createParticles(t.x + t.w/2, t.y, 10, '#ffff00'); return; }
+            else if (t.type === 'PORTAL_SHIP') { if(player.mode !== 'SHIP') { player.mode = 'SHIP'; playSound('portal'); createParticles(player.x, player.y, 20, '#00ff00'); } }
+            else if (t.type === 'PORTAL_CUBE') { if(player.mode !== 'CUBE') { player.mode = 'CUBE'; player.angle = 0; playSound('portal'); createParticles(player.x, player.y, 20, '#ff8800'); } }
+            else if (t.type === 'PORTAL_GRAVITY_REVERSE') { if (player.gravity > 0) { player.gravity = -1; playSound('portal'); createParticles(player.x, player.y, 20, '#a020f0'); } }
+            else if (t.type === 'PORTAL_GRAVITY_NORMAL') { if (player.gravity < 0) { player.gravity = 1; playSound('portal'); createParticles(player.x, player.y, 20, '#ffffff'); } }
+            else if (t.type === 'GOAL') { levelClear(); }
+        }
+    }
+}
+function checkSolids() {
+    const marginX = 24, px = player.x + marginX, pw = player.w - (marginX * 2), py = player.y, ph = player.h;
+    for (let b of blocks) {
+        if (px + pw > b.x && px < b.x + b.w && py + ph > b.y && py < b.y + b.h) {
+            if (b.type === 'SPIKE' || b.type === 'SPIKE_DOWN') { die(); return; }
+            if (b.type === 'BLOCK') {
+                const playerPrevY = player.y - player.dy;
+                if (player.gravity > 0 && player.dy >= 0 && playerPrevY + ph <= b.y) { player.y = b.y - ph; player.dy = 0; player.isGrounded = true; }
+                else if (player.gravity < 0 && player.dy <= 0 && playerPrevY >= b.y + b.h) { player.y = b.y + b.h; player.dy = 0; player.isGrounded = true; }
+                else if (player.gravity > 0 && player.dy < 0 && playerPrevY >= b.y + b.h) { player.y = b.y + b.h; player.dy = 0; }
+                else if (player.gravity < 0 && player.dy > 0 && playerPrevY + ph <= b.y + b.h) { player.y = b.y - ph; player.dy = 0; }
+                else { die(); return; }
+            }
+        }
+    }
+}
+
+function handleInputStart() {
+    if (gameState === 'MENU' || gameState === 'STAFF_ROLL') return;
+    if (gameState === 'GAMEOVER' || gameState === 'CLEARED') { initGame(currentLevel); return; }
+    input.holding = true;
+    if (player.mode === 'CUBE') {
+        let hitOrb = false;
+        const cx = player.x + player.w/2, cy = player.y + player.h/2;
+        for(let t of triggers) {
+            if(t.type === 'ORB' && cx > t.x && cx < t.x + t.w && cy > t.y && cy < t.y + t.h) {
+                playSound('orb'); player.dy = JUMP_ORB * player.gravity; player.isGrounded = false; createParticles(t.x+t.w/2, t.y+t.h/2, 10, '#00ffff'); hitOrb = true; break;
+            }
+        }
+        if (!hitOrb && player.isGrounded) { playSound('jump'); player.dy = JUMP_CUBE * player.gravity; player.isGrounded = false; createParticles(player.x + player.w/2, player.y + player.h, 5, '#fff'); }
+    }
+}
+function handleInputEnd() { input.holding = false; }
+window.addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'ArrowUp') handleInputStart(); if (e.code === 'Escape') { if (gameState === 'PLAYING') { gameState = 'MENU'; document.getElementById('menu-screen').style.display = 'flex'; document.getElementById('ui-layer').style.display = 'none'; if(animationFrameId) cancelAnimationFrame(animationFrameId); animationFrameId = null; resize(); initSnow(); draw(); } } });
+window.addEventListener('keyup', e => { if (e.code === 'Space' || e.code === 'ArrowUp') handleInputEnd(); });
+window.addEventListener('mousedown', handleInputStart); window.addEventListener('mouseup', handleInputEnd);
+window.addEventListener('touchstart', (e) => { e.preventDefault(); handleInputStart(); }, {passive:false});
+window.addEventListener('touchend', (e) => { e.preventDefault(); handleInputEnd(); });
+
+function die() { if (player.dead) return; player.dead = true; playSound('die'); gameState = 'GAMEOVER'; saveHighScore(currentLevel, Math.floor((player.x/mapWidth)*100)); createParticles(player.x, player.y, 50, '#ff0000'); document.getElementById('message').innerHTML = "CRASHED<br><span style='font-size:20px'>Press SPACE to retry</span>"; document.getElementById('message').style.display = 'block'; }
+function levelClear() { player.dead = true; gameState = 'CLEARED'; playSound('win'); saveHighScore(currentLevel, 100); document.getElementById('message').innerHTML = "<span style='color:#0f0'>DELIVERY COMPLETE!</span><br><span style='font-size:20px'>Press SPACE</span>"; document.getElementById('message').style.display = 'block'; }
+function createParticles(x, y, count, color) { for(let i=0; i<count; i++) { particles.push({x:x, y:y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, life:1.0, color:color}); } }
+
+// --- プレイヤー（そり）を描画するヘルパー ---
+function drawSleigh(ctx, x, y, w, h, mode) {
+    // 共通：そりのランナー（足）
+    ctx.strokeStyle = '#c0c0c0'; // 銀色
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(x - w*0.2, y + h); 
+    ctx.lineTo(x + w*1.2, y + h); // 底面
+    ctx.quadraticCurveTo(x + w*1.4, y + h - h*0.3, x + w*1.2, y + h*0.5); // 前のカール
+    ctx.stroke();
+
+    // 支柱
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x + w*0.2, y + h); ctx.lineTo(x + w*0.2, y + h*0.8);
+    ctx.moveTo(x + w*0.8, y + h); ctx.lineTo(x + w*0.8, y + h*0.8);
+    ctx.stroke();
+
+    if (mode === 'CUBE') {
+        // CUBEモード：プレゼントボックスのようなデザインの本体
+        ctx.fillStyle = '#c41e3a'; // 赤
+        ctx.fillRect(x, y, w, h*0.85);
+        // 金のリボン
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(x + w*0.4, y, w*0.2, h*0.85); // 縦
+        ctx.fillRect(x, y + h*0.35, w, h*0.2); // 横
+        // 枠
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x, y, w, h*0.85);
+    } else {
+        // SHIPモード：流線型のそり
+        ctx.fillStyle = '#c41e3a';
+        ctx.beginPath();
+        ctx.moveTo(x, y + h*0.2);
+        ctx.lineTo(x + w, y + h*0.2);
+        ctx.lineTo(x + w*0.8, y + h*0.8);
+        ctx.lineTo(x + w*0.2, y + h*0.8);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = '#ffd700';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // プレゼント袋
+        ctx.fillStyle = '#f0e68c';
+        ctx.beginPath();
+        ctx.arc(x + w*0.4, y + h*0.1, w*0.25, 0, Math.PI*2);
+        ctx.fill();
+    }
+}
+
+function draw() {
+    ctx.save();
+    const scale = Math.max(canvas.width / VIRTUAL_WIDTH, canvas.height / VIRTUAL_HEIGHT);
+    const offsetX = (canvas.width - VIRTUAL_WIDTH * scale) / 2;
+    const offsetY = (canvas.height - VIRTUAL_HEIGHT * scale) / 2;
+    ctx.translate(offsetX, offsetY);
+    ctx.scale(scale, scale);
+
+    // --- 背景: 夜空のグラデーション ---
+    const grad = ctx.createLinearGradient(0, 0, 0, VIRTUAL_HEIGHT);
+    grad.addColorStop(0, '#020024'); // 深い紺
+    grad.addColorStop(1, '#090979'); // 青
+    ctx.fillStyle = grad; 
+    ctx.fillRect(0, 0, VIRTUAL_WIDTH, VIRTUAL_HEIGHT);
+
+    // --- 遠景の雪（背景として描画） ---
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    snowflakes.forEach((s, i) => {
+        // カメラ位置に基づいてループさせる演出（簡易版）
+        let drawX = (s.x - camera.x * 0.5) % VIRTUAL_WIDTH;
+        if (drawX < 0) drawX += VIRTUAL_WIDTH;
+        
+        // メニュー画面ではcamera.xが0なので普通に降る
+        if(gameState === 'MENU') drawX = s.x;
+
+        ctx.beginPath();
+        ctx.arc(drawX, s.y, s.r, 0, Math.PI*2);
+        ctx.fill();
+        
+        // MENUの場合はここでy座標更新もしちゃう（updateが止まっている場合があるため）
+        if(gameState === 'MENU') {
+            s.y += s.speed;
+            if(s.y > VIRTUAL_HEIGHT) s.y = -10;
         }
     });
-}
+    ctx.restore();
 
-const filterButtons = document.querySelectorAll('.category-btn');
-filterButtons.forEach(button => { 
-    button.addEventListener('click', () => { 
-        filterButtons.forEach(btn => btn.classList.remove('active')); 
-        button.classList.add('active'); 
-        filterItems(button.dataset.category);
-    }); 
-});
+    // --- カメラ追従開始 ---
+    ctx.save();
+    ctx.translate(-camera.x, 0);
 
-const allModals = { details: document.getElementById('details-modal'), share: document.getElementById('share-modal'), update: document.getElementById('update-info-modal'), schedule: document.getElementById('schedule-modal') };
-document.getElementById('show-update-info-btn').addEventListener('click',()=>allModals.update.classList.add('visible'));
-document.getElementById('show-schedule-btn').addEventListener('click',()=>allModals.schedule.classList.add('visible'));
-
-let currentItemUrl = '';
-itemListContainer.addEventListener('click', function(e) {
-    const card = e.target.closest('.item-card');
-    if (card) {
-        const item = items[card.dataset.itemId];
-        if (item.url==='#'){alert('作成中');return}
-        currentItemUrl = item.url;
-        document.getElementById('details-modal-title').textContent = item.title;
-        document.getElementById('details-modal-img').src = item.thumbnail;
-        document.getElementById('details-modal-desc').textContent = item.description;
-        const launchBtn = document.getElementById('details-modal-launch-btn');
-        launchBtn.href = item.url;
-        launchBtn.onclick = () => callGas('logGamePlay', { userId, gameTitle: item.title }).catch(()=>{});
-        allModals.details.classList.add('visible');
-    }
-});
-
-function openShareModal(title, url, imagePath = null) {
-    document.getElementById("share-modal-title").textContent = title;
-    document.getElementById("share-url-input").value = url;
-    const qrContainer = document.getElementById("qrcode"); qrContainer.innerHTML = "";
+    // --- 床: 雪原 ---
+    // 下の黒い部分
+    ctx.fillStyle = '#111';
+    ctx.fillRect(camera.x, floorY, VIRTUAL_WIDTH, VIRTUAL_HEIGHT - floorY);
+    // 天井
+    ctx.fillRect(camera.x, 0, VIRTUAL_WIDTH, TILE_SIZE);
     
-    if (imagePath) {
-        const img = document.createElement('img');
-        img.src = imagePath;
-        img.style.width = '220px';
-        img.style.height = 'auto';
-        img.alt = 'QR Code';
-        qrContainer.appendChild(img);
-    } else {
-        if (typeof QRCode !== 'undefined') QRCode.toCanvas(url, { width: 220, color: { dark: '#d42426', light: '#ffffff' } }, (e, c) => { if(!e) qrContainer.appendChild(c); });
-    }
+    // 床の雪（白くふんわりと）
+    ctx.fillStyle = '#f0f8ff'; // AliceBlue
+    ctx.fillRect(camera.x, floorY, VIRTUAL_WIDTH, 15);
+    ctx.strokeStyle = '#aaddff'; // 氷っぽい色
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(camera.x, floorY); ctx.lineTo(camera.x+VIRTUAL_WIDTH, floorY); ctx.stroke();
     
-    allModals.share.classList.add("visible");
+    // 天井の氷
+    ctx.fillStyle = '#aaddff';
+    ctx.fillRect(camera.x, TILE_SIZE, VIRTUAL_WIDTH, 5);
+
+    // --- 装飾 ---
+    for(let d of decorations) {
+        if(d.x+d.w < camera.x || d.x > camera.x+VIRTUAL_WIDTH) continue;
+        ctx.globalAlpha = 0.6; ctx.strokeStyle = '#88ccee'; ctx.lineWidth = 3;
+        // デザインを雪の結晶っぽく
+        if(d.type === 'DECO_CIRCLE') { 
+            ctx.beginPath(); ctx.arc(d.x+d.w/2, d.y+d.h/2, d.w/2.5, 0, Math.PI*2); ctx.stroke(); 
+            // 十字を入れて結晶感
+            ctx.moveTo(d.x+d.w/2, d.y); ctx.lineTo(d.x+d.w/2, d.y+d.h);
+            ctx.moveTo(d.x, d.y+d.h/2); ctx.lineTo(d.x+d.w, d.y+d.h/2);
+            ctx.stroke();
+        }
+        else if (d.type === 'DECO_ARROW') { ctx.fillStyle='#88ccee'; ctx.font="30px serif"; ctx.fillText(">>", d.x, d.y+40); }
+        else if (d.type === 'DECO_CHAIN') { 
+            ctx.strokeStyle = '#ffd700'; // 金の鎖
+            for(let i=0; i<4; i++){ ctx.beginPath(); ctx.arc(d.x+d.w/2, d.y+i*20, 8, 0, Math.PI*2); ctx.stroke(); } 
+        }
+        ctx.globalAlpha = 1.0;
+    }
+
+    // --- ブロック・トゲ ---
+    for(let b of blocks) {
+        if(b.x+b.w < camera.x || b.x > camera.x+VIRTUAL_WIDTH) continue;
+        
+        if(b.type === 'BLOCK') {
+            // プレゼントボックス風ブロック
+            ctx.fillStyle = '#d32f2f'; // 濃い赤
+            ctx.fillRect(b.x, b.y, b.w, b.h);
+            
+            // 金のリボン（十字）
+            ctx.fillStyle = '#ffeb3b';
+            ctx.fillRect(b.x + b.w/2 - 5, b.y, 10, b.h);
+            ctx.fillRect(b.x, b.y + b.h/2 - 5, b.w, 10);
+            
+            // 外枠
+            ctx.strokeStyle = '#fff'; ctx.lineWidth=2; 
+            ctx.strokeRect(b.x, b.y, b.w, b.h);
+
+        } else if(b.type === 'SPIKE' || b.type === 'SPIKE_DOWN') {
+            // 氷のトゲ（つらら）
+            const grad = ctx.createLinearGradient(b.dx, b.dy, b.dx, b.dy + TILE_SIZE); 
+            grad.addColorStop(0, '#e0ffff'); // 薄い水色
+            grad.addColorStop(1, '#00bfff'); // ディープスカイブルー
+            
+            ctx.fillStyle = grad; ctx.strokeStyle = '#fff'; ctx.lineWidth = 1;
+            ctx.beginPath();
+            if(b.type === 'SPIKE') { ctx.moveTo(b.dx, b.dy+TILE_SIZE); ctx.lineTo(b.dx+TILE_SIZE/2, b.dy); ctx.lineTo(b.dx+TILE_SIZE, b.dy+TILE_SIZE); }
+            else { ctx.moveTo(b.dx, b.dy); ctx.lineTo(b.dx+TILE_SIZE, b.dy); ctx.lineTo(b.dx+TILE_SIZE/2, b.dy+TILE_SIZE); }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        }
+    }
+
+    // --- トリガーオブジェクト ---
+    for(let t of triggers) {
+        if(t.x+t.w < camera.x || t.x > camera.x+VIRTUAL_WIDTH) continue;
+        
+        if(t.type === 'PAD') { 
+            // ジャンプパッド（リース風）
+            ctx.fillStyle = '#2ecc71'; 
+            ctx.beginPath(); ctx.arc(t.x+(t.w/2), t.y+t.h, t.w/2, Math.PI, 0); ctx.fill(); 
+            ctx.strokeStyle = '#c0392b'; ctx.lineWidth = 3; ctx.stroke();
+        }
+        else if(t.type === 'ORB') { 
+            // オーブ（クリスマスの飾り玉）
+            const grad = ctx.createRadialGradient(t.x+t.w/2, t.y+t.h/2, 5, t.x+t.w/2, t.y+t.h/2, t.w/2);
+            grad.addColorStop(0, '#fff');
+            grad.addColorStop(1, '#ffeb3b');
+            ctx.fillStyle = grad; 
+            ctx.beginPath(); ctx.arc(t.x+t.w/2, t.y+t.h/2, t.w/2, 0, Math.PI*2); ctx.fill(); 
+            ctx.strokeStyle = '#fff'; ctx.lineWidth=2; ctx.stroke(); 
+        }
+        else if(t.type.startsWith('PORTAL')) {
+            const colors = { PORTAL_SHIP: '#2ecc71', PORTAL_CUBE: '#e74c3c', PORTAL_GRAVITY_REVERSE: '#9b59b6', PORTAL_GRAVITY_NORMAL: '#f1c40f'};
+            const color = colors[t.type];
+            // キャンディケイン（飴）のような縞模様
+            ctx.strokeStyle = color; ctx.lineWidth = 6;
+            ctx.beginPath(); ctx.moveTo(t.x, t.y); ctx.lineTo(t.x, t.y + t.h); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(t.x + t.w, t.y); ctx.lineTo(t.x + t.w, t.y + t.h); ctx.stroke();
+            
+            // キラキラパーティクル演出
+            for(let i=0; i < 5; i++) {
+                const yOffset = (Date.now() * 0.1 * (i+1) + i * 50) % t.h;
+                ctx.fillStyle = '#fff'; 
+                ctx.beginPath(); ctx.arc(t.x + Math.random()*t.w, t.y + yOffset, 2, 0, Math.PI*2); ctx.fill();
+            }
+        } else if(t.type === 'GOAL') { 
+            // ゴール（光のカーテン）
+            ctx.fillStyle = 'rgba(255,215,0,0.3)'; 
+            ctx.fillRect(t.x, t.y, t.w, VIRTUAL_HEIGHT); 
+        }
+    }
+
+    // --- プレイヤー描画 ---
+    if(!player.dead) {
+        // 残像
+        player.trail.forEach(t => { 
+            ctx.save(); 
+            ctx.translate(t.x+player.w/2, t.y+player.h/2); 
+            ctx.rotate(t.angle); 
+            ctx.scale(1, player.gravity); 
+            ctx.globalAlpha = t.alpha * 0.5;
+            // 残像はシルエットで
+            drawSleigh(ctx, -player.w/2, -player.h/2, player.w, player.h, t.mode);
+            ctx.restore(); 
+            t.alpha -= 0.05; 
+        });
+        player.trail = player.trail.filter(t => t.alpha > 0);
+        ctx.globalAlpha = 1.0;
+
+        // 本体
+        ctx.save();
+        ctx.translate(player.x+player.w/2, player.y+player.h/2);
+        ctx.rotate(player.angle);
+        ctx.scale(1, player.gravity);
+        
+        // ヘルパー関数でそりを描画
+        drawSleigh(ctx, -player.w/2, -player.h/2, player.w, player.h, player.mode);
+        
+        ctx.restore();
+    }
+
+    // --- パーティクル（雪煙など） ---
+    for (let i = particles.length - 1; i >= 0; i--) {
+        let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03;
+        if(p.life <= 0) { particles.splice(i, 1); }
+        else { 
+            ctx.globalAlpha = p.life; 
+            ctx.fillStyle = p.color; 
+            // パーティクルも星型や雪玉にしたいが、負荷軽減のため円で
+            ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    ctx.globalAlpha = 1.0;
+
+    ctx.restore(); // カメラ解除
+    ctx.restore(); // スケール解除
 }
-
-document.getElementById("details-modal-share-btn").addEventListener("click", () => { openShareModal("作品を共有", new URL(currentItemUrl, window.location.href).href); allModals.details.classList.remove("visible"); });
-
-document.getElementById("share-site-btn").addEventListener("click", () => openShareModal("このサイトを共有", window.location.href, "QR.jpeg"));
-
-document.getElementById("copy-url-btn").addEventListener("click", e => { navigator.clipboard.writeText(document.getElementById('share-url-input').value).then(() => { e.target.textContent = "完了!"; setTimeout(() => e.target.textContent = "コピー", 2000); }); });
-document.querySelectorAll("[data-close-modal]").forEach(btn => btn.addEventListener("click", () => btn.closest(".modal-overlay").classList.remove("visible")));
-document.querySelectorAll(".modal-overlay").forEach(modal => modal.addEventListener("click", e => { if (e.target === modal && modal.id !== 'ban-screen') modal.classList.remove("visible"); }));
-
-document.getElementById('translator-input').addEventListener("input",(e)=>{document.getElementById('translator-output').value=e.target.value.toLowerCase().split("").map(c=>({a:"あ",i:"い",u:"う",e:"え",o:"お"," ":"　"})[c]||c).join("")});
-
-generateCountdownCards();
-generateItemCards();
-initSiteFlow();
-
-});
