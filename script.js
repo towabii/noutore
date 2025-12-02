@@ -22,9 +22,9 @@ const countdownConfig = [
 { label: "人生終了まで", type: "life", span: "half-left" }, // spanをhalf-leftに変更
 { label: "クリスマスまで", date: "2025/12/25", span: "half-right" }, // dateを設定し、spanをhalf-rightに変更
 { label: "期末テストまで", date: "2026/02/16" },
-{ label: "修学旅行まで", date: "2026/01/16" },
+{ label: "修学旅行まで", date: "2026/01/20" },
 { label: "修了式まで", date: "2026/03/19" },
-{ label: "とわの誕生日まで", date: "04/06" },
+{ label: "とわの誕生日まで", date: "2026/04/06" },
 ];
 
 const items = [
