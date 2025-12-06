@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>17番出口</title>
+    <title>壇ノ浦の戦い-今の下関について</title>
     <style>
         body {
             margin: 0;
@@ -11,109 +11,258 @@
             overflow: hidden;
             user-select: none;
             font-family: "Hiragino Kaku Gothic ProN", "Meiryo", sans-serif;
+            color: white;
         }
 
-        #start-screen {
+        /* 共通ボタンタイル */
+        button {
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid #ffd700;
+            color: #ffd700;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        button:hover {
+            background: rgba(255, 215, 0, 0.3);
+            transform: scale(1.05);
+        }
+
+        /* オーバーレイ共通 */
+        .overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: #111;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            color: white;
-            z-index: 200;
-            cursor: pointer;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(5px);
         }
 
-        #start-screen-content { text-align: center; }
+        /* 10. 品質設定モーダル (最前面) */
+        #quality-modal { z-index: 3000; background: #000; }
 
-        #start-screen-content h1 {
+        /* 9. スタート画面 (背景透過で3Dを見せる) */
+        #start-screen {
+            background: rgba(0, 0, 0, 0.4); /* 薄暗くするが背景は見せる */
+            z-index: 200;
+            transition: opacity 0.5s;
+        }
+        #start-screen h1 {
             font-size: 80px;
-            margin: 0 0 10px 0;
+            margin: 0 0 20px 0;
             color: #ffd700;
             font-weight: 900;
             letter-spacing: 10px;
             text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
         }
+        .menu-buttons { display: flex; flex-direction: column; gap: 10px; min-width: 200px; }
 
-        .instructions {
-            background: rgba(255, 255, 255, 0.1);
+        /* 6. ポーズメニュー & 設定 */
+        #pause-menu { display: none; z-index: 2500; }
+        .settings-panel {
+            background: rgba(30, 30, 30, 0.9);
             padding: 30px;
-            border-radius: 4px;
-            line-height: 2.0;
-            font-size: 18px;
-            margin-top: 20px;
+            border: 1px solid #555;
+            border-radius: 8px;
             text-align: left;
-            display: inline-block;
-            border: 1px solid #444;
         }
+        .key-row { display: flex; justify-content: space-between; margin: 10px 0; align-items: center; }
+        .key-display { 
+            background: #333; padding: 5px 10px; border-radius: 4px; min-width: 80px; text-align: center; border: 1px solid #666; cursor: pointer;
+        }
+        .key-display.listening { border-color: #ffd700; color: #ffd700; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0.5; } }
 
+        /* 3. チュートリアル */
+        #tutorial-overlay { display: none; z-index: 2400; text-align: center; }
+        .tutorial-box {
+            background: rgba(20, 20, 20, 0.95);
+            padding: 40px;
+            border: 2px solid #ffd700;
+            max-width: 600px;
+        }
+        
+        /* UI HUD */
         #ui-container {
             position: absolute;
-            width: 100%;
-            height: 100%;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
             pointer-events: none;
+            z-index: 100;
         }
-
         #crosshair {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 6px;
-            height: 6px;
+            top: 50%; left: 50%;
+            width: 6px; height: 6px;
             background-color: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
             transform: translate(-50%, -50%);
             box-shadow: 0 0 4px white;
         }
-
-        #blackout-curtain {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: black;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            z-index: 999;
-        }
-
         #debug-info {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
+            bottom: 20px; right: 20px;
             color: #ffd700;
             font-size: 24px;
             font-weight: bold;
             text-shadow: 0 0 5px #000;
+        }
+        /* 2. RTAタイマー */
+        #rta-timer-container {
+            position: absolute;
+            top: 20px; right: 20px;
+            text-align: right;
+            display: none; /* RTAモード時のみ表示 */
+        }
+        #rta-current-time {
+            color: #00ff00; font-family: monospace; font-size: 32px; font-weight: bold; text-shadow: 0 0 5px #000;
+        }
+        #rta-best-time {
+            color: #aaa; font-family: monospace; font-size: 14px; margin-top: 5px;
+        }
+
+        #blackout-curtain {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background-color: black;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 999;
+            pointer-events: none;
+        }
+
+        /* 8. クリア画面 */
+        #clear-screen {
+            display: none;
+            z-index: 4000;
+            background: #000;
+            flex-direction: column;
+        }
+        #clear-message {
+            font-size: 100px; color: #ffd700; font-weight: bold;
+            text-shadow: 0 0 30px #ffd700;
+            animation: popIn 0.5s ease-out;
+        }
+        @keyframes popIn { 0% { transform: scale(0); } 80% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* 7. スタッフロール */
+        #credits-screen {
+            display: none;
+            z-index: 4100;
+            background: #000;
+            overflow: hidden;
+        }
+        #credits-content {
+            position: absolute;
+            bottom: -2500px; /* Adjust based on content length */
+            width: 100%;
+            text-align: center;
+            animation: scrollCredits 40s linear forwards;
+        }
+        .credit-role { font-size: 16px; color: #aaa; margin-top: 20px; }
+        .credit-name { font-size: 24px; color: #fff; margin-bottom: 20px; font-weight: bold; }
+        @keyframes scrollCredits {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-3500px); }
         }
 
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="start-screen">
-        <div id="start-screen-content">
-            <h1>(とわ作BETA版)17番出口</h1>
-            <p>クリックして開始</p>
-            <div class="instructions">
-                異変を見逃さないこと。<br>
-                異変があればすぐに引き返すこと。<br>
-                異変がなければ進むこと。<br>
-                <small>目指せ 17番出口</small><br>
-                <small style="color:#aaa;">移動: WASD / 視点: マウス・矢印 / ダッシュ: Shift</small>
+
+    <!-- 10. 品質設定 -->
+    <div id="quality-modal" class="overlay">
+        <h2 style="color:#ffd700; margin-bottom: 20px;">画質設定 / GRAPHICS SETTING</h2>
+        <div style="display:flex; gap:20px;">
+            <button onclick="setQuality('HIGH')">高画質 (HIGH)</button>
+            <button onclick="setQuality('LOW')">パフォーマンス (LOW)</button>
+        </div>
+        <p style="color:#888; margin-top:20px; font-size:12px;">※プレイ中に変更はできません</p>
+    </div>
+
+    <!-- 9. スタート画面 -->
+    <div id="start-screen" class="overlay hidden">
+        <div id="start-screen-content" style="text-align:center;">
+            <h1>17番出口</h1>
+            <div class="menu-buttons">
+                <button onclick="selectMode('NORMAL')">通常プレイ</button>
+                <button onclick="selectMode('RTA')">RTAモード (ストップウォッチ)</button>
+                <button onclick="openSettings()">キー設定</button>
+            </div>
+            <div style="margin-top: 30px; font-size: 14px; color: #aaa;">
+                (とわ作BETA版) Modified Full Version
             </div>
         </div>
     </div>
 
+    <!-- 3. チュートリアル -->
+    <div id="tutorial-overlay" class="overlay">
+        <div class="tutorial-box">
+            <h2 style="color:#ffd700;">ルール説明</h2>
+            <div style="text-align: left; line-height: 1.8; font-size: 18px;">
+                <p>1. 異変を見逃さないこと。</p>
+                <p>2. 異変があればすぐに引き返すこと。</p>
+                <p>3. 異変がなければ進むこと。</p>
+                <p>4. 17番出口を目指してください。</p>
+            </div>
+            <div style="margin-top: 20px; font-size: 14px; color: #ccc; border-top:1px solid #555; padding-top:10px;">
+                操作: WASDで移動 / Shiftでダッシュ / マウスで視点<br>
+                ESC: 一時停止・メニュー
+            </div>
+            <button style="margin-top: 30px; width: 100%;" onclick="closeTutorial()">理解した</button>
+        </div>
+    </div>
+
+    <!-- 6. ポーズメニュー & 設定 -->
+    <div id="pause-menu" class="overlay">
+        <div class="settings-panel">
+            <h2 style="text-align:center; color:#ffd700; margin-top:0;">PAUSE / SETTINGS</h2>
+            <div id="key-config-list">
+                <!-- JSで生成 -->
+            </div>
+            <div style="text-align:center; margin-top:20px;">
+                <button onclick="resumeGame()">ゲームに戻る</button>
+                <button onclick="location.reload()">タイトルへ戻る</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ゲーム内UI -->
     <div id="ui-container" class="hidden">
         <div id="crosshair"></div>
         <div id="debug-info">出口 0</div>
+        
+        <!-- 2. RTA表示 -->
+        <div id="rta-timer-container">
+            <div id="rta-current-time">00:00.00</div>
+            <div id="rta-best-time">BEST: --:--.--</div>
+        </div>
+
         <div id="blackout-curtain"></div>
+    </div>
+
+    <!-- 8. クリア画面 -->
+    <div id="clear-screen" class="overlay">
+        <div id="clear-message">脱出成功</div>
+        <div id="clear-stats" style="font-size: 30px; margin-top: 20px;"></div>
+    </div>
+
+    <!-- 7. スタッフロール -->
+    <div id="credits-screen" class="overlay">
+        <div id="credits-content">
+            <!-- JSで挿入 -->
+        </div>
     </div>
 
     <script type="importmap">
@@ -169,19 +318,93 @@
 
         let currentExit = 0;
         let anomalyType = 'NONE'; 
-        let gameActive = false;
+        
+        // --- 状態管理 ---
+        let gameState = 'QUALITY_SELECT'; // QUALITY_SELECT, MENU, TUTORIAL, PLAYING, PAUSED, CLEAR, CREDITS
+        let isRTAMode = false;
+        let qualityMode = 'HIGH';
         let isTransitioning = false;
+        
         let waveAnimTime = 0; 
         let lightFlickerTimer = 0;
         let npcState = { z: 0, speed: 2.2, animTime: 0 }; 
 
-        const keys = {};
-        const startScreen = document.getElementById('start-screen');
+        // RTA Variables
+        let rtaStartTime = 0;
+        let rtaElapsedTime = 0;
+        let rtaTimerInterval = null;
+
+        // Key Config Default
+        let keyMap = {
+            forward: 'KeyW',
+            backward: 'KeyS',
+            left: 'KeyA',
+            right: 'KeyD',
+            run: 'ShiftLeft'
+        };
+        const activeKeys = {};
+
+        // DOM Elements
         const uiContainer = document.getElementById('ui-container');
         const curtain = document.getElementById('blackout-curtain');
         const debugInfo = document.getElementById('debug-info');
+        const rtaContainer = document.getElementById('rta-timer-container');
+        const rtaDisplay = document.getElementById('rta-current-time');
+        const rtaBestDisplay = document.getElementById('rta-best-time');
+        const startScreen = document.getElementById('start-screen');
+        const pauseMenu = document.getElementById('pause-menu');
+        const tutorialOverlay = document.getElementById('tutorial-overlay');
 
         const textureLoader = new THREE.TextureLoader();
+
+        // 7. スタッフリスト
+        const staffList = [
+            ["プロデューサー", "底原永和"],
+            ["ディレクター", "底原永和"],
+            ["エグゼクティブプロデューサー", "底原永和"],
+            ["アシスタントプロデューサー", "底原永和"],
+            ["デザイン", "底原永和"],
+            ["シナリオ", "底原永和"],
+            ["レベルデザイン", "底原永和"],
+            ["バランス調整", "底原永和"],
+            ["UI/UXデザイン", "底原永和"],
+            ["プログラムリード", "底原永和"],
+            ["エンジンプログラマー", "底原永和"],
+            ["ネットワークプログラマー", "底原永和"],
+            ["AIプログラマー", "底原永和"],
+            ["ツールプログラマー", "底原永和"],
+            ["サウンドプログラマー", "底原永和"],
+            ["グラフィックプログラマー", "底原永和"],
+            ["アートディレクター", "底原永和"],
+            ["キャラクターデザイナー", "底原永和"],
+            ["モンスターデザイナー", "底原永和"],
+            ["背景デザイナー", "底原永和"],
+            ["UIデザイナー", "底原永和"],
+            ["2Dアーティスト", "底原永和"],
+            ["3Dモデラー", "底原永和"],
+            ["リガー", "底原永和"],
+            ["アニメーター", "底原永和"],
+            ["モーションキャプチャー", "底原永和"],
+            ["VFXアーティスト", "底原永和"],
+            ["ライティングアーティスト", "底原永和"],
+            ["テクスチャーアーティスト", "底原永和"],
+            ["サウンドディレクター", "底原永和"],
+            ["作曲", "底原永和"],
+            ["効果音制作", "底原永和"],
+            ["ボイス収録", "底原永和"],
+            ["ミキシング", "底原永和"],
+            ["QAマネージャー", "底原永和"],
+            ["QAリーダー", "底原永和"],
+            ["QAテスター", "底原永和"],
+            ["ローカライズディレクター", "底原永和"],
+            ["翻訳", "底原永和"],
+            ["ローカライズテスター", "底原永和"],
+            ["マーケティングマネージャー", "底原永和"],
+            ["PR", "底原永和"],
+            ["コミュニティマネージャー", "底原永和"],
+            ["公式サイト運営", "底原永和"],
+            ["スペシャルサンクス", "底原永和"]
+        ];
 
         // --- テクスチャ自動生成 ---
         function createTileTexture() {
@@ -288,7 +511,7 @@
 
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.shadowMap.enabled = true;
+            // 1. 品質設定のデフォルト適用は後で setQuality で行う
             renderer.toneMapping = THREE.ACESFilmicToneMapping;
             renderer.toneMappingExposure = 1.0;
             document.body.appendChild(renderer.domElement);
@@ -299,12 +522,39 @@
             createBrailleBlocks(); 
             createNPCModel();      
             createWaveMesh(); 
+            
+            // UI用関数バインド
+            window.setQuality = setQuality;
+            window.selectMode = selectMode;
+            window.openSettings = openSettings;
+            window.closeTutorial = closeTutorial;
+            window.resumeGame = resumeGame;
+
+            loadSettings();
             setupEvents();
+
+            // 初期位置（タイトル画面用）
+            camera.position.set(0, 1.6, 5); 
+            camera.lookAt(0, 1.6, -10);
 
             animate();
         }
 
-        // --- マテリアル ---
+        function setQuality(mode) {
+            qualityMode = mode;
+            if (mode === 'LOW') {
+                renderer.setPixelRatio(0.6); // 低解像度
+                renderer.shadowMap.enabled = false;
+            } else {
+                renderer.setPixelRatio(window.devicePixelRatio);
+                renderer.shadowMap.enabled = true;
+                renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            }
+            document.getElementById('quality-modal').classList.add('hidden');
+            document.getElementById('start-screen').classList.remove('hidden');
+            gameState = 'MENU';
+        }
+
         function loadMaterials() {
             const tileTex = createTileTexture();
             const floorTex = createConcreteTexture();
@@ -368,6 +618,8 @@
             const createBox = (w, h, d, x, y, z, mat) => {
                 const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
                 mesh.position.set(x, y, z);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
                 scene.add(mesh);
                 return mesh;
             };
@@ -402,6 +654,7 @@
                 group.add(bulb);
                 const pt = new THREE.PointLight(0xffffff, 0.5, 12);
                 pt.position.y = -1.0;
+                pt.castShadow = true;
                 group.add(pt);
                 lights.push(pt); 
                 scene.add(group);
@@ -433,7 +686,9 @@
             const lenZ = zStart - zEnd;
             const centerZ = zEnd + lenZ/2;
             const rWall = new THREE.Mesh(new THREE.BoxGeometry(0.2, H, lenZ), mats.wall);
-            rWall.position.set(0.1, H/2, centerZ); 
+            rWall.position.set(0.1, H/2, centerZ);
+            rWall.castShadow = true;
+            rWall.receiveShadow = true;
             rightWallGroup.add(rWall);
             
             doorMesh = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 3.5), mats.door);
@@ -457,26 +712,22 @@
 
             createExitSign();
 
-            // 監視カメラと看板（左壁の奥、Z=-35付近）
+            // 監視カメラと看板
             const camZ = -35.0;
             
             securityCamera = createCameraMesh();
-            // 左壁から突き出す
             securityCamera.position.set(-W/2 + 0.3, H - 0.5, camZ);
-            securityCamera.lookAt(0, 1.5, camZ + 5); // 手前を見る
+            securityCamera.lookAt(0, 1.5, camZ + 5); 
             scene.add(securityCamera);
 
             securityPosterGroup = new THREE.Group();
-            // 看板本体（厚みあり）
             const spMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.1, 0.05), mats.secPoster);
             securityPosterGroup.add(spMesh);
             
-            // 目玉
             eyePupilMesh = new THREE.Mesh(new THREE.CircleGeometry(0.06, 16), mats.pupil);
-            eyePupilMesh.position.set(0, 0.16, 0.03); // ボードの表面より手前
+            eyePupilMesh.position.set(0, 0.16, 0.03); 
             securityPosterGroup.add(eyePupilMesh);
 
-            // 配置 (左壁、カメラの下)
             securityPosterGroup.position.set(-W/2 + 0.05, 2.0, camZ);
             securityPosterGroup.rotation.y = Math.PI / 2;
             scene.add(securityPosterGroup);
@@ -500,6 +751,7 @@
                 const b = new THREE.Mesh(new THREE.BoxGeometry(blockSize * 0.95, 0.02, blockSize * 0.95), mats.braille);
                 const z = zStart - i * blockSize - blockSize/2;
                 b.position.set(0, blockY, z);
+                b.receiveShadow = true;
                 b.userData = { orgPos: b.position.clone(), orgRot: b.rotation.clone() };
                 scene.add(b);
                 brailleBlocks.push(b);
@@ -510,6 +762,7 @@
                 const b = new THREE.Mesh(new THREE.BoxGeometry(blockSize * 0.95, 0.02, blockSize * 0.95), mats.braille);
                 const x = -blockSize - i * blockSize;
                 b.position.set(x, blockY, -L1 + W/2);
+                b.receiveShadow = true;
                 b.userData = { orgPos: b.position.clone(), orgRot: b.rotation.clone() };
                 scene.add(b);
                 brailleBlocks.push(b);
@@ -543,6 +796,7 @@
         function createVentMesh() {
             const group = new THREE.Group();
             const frame = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.8, 0.1), mats.ventFrame);
+            frame.castShadow = true;
             group.add(frame);
             const hole = new THREE.Mesh(new THREE.PlaneGeometry(1.0, 0.6), mats.ventHole);
             hole.position.z = 0.06;
@@ -558,7 +812,7 @@
         function createFireHydrant() {
             const group = new THREE.Group();
             const body = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.7, 16), mats.hydrantRed);
-            body.position.y = 0.35; group.add(body);
+            body.position.y = 0.35; body.castShadow = true; group.add(body);
             const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.1, 16), mats.hydrantRed);
             cap.position.y = 0.7; group.add(cap);
             const connector = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 0.3, 16), mats.hydrantRed);
@@ -586,21 +840,21 @@
         function createNPCModel(isTwin=false) {
             const grp = new THREE.Group();
             const head = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.3, 0.25), mats.npcSkin);
-            head.position.y = 1.65; grp.add(head);
+            head.position.y = 1.65; head.castShadow = true; grp.add(head);
             const body = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.7, 0.3), mats.npcSuit);
-            body.position.y = 1.15; grp.add(body);
+            body.position.y = 1.15; body.castShadow = true; grp.add(body);
             const shirt = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.3, 0.31), mats.npcShirt);
             shirt.position.set(0, 1.3, 0.01); grp.add(shirt);
 
             const limbs = {};
             limbs.legL = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.8, 0.2), mats.npcPants);
-            limbs.legL.position.set(-0.13, 0.4, 0); grp.add(limbs.legL);
+            limbs.legL.position.set(-0.13, 0.4, 0); limbs.legL.castShadow = true; grp.add(limbs.legL);
             limbs.legR = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.8, 0.2), mats.npcPants);
-            limbs.legR.position.set(0.13, 0.4, 0); grp.add(limbs.legR);
+            limbs.legR.position.set(0.13, 0.4, 0); limbs.legR.castShadow = true; grp.add(limbs.legR);
             limbs.armL = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.12), mats.npcSuit);
-            limbs.armL.position.set(-0.32, 1.2, 0); grp.add(limbs.armL);
+            limbs.armL.position.set(-0.32, 1.2, 0); limbs.armL.castShadow = true; grp.add(limbs.armL);
             limbs.armR = new THREE.Mesh(new THREE.BoxGeometry(0.12, 0.7, 0.12), mats.npcSuit);
-            limbs.armR.position.set(0.32, 1.2, 0); grp.add(limbs.armR);
+            limbs.armR.position.set(0.32, 1.2, 0); limbs.armR.castShadow = true; grp.add(limbs.armR);
 
             scene.add(grp);
             
@@ -615,14 +869,111 @@
             scene.add(waveMesh);
         }
 
-        function startGame() {
+        // --- ゲーム進行制御 ---
+
+        function loadSettings() {
+            const stored = localStorage.getItem('exit17_keymap');
+            if(stored) keyMap = JSON.parse(stored);
+            
+            const best = localStorage.getItem('exit17_rta_best');
+            if(best) {
+                rtaBestDisplay.innerText = `BEST: ${formatTime(parseInt(best))}`;
+            }
+        }
+
+        function selectMode(mode) {
+            isRTAMode = (mode === 'RTA');
+            const seenTutorial = localStorage.getItem('exit17_tutorial_seen');
+            
             startScreen.style.display = 'none';
+            if(!seenTutorial) {
+                gameState = 'TUTORIAL';
+                tutorialOverlay.style.display = 'flex';
+            } else {
+                startGame();
+            }
+        }
+
+        function closeTutorial() {
+            localStorage.setItem('exit17_tutorial_seen', 'true');
+            tutorialOverlay.style.display = 'none';
+            startGame();
+        }
+
+        function startGame() {
             uiContainer.classList.remove('hidden');
+            if(isRTAMode) {
+                rtaContainer.style.display = 'block';
+                rtaStartTime = Date.now();
+                rtaTimerInterval = setInterval(updateRTATimer, 10);
+            } else {
+                rtaContainer.style.display = 'none';
+            }
+
             document.body.requestPointerLock();
-            gameActive = true;
+            gameState = 'PLAYING';
             currentExit = 0;
             resetRound(true);
         }
+
+        function updateRTATimer() {
+            if(gameState === 'PLAYING') {
+                rtaElapsedTime = Date.now() - rtaStartTime;
+                rtaDisplay.innerText = formatTime(rtaElapsedTime);
+            }
+        }
+
+        function formatTime(ms) {
+            const min = Math.floor(ms / 60000);
+            const sec = Math.floor((ms % 60000) / 1000);
+            const mil = Math.floor((ms % 1000) / 10); // 2桁
+            return `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}.${String(mil).padStart(2,'0')}`;
+        }
+
+        function openSettings() {
+            pauseMenu.style.display = 'flex';
+            renderKeyConfig();
+        }
+
+        function renderKeyConfig() {
+            const list = document.getElementById('key-config-list');
+            list.innerHTML = '';
+            const labels = { forward: '前進', backward: '後退', left: '左', right: '右', run: 'ダッシュ' };
+            
+            for(let action in keyMap) {
+                const row = document.createElement('div');
+                row.className = 'key-row';
+                row.innerHTML = `<span>${labels[action]}</span> <div class="key-display" id="btn-${action}" onclick="bindKey('${action}')">${keyMap[action]}</div>`;
+                list.appendChild(row);
+            }
+        }
+        
+        // グローバルスコープへ露出が必要なため
+        window.bindKey = function(action) {
+            const btn = document.getElementById(`btn-${action}`);
+            btn.innerText = 'Press Key...';
+            btn.classList.add('listening');
+            
+            const handler = (e) => {
+                e.preventDefault();
+                keyMap[action] = e.code;
+                localStorage.setItem('exit17_keymap', JSON.stringify(keyMap));
+                btn.classList.remove('listening');
+                renderKeyConfig();
+                document.removeEventListener('keydown', handler);
+            };
+            document.addEventListener('keydown', handler);
+        };
+
+        function resumeGame() {
+            pauseMenu.style.display = 'none';
+            if (gameState !== 'CLEAR' && gameState !== 'CREDITS') {
+                gameState = 'PLAYING';
+                document.body.requestPointerLock();
+            }
+        }
+
+        // --- ゲーム内ロジック ---
 
         function resetRound(firstTime = false) {
             camera.position.set(0, 1.6, CONFIG.spawnZ); 
@@ -667,29 +1018,14 @@
 
             anomalyType = 'NONE';
             
-            // 異変確率 10/17 (約58.8%)
             if (!firstTime && Math.random() < 10/17) { 
                 const types = [
-                    'POSTER',           // 1
-                    'VENT_SHIFT',       // 2 (微細)
-                    'VENT_SMOKE',       // 3
-                    'DOOR_OPEN',        // 4 (微細)
-                    'DOOR_TILT',        // 5
-                    'RED_CAMERA',       // 6
-                    'BRAILLE_MISSING',  // 7 
-                    'NPC_CHASE',        // 8
-                    'TSUNAMI',          // 9
-                    'WALL_CLOSE',       // 10
-                    'LIGHT_FLICKER',    // 11
-                    'ALL_ADS_1',        // 12
-                    'POSTER_GROW',      // 13 
-                    'POSTER_EYE',       // 14 
-                    'SIGN_INVERT',      // 15 
-                    'NPC_TWINS',        // 16 
-                    'HYDRANT_COLOR'     // 17
+                    'POSTER', 'VENT_SHIFT', 'VENT_SMOKE', 'DOOR_OPEN', 'DOOR_TILT', 
+                    'RED_CAMERA', 'BRAILLE_MISSING', 'NPC_CHASE', 'TSUNAMI', 'WALL_CLOSE', 
+                    'LIGHT_FLICKER', 'ALL_ADS_1', 'POSTER_GROW', 'POSTER_EYE', 'SIGN_INVERT', 
+                    'NPC_TWINS', 'HYDRANT_COLOR'
                 ];
-                const randIndex = Math.floor(Math.random() * types.length);
-                anomalyType = types[randIndex];
+                anomalyType = types[Math.floor(Math.random() * types.length)];
 
                 if(anomalyType === 'POSTER') {
                     const idx = Math.floor(Math.random() * 6);
@@ -706,9 +1042,7 @@
                     doorMesh.rotation.z = 0.1;
                 }
                 else if(anomalyType === 'ALL_ADS_1') {
-                    posters.forEach(p => {
-                        if(mats.posters[0]) p.material = mats.posters[0];
-                    });
+                    posters.forEach(p => { if(mats.posters[0]) p.material = mats.posters[0]; });
                 }
                 else if(anomalyType === 'RED_CAMERA') {
                     cameraLight.intensity = 2.0;
@@ -734,7 +1068,7 @@
                     fireHydrant.children.forEach(c => c.material = mats.hydrantYellow);
                 }
             }
-            console.log("Current Anomaly:", anomalyType);
+            console.log("Anomaly:", anomalyType);
         }
 
         function spawnSmoke() {
@@ -760,8 +1094,7 @@
             updateExitSign();
             
             if (currentExit >= CONFIG.goalExit) {
-                alert(`脱出成功！${CONFIG.goalExit}番出口へ到達しました。`);
-                location.reload();
+                triggerClear();
                 return;
             }
             
@@ -771,6 +1104,49 @@
             else if (camera.position.z > CONFIG.backTriggerZ) {
                 resetRound();
             }
+        }
+
+        function triggerClear() {
+            gameState = 'CLEAR';
+            document.exitPointerLock();
+            clearInterval(rtaTimerInterval);
+            
+            const clearScreen = document.getElementById('clear-screen');
+            clearScreen.style.display = 'flex';
+            
+            if(isRTAMode) {
+                const timeStr = formatTime(rtaElapsedTime);
+                document.getElementById('clear-stats').innerText = `Time: ${timeStr}`;
+                
+                const best = localStorage.getItem('exit17_rta_best');
+                if(!best || rtaElapsedTime < parseInt(best)) {
+                    localStorage.setItem('exit17_rta_best', rtaElapsedTime);
+                    document.getElementById('clear-stats').innerHTML += '<br><small style="color:#f00">New Record!</small>';
+                }
+            }
+
+            setTimeout(() => {
+                clearScreen.style.display = 'none';
+                startCredits();
+            }, 4000);
+        }
+
+        function startCredits() {
+            gameState = 'CREDITS';
+            const credScreen = document.getElementById('credits-screen');
+            const content = document.getElementById('credits-content');
+            credScreen.style.display = 'block';
+
+            let html = `<div style="padding-top:100vh;">`;
+            staffList.forEach(item => {
+                html += `<div class="credit-role">${item[0]}</div><div class="credit-name">${item[1]}</div>`;
+            });
+            html += `<h1 style="margin-top:100px; color:#ffd700">Thank you for playing</h1></div>`;
+            content.innerHTML = html;
+
+            setTimeout(() => {
+                location.reload();
+            }, 42000); // アニメーション時間に合わせてリロード
         }
         
         function handleGameOver() {
@@ -888,22 +1264,26 @@
                 }
             }
 
-            updatePlayer(delta);
+            if (gameState === 'PLAYING') {
+                updatePlayer(delta);
 
-            const p = camera.position;
-            
-            if (p.x < CONFIG.loopTriggerX) {
-                if (anomalyType === 'NONE') handleSeamlessReset(true);
-                else handleSeamlessReset(false); 
-            }
-            if (p.z > CONFIG.backTriggerZ) {
-                if (anomalyType !== 'NONE') handleSeamlessReset(true);
-                else handleSeamlessReset(false);
+                const p = camera.position;
+                if (p.x < CONFIG.loopTriggerX) {
+                    if (anomalyType === 'NONE') handleSeamlessReset(true);
+                    else handleSeamlessReset(false); 
+                }
+                if (p.z > CONFIG.backTriggerZ) {
+                    if (anomalyType !== 'NONE') handleSeamlessReset(true);
+                    else handleSeamlessReset(false);
+                }
+            } else if (gameState === 'MENU' || gameState === 'QUALITY_SELECT') {
+                // メニュー時のカメラ演出
+                camera.rotation.y = Math.sin(Date.now() * 0.0005) * 0.1;
             }
         }
 
         function updatePlayer(delta) {
-            const speed = keys['ShiftLeft'] ? CONFIG.runSpeed : CONFIG.walkSpeed;
+            const speed = activeKeys[keyMap.run] ? CONFIG.runSpeed : CONFIG.walkSpeed;
             const dist = speed * delta;
             
             const fwd = new THREE.Vector3();
@@ -912,15 +1292,15 @@
             const right = new THREE.Vector3().crossVectors(fwd, camera.up).normalize();
 
             const move = new THREE.Vector3();
-            if (keys['KeyW']) move.add(fwd);
-            if (keys['KeyS']) move.sub(fwd);
-            if (keys['KeyD']) move.add(right);
-            if (keys['KeyA']) move.sub(right);
+            if (activeKeys[keyMap.forward]) move.add(fwd);
+            if (activeKeys[keyMap.backward]) move.sub(fwd);
+            if (activeKeys[keyMap.right]) move.add(right);
+            if (activeKeys[keyMap.left]) move.sub(right);
             
-            if (keys['ArrowLeft']) camera.rotation.y += CONFIG.keyRotationSpeed * delta;
-            if (keys['ArrowRight']) camera.rotation.y -= CONFIG.keyRotationSpeed * delta;
-            if (keys['ArrowUp']) camera.rotation.x += CONFIG.keyRotationSpeed * delta;
-            if (keys['ArrowDown']) camera.rotation.x -= CONFIG.keyRotationSpeed * delta;
+            if (activeKeys['ArrowLeft']) camera.rotation.y += CONFIG.keyRotationSpeed * delta;
+            if (activeKeys['ArrowRight']) camera.rotation.y -= CONFIG.keyRotationSpeed * delta;
+            if (activeKeys['ArrowUp']) camera.rotation.x += CONFIG.keyRotationSpeed * delta;
+            if (activeKeys['ArrowDown']) camera.rotation.x -= CONFIG.keyRotationSpeed * delta;
             camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
 
             if (move.length() > 0) {
@@ -948,11 +1328,27 @@
         }
 
         function setupEvents() {
-            startScreen.addEventListener('click', startGame);
-            document.addEventListener('keydown', e => keys[e.code] = true);
-            document.addEventListener('keyup', e => keys[e.code] = false);
+            // キーイベントは全体で監視
+            document.addEventListener('keydown', e => {
+                activeKeys[e.code] = true;
+                // 6. ESCキーでポーズ
+                if(e.code === 'Escape' && gameState === 'PLAYING') {
+                    gameState = 'PAUSED';
+                    document.exitPointerLock();
+                    openSettings();
+                }
+            });
+            document.addEventListener('keyup', e => activeKeys[e.code] = false);
+
+            // 4. マウスを一回外したら... クリックで再開
+            document.addEventListener('click', () => {
+                if(gameState === 'PLAYING' && document.pointerLockElement !== document.body) {
+                    document.body.requestPointerLock();
+                }
+            });
+
             document.addEventListener('mousemove', e => {
-                if (!gameActive || document.pointerLockElement !== document.body) return;
+                if (gameState !== 'PLAYING' || document.pointerLockElement !== document.body) return;
                 camera.rotation.y -= e.movementX * CONFIG.mouseSensitivity;
                 camera.rotation.x -= e.movementY * CONFIG.mouseSensitivity;
                 camera.rotation.x = Math.max(-1.5, Math.min(1.5, camera.rotation.x));
@@ -961,7 +1357,12 @@
 
         function animate() {
             requestAnimationFrame(animate);
-            if (gameActive) update(clock.getDelta());
+            // PAUSED時はdelta更新を止めるか、updateを呼ばない
+            if (gameState !== 'PAUSED') {
+                update(clock.getDelta());
+            } else {
+                clock.getDelta(); // 時間消費だけしておく
+            }
             renderer.render(scene, camera);
         }
 
