@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Going Balls 50 Levels</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #87CEEB; font-family: 'Segoe UI', sans-serif; }
+        #ui-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        #info {
+            text-align: center;
+            color: white;
+            margin-top: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        h1 { margin: 0; font-size: 32px; }
+        #level-indicator { font-size: 40px; color: #ffd700; font-weight: bold; }
+        #controls {
+            background-color: rgba(0, 0, 0, 0.5);
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            margin-top: 10px;
+        }
+        .key {
+            border: 1px solid white; border-radius: 4px; padding: 2px 6px;
+            margin: 0 2px; background: rgba(255,255,255,0.2); font-family: monospace;
+        }
+        #message {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 60px; color: white;
+            font-weight: bold;
+            text-shadow: 0 0 10px #000;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="ui-layer">
+        <div id="info">
+            <div id="level-indicator">LEVEL 1</div>
+            <div id="controls">
+                MOVE: <span class="key">W</span><span class="key">A</span><span class="key">S</span><span class="key">D</span> 
+                or <span class="key">↑</span><span class="key">←</span><span class="key">↓</span><span class="key">→</span><br>
+                RESTART: <span class="key">R</span>
+            </div>
+        </div>
+        <div id="message">LEVEL COMPLETE!</div>
+    </div>
+
+    <!-- Import Maps -->
+    <script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.150.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.150.0/examples/jsm/",
+                "cannon-es": "https://unpkg.com/cannon-es@0.20.0/dist/cannon-es.js"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import * as CANNON from 'cannon-es';
+        import { levels } from './levels.js'; // 外部ファイル読み込み
+
+        // --- 設定 ---
+        const BALL_RADIUS = 0.5;
+        const TRACK_WIDTH = 4.5;
+        // カメラ設定: ボールを見るために「手前(Zマイナス)」に配置し、+Z方向を見る
+        const CAM_OFFSET = new THREE.Vector3(0, 5, -8); 
+
+        // --- 変数 ---
+        let scene, camera, renderer;
+        let world, physicsMaterial;
+        let ballMesh, ballBody;
+        
+        let currentLevelIndex = 0;
+        let levelObjects = []; // 地形メッシュと物理ボディを管理
+        let levelBodies = []; 
+        let isGameActive = false;
+        let finishZ = 0;
+
+        const keys = { w: false, s: false, a: false, d: false };
+
+        // --- 初期化 ---
+        init();
+        loadLevel(currentLevelIndex);
+        animate();
+
+        function init() {
+            // シーン
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); 
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 50);
+
+            // カメラ
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 200);
+
+            // レンダラー
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.body.appendChild(renderer.domElement);
+
+            // ライト
+            const ambLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambLight);
+            const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(20, 40, -20); // 影が進行方向に落ちるように調整
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.set(2048, 2048);
+            dirLight.shadow.camera.left = -30; dirLight.shadow.camera.right = 30;
+            dirLight.shadow.camera.top = 30; dirLight.shadow.camera.bottom = -30;
+            scene.add(dirLight);
+
+            // 物理ワールド
+            world = new CANNON.World();
+            world.gravity.set(0, -18, 0); // 重力強め
+            physicsMaterial = new CANNON.Material('physics');
+            const contactMat = new CANNON.ContactMaterial(physicsMaterial, physicsMaterial, {
+                friction: 0.3, restitution: 0.5
+            });
+            world.addContactMaterial(contactMat);
+
+            // ボール作成
+            createBall();
+
+            // イベント
+            window.addEventListener('resize', onResize);
+            window.addEventListener('keydown', onKeyDown);
+            window.addEventListener('keyup', onKeyUp);
+        }
+
+        function createBall() {
+            // 見た目
+            const geo = new THREE.SphereGeometry(BALL_RADIUS, 32, 32);
+            const tex = createBallTexture();
+            const mat = new THREE.MeshStandardMaterial({ map: tex, metalness: 0.4, roughness: 0.4 });
+            ballMesh = new THREE.Mesh(geo, mat);
+            ballMesh.castShadow = true;
+            scene.add(ballMesh);
+
+            // 物理
+            const shape = new CANNON.Sphere(BALL_RADIUS);
+            ballBody = new CANNON.Body({ mass: 10, material: physicsMaterial, shape: shape, angularDamping: 0.3 });
+            world.addBody(ballBody);
+        }
+
+        // --- レベル管理 ---
+
+        function clearLevel() {
+            // 前のレベルのオブジェクトを削除
+            levelObjects.forEach(mesh => scene.remove(mesh));
+            levelBodies.forEach(body => world.removeBody(body));
+            levelObjects = [];
+            levelBodies = [];
+        }
+
+        function loadLevel(index) {
+            clearLevel();
+            isGameActive = true;
+            document.getElementById('message').style.display = 'none';
+            document.getElementById('level-indicator').innerText = `LEVEL ${index + 1}`;
+
+            // ボールリセット
+            ballBody.position.set(0, 2, 0);
+            ballBody.velocity.set(0, 0, 0);
+            ballBody.angularVelocity.set(0, 0, 0);
+            ballBody.quaternion.set(0, 0, 0, 1);
+
+            // テクスチャ
+            const woodTex = createWoodTexture();
+            const railTex = createCautionTexture();
+            const finishTex = createFinishTexture();
+
+            const data = levels[index];
+            let zCursor = 0;
+
+            data.forEach((segment) => {
+                const len = segment.length;
+                const type = segment.type;
+                const tilt = segment.tilt;
+                const zPos = zCursor + len / 2;
+
+                // 床作成
+                const floorW = (type === 'narrow') ? TRACK_WIDTH * 0.5 : TRACK_WIDTH;
+                
+                // 床メッシュ
+                const boxGeo = new THREE.BoxGeometry(floorW, 0.5, len);
+                const boxMat = new THREE.MeshStandardMaterial({ map: woodTex });
+                const mesh = new THREE.Mesh(boxGeo, boxMat);
+                mesh.position.set(0, 0, zPos);
+                mesh.rotation.x = tilt;
+                mesh.receiveShadow = true;
+                scene.add(mesh);
+                levelObjects.push(mesh);
+
+                // 床物理
+                const shape = new CANNON.Box(new CANNON.Vec3(floorW/2, 0.25, len/2));
+                const body = new CANNON.Body({ mass: 0, material: physicsMaterial });
+                body.position.copy(mesh.position);
+                body.quaternion.copy(mesh.quaternion);
+                body.addShape(shape);
+                world.addBody(body);
+                levelBodies.push(body);
+
+                // 壁 (no-rails 以外)
+                if (type !== 'no-rails') {
+                    const railGeo = new THREE.BoxGeometry(0.3, 0.8, len);
+                    const railMat = new THREE.MeshStandardMaterial({ map: railTex });
+                    [-1, 1].forEach(dir => {
+                        const rMesh = new THREE.Mesh(railGeo, railMat);
+                        const offset = (floorW/2 + 0.15) * dir;
+                        rMesh.position.set(offset, 0.25, zPos);
+                        rMesh.rotation.x = tilt;
+                        rMesh.receiveShadow = true;
+                        scene.add(rMesh);
+                        levelObjects.push(rMesh);
+
+                        const rShape = new CANNON.Box(new CANNON.Vec3(0.15, 0.4, len/2));
+                        const rBody = new CANNON.Body({ mass: 0 });
+                        rBody.position.copy(rMesh.position);
+                        rBody.quaternion.copy(rMesh.quaternion);
+                        rBody.addShape(rShape);
+                        world.addBody(rBody);
+                        levelBodies.push(rBody);
+                    });
+                }
+
+                // 障害物生成
+                if (segment.obstacles > 0) {
+                    for(let k=0; k<segment.obstacles; k++) {
+                        const obsZ = (zCursor) + (Math.random() * len);
+                        const obsX = (Math.random() * (floorW - 1)) - (floorW - 1)/2;
+                        createObstacle(obsX, 1, obsZ);
+                    }
+                }
+
+                zCursor += len;
+            });
+
+            // ゴール地点
+            finishZ = zCursor;
+            const finishGeo = new THREE.BoxGeometry(TRACK_WIDTH, 0.5, 5);
+            const finishMat = new THREE.MeshStandardMaterial({ map: finishTex });
+            const fMesh = new THREE.Mesh(finishGeo, finishMat);
+            fMesh.position.set(0, 0, finishZ + 2.5);
+            fMesh.receiveShadow = true;
+            scene.add(fMesh);
+            levelObjects.push(fMesh);
+
+            const fBody = new CANNON.Body({ mass: 0 });
+            fBody.addShape(new CANNON.Box(new CANNON.Vec3(TRACK_WIDTH/2, 0.25, 2.5)));
+            fBody.position.copy(fMesh.position);
+            world.addBody(fBody);
+            levelBodies.push(fBody);
+        }
+
+        function createObstacle(x, y, z) {
+            const size = 0.7;
+            const geo = new THREE.BoxGeometry(size, size, size);
+            const mat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+            const mesh = new THREE.Mesh(geo, mat);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            scene.add(mesh);
+            levelObjects.push(mesh);
+
+            const shape = new CANNON.Box(new CANNON.Vec3(size/2, size/2, size/2));
+            const body = new CANNON.Body({ mass: 1.5 }); // 少し重く
+            body.position.copy(mesh.position);
+            body.addShape(shape);
+            world.addBody(body);
+            levelBodies.push(body);
+        }
+
+        // --- ループ & ロジック ---
+        function animate() {
+            requestAnimationFrame(animate);
+            const dt = 1/60;
+            world.step(dt);
+
+            if (isGameActive) {
+                // --- 操作ロジック (反転修正済み) ---
+                // カメラ: (0, 5, -8) -> 原点方向 (+Z) を見ている
+                // この視点では、画面の「右」は -X軸、画面の「左」は +X軸 になる
+                
+                const speed = 25;
+                const sideSpeed = 18;
+
+                // 前進 (W): +Z方向へ力を加える
+                if (keys.w) ballBody.applyForce(new CANNON.Vec3(0, 0, speed), ballBody.position);
+                
+                // 後退 (S): -Z方向へ力を加える
+                if (keys.s) ballBody.applyForce(new CANNON.Vec3(0, 0, -speed), ballBody.position);
+
+                // 左 (A): 画面左に行きたい -> カメラ視点では +X 方向
+                if (keys.a) ballBody.applyForce(new CANNON.Vec3(sideSpeed, 0, 0), ballBody.position);
+
+                // 右 (D): 画面右に行きたい -> カメラ視点では -X 方向
+                if (keys.d) ballBody.applyForce(new CANNON.Vec3(-sideSpeed, 0, 0), ballBody.position);
+
+                // 落下判定
+                if (ballBody.position.y < -5) {
+                    respawn();
+                }
+
+                // ゴール判定
+                if (ballBody.position.z > finishZ + 2) {
+                    levelComplete();
+                }
+            }
+
+            // 同期
+            ballMesh.position.copy(ballBody.position);
+            ballMesh.quaternion.copy(ballBody.quaternion);
+
+            // 障害物同期 (levelBodiesの中で質量>0のものだけ簡易同期)
+            // ※今回は全て再配置しているのでループは簡略化せず全部回す
+            for(let i=0; i<levelObjects.length; i++) {
+                if (levelBodies[i].mass > 0) {
+                    levelObjects[i].position.copy(levelBodies[i].position);
+                    levelObjects[i].quaternion.copy(levelBodies[i].quaternion);
+                }
+            }
+
+            // カメラ追従
+            const targetPos = new THREE.Vector3(
+                ballMesh.position.x * 0.3, // Xは緩く追従
+                ballMesh.position.y + CAM_OFFSET.y, 
+                ballMesh.position.z + CAM_OFFSET.z
+            );
+            camera.position.lerp(targetPos, 0.1);
+            camera.lookAt(ballMesh.position);
+
+            renderer.render(scene, camera);
+        }
+
+        function respawn() {
+            // 現在のレベルの最初に戻る
+            ballBody.position.set(0, 2, 0);
+            ballBody.velocity.set(0, 0, 0);
+            ballBody.angularVelocity.set(0, 0, 0);
+            ballBody.quaternion.set(0, 0, 0, 1);
+        }
+
+        function levelComplete() {
+            isGameActive = false;
+            const msg = document.getElementById('message');
+            msg.innerText = "LEVEL COMPLETE!";
+            msg.style.display = 'block';
+
+            setTimeout(() => {
+                currentLevelIndex++;
+                if (currentLevelIndex >= levels.length) {
+                    msg.innerText = "ALL LEVELS CLEARED!";
+                    currentLevelIndex = 0; // 最初に戻る
+                    setTimeout(() => loadLevel(currentLevelIndex), 3000);
+                } else {
+                    loadLevel(currentLevelIndex);
+                }
+            }, 2000);
+        }
+
+        // --- 入力 ---
+        function onKeyDown(e) {
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup': keys.w = true; break;
+                case 's': case 'arrowdown': keys.s = true; break;
+                case 'a': case 'arrowleft': keys.a = true; break; // Aキーは左
+                case 'd': case 'arrowright': keys.d = true; break; // Dキーは右
+                case 'r': respawn(); break;
+            }
+        }
+        function onKeyUp(e) {
+            switch(e.key.toLowerCase()) {
+                case 'w': case 'arrowup': keys.w = false; break;
+                case 's': case 'arrowdown': keys.s = false; break;
+                case 'a': case 'arrowleft': keys.a = false; break;
+                case 'd': case 'arrowright': keys.d = false; break;
+            }
+        }
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- テクスチャ生成 (画像なしで動作させるため) ---
+        function createWoodTexture() {
+            const c = document.createElement('canvas'); c.width=256; c.height=256;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#deb887'; ctx.fillRect(0,0,256,256);
+            ctx.strokeStyle = '#cd853f'; ctx.lineWidth = 3;
+            for(let i=0;i<20;i++){ ctx.beginPath(); ctx.moveTo(i*15,0); ctx.lineTo(i*15,256); ctx.stroke();}
+            const t = new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1,4); return t;
+        }
+        function createCautionTexture() {
+            const c = document.createElement('canvas'); c.width=64; c.height=64;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#ffcc00'; ctx.fillRect(0,0,64,64);
+            ctx.fillStyle = '#111'; 
+            ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(32,0); ctx.lineTo(0,32); ctx.fill();
+            ctx.moveTo(32,64); ctx.lineTo(64,64); ctx.lineTo(64,32); ctx.fill();
+            const t = new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(1,4); return t;
+        }
+        function createFinishTexture() {
+            const c = document.createElement('canvas'); c.width=64; c.height=64;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = 'white'; ctx.fillRect(0,0,64,64);
+            ctx.fillStyle = 'black'; ctx.fillRect(0,0,32,32); ctx.fillRect(32,32,32,32);
+            const t = new THREE.CanvasTexture(c); t.wrapS=t.wrapT=THREE.RepeatWrapping; t.repeat.set(4,4); return t;
+        }
+        function createBallTexture() {
+            const c = document.createElement('canvas'); c.width=128; c.height=128;
+            const ctx = c.getContext('2d');
+            ctx.fillStyle = '#222'; ctx.fillRect(0,0,128,128);
+            ctx.fillStyle = '#0f0'; ctx.fillRect(0,50,128,28); // Stripe
+            const t = new THREE.CanvasTexture(c); return t;
+        }
+    </script>
+</body>
+</html>
