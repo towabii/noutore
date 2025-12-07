@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cities2D: Complete Edition</title>
+    <style>
+        /* 1. 画面描写修正: 余白削除とCanvasのブロック化 */
+        body { margin: 0; padding: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+
+        /* UIレイヤー */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
+        /* 上部HUD */
+        #hud-top {
+            position: absolute; top: 0; left: 0; width: 100%; height: 50px;
+            background: rgba(30, 35, 40, 0.95); border-bottom: 2px solid #444;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; box-sizing: border-box; pointer-events: auto; color: #fff;
+        }
+        .stat-group { display: flex; gap: 20px; align-items: center; font-size: 14px; font-weight: bold; }
+        .val { color: #00b894; margin-left: 5px; }
+        .val.warn { color: #fdcb6e; }
+        .val.err { color: #d63031; }
+
+        /* 時間操作ボタン */
+        .time-controls { display: flex; gap: 5px; background: #222; padding: 4px; border-radius: 4px; }
+        .time-btn {
+            background: #444; border: none; color: #888; cursor: pointer;
+            width: 30px; height: 24px; font-size: 12px; border-radius: 2px;
+        }
+        .time-btn.active { background: #0984e3; color: white; }
+
+        /* ツールバー (下部) */
+        #toolbar {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 5px; pointer-events: auto;
+            background: rgba(30, 35, 40, 0.9); padding: 8px; border-radius: 8px;
+            border: 1px solid #555; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            max-width: 90vw; overflow-x: auto;
+        }
+        
+        /* ツールボタンスタイル */
+        .tool-category { display: flex; gap: 4px; padding: 0 8px; border-right: 1px solid #555; }
+        .tool-category:last-child { border-right: none; }
+        
+        .tool-btn {
+            width: 48px; height: 48px; background: #333; border: 2px solid #444;
+            border-radius: 6px; cursor: pointer; color: #ccc;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 9px; position: relative; transition: all 0.1s;
+        }
+        .tool-btn:hover { background: #444; transform: translateY(-2px); }
+        .tool-btn.active { border-color: #0984e3; background: #222; color: #fff; box-shadow: 0 0 8px #0984e3; }
+        .icon { font-size: 20px; margin-bottom: 2px; }
+
+        /* 色定義バー (ボタン下部) */
+        .b-road { border-bottom: 3px solid #636e72; }
+        .b-res { border-bottom: 3px solid #00b894; }
+        .b-com { border-bottom: 3px solid #0984e3; }
+        .b-ind { border-bottom: 3px solid #fdcb6e; }
+        .b-ind-f { border-bottom: 3px solid #2d3436; } /* 農林 */
+        .b-serv { border-bottom: 3px solid #a29bfe; }
+        .b-del { border-bottom: 3px solid #d63031; }
+
+        /* インフォパネル */
+        #panel-info {
+            position: absolute; top: 60px; right: 20px; width: 250px;
+            background: rgba(30, 35, 40, 0.95); color: #fff; padding: 15px;
+            border-radius: 8px; pointer-events: auto; display: none;
+            border: 1px solid #555; font-size: 13px;
+        }
+        .bar-container { background: #444; height: 6px; width: 100%; margin-top: 4px; border-radius: 3px; }
+        .bar-fill { height: 100%; border-radius: 3px; transition: width 0.3s; }
+
+        /* 通知 */
+        #msg-area {
+            position: absolute; bottom: 100px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 5px; pointer-events: none;
+        }
+        .msg { background: rgba(0,0,0,0.8); color: white; padding: 6px 12px; border-radius: 15px; animation: fadeOut 4s forwards; }
+        @keyframes fadeOut { 0%{opacity:0;transform:translateY(10px);} 10%{opacity:1;transform:translateY(0);} 90%{opacity:1;} 100%{opacity:0;} }
+    </style>
+</head>
+<body>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui-layer">
+        <!-- HUD TOP -->
+        <div id="hud-top">
+            <div class="stat-group">
+                <div style="font-size:18px; font-weight:900; color:#0984e3;">CITIES <span style="color:#fff">2D</span></div>
+                <div>資金: <span id="ui-money" class="val">¥0</span></div>
+                <div>人口: <span id="ui-pop" class="val">0</span></div>
+                <div>日付: <span id="ui-date" class="val"></span></div>
+            </div>
+            
+            <div class="stat-group">
+                <div class="time-controls">
+                    <button class="time-btn active" id="btn-spd-1" onclick="game.setSpeed(1)">▶</button>
+                    <button class="time-btn" id="btn-spd-2" onclick="game.setSpeed(2)">▶▶</button>
+                    <button class="time-btn" id="btn-spd-3" onclick="game.setSpeed(3)">▶▶▶</button>
+                    <button class="time-btn" onclick="game.togglePause()">II</button>
+                </div>
+                <div title="電力">⚡<span id="ui-elec" class="val">100%</span></div>
+                <div title="水">💧<span id="ui-water" class="val">100%</span></div>
+                <button onclick="game.save()" style="background:#444;border:none;color:#fff;cursor:pointer;padding:4px 8px;">保存</button>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div id="toolbar">
+            <div class="tool-category">
+                <div class="tool-btn active" onclick="game.setTool('select')"><div class="icon">➤</div>情報</div>
+            </div>
+            <div class="tool-category">
+                <div class="tool-btn b-road" onclick="game.setTool('road_s')" title="小道路 ¥100"><div class="icon">🛣️</div>小道</div>
+                <div class="tool-btn b-road" onclick="game.setTool('road_l')" title="大道路 ¥400"><div class="icon"> हाईवे</div>大道</div>
+            </div>
+            <div class="tool-category">
+                <div class="tool-btn b-res" onclick="game.setTool('zone_res')" title="住宅区画"><div class="icon">🏠</div>住宅</div>
+                <div class="tool-btn b-com" onclick="game.setTool('zone_com')" title="商業区画"><div class="icon">🏪</div>商業</div>
+                <div class="tool-btn b-ind" onclick="game.setTool('zone_ind')" title="一般産業"><div class="icon">🏭</div>産業</div>
+                <div class="tool-btn b-ind-f" onclick="game.setTool('zone_farm')" title="農業 (平地)"><div class="icon">🌾</div>農業</div>
+                <div class="tool-btn b-ind-f" onclick="game.setTool('zone_forest')" title="林業 (森)"><div class="icon">🌲</div>林業</div>
+            </div>
+            <div class="tool-category">
+                <div class="tool-btn b-serv" onclick="game.setTool('bld_power')" title="発電所 ¥5000"><div class="icon">⚡</div>電力</div>
+                <div class="tool-btn b-serv" onclick="game.setTool('bld_water')" title="ポンプ ¥3000 (水辺)"><div class="icon">💧</div>水道</div>
+                <div class="tool-btn b-serv" onclick="game.setTool('bld_hosp')" title="病院 ¥10000"><div class="icon">🏥</div>病院</div>
+                <div class="tool-btn b-serv" onclick="game.setTool('bld_fire')" title="消防署 ¥8000"><div class="icon">🚒</div>消防</div>
+            </div>
+            <div class="tool-category">
+                <div class="tool-btn b-del" onclick="game.setTool('bulldoze')"><div class="icon">💣</div>撤去</div>
+            </div>
+        </div>
+
+        <!-- Info Panel -->
+        <div id="panel-info">
+            <h3 id="info-header" style="margin-top:0; border-bottom:1px solid #555;">Tile Info</h3>
+            <div id="info-content"></div>
+        </div>
+
+        <!-- Msg -->
+        <div id="msg-area"></div>
+    </div>
+
+<script>
+/**
+ * Cities2D: Complete Edition
+ * Implements Manual Specifications: 4-tile zoning, Service Buildings, Speed Control, Better Graphics
+ */
+
+// --- 1. CONFIGURATION ---
+const CONFIG = {
+    TILE_SIZE: 32,
+    MAP_SIZE: 128,
+    ZOOM_MIN: 0.2,
+    ZOOM_MAX: 4.0,
+    BASE_TICK_RATE: 50, // ms
+
+    // Economy
+    INITIAL_MONEY: 100000,
+    COST: {
+        ROAD_S: 100, ROAD_L: 400,
+        ZONE: 20,
+        POWER: 5000, WATER: 3000, HOSP: 10000, FIRE: 8000,
+        DEMOLISH: 50
+    },
+    MAINTENANCE: {
+        ROAD_S: 2, ROAD_L: 5,
+        POWER: 150, WATER: 100, HOSP: 400, FIRE: 300
+    },
+    // Manual 10.1: Power/Water Capacity (increased for balance)
+    CAPACITY: {
+        POWER: 2000,  // kW equivalent (supports many buildings)
+        WATER: 2500,
+        HOSP_RADIUS: 20,
+        FIRE_RADIUS: 15
+    },
+    
+    // Manual 7.2: Growth Rules
+    MAX_ROAD_DIST: 4 // Zoning 4-tile rule
+};
+
+// --- 2. ENUMS ---
+const TYPE = {
+    EMPTY: 0,
+    WATER: 1,      // River/Sea
+    MOUNTAIN: 2,
+    FOREST: 3,     // Resource for Forestry
+    OIL: 4,        // Resource for Oil
+    ROAD_S: 10,    // Small Road
+    ROAD_L: 11,    // Large Road
+    BUILDING: 20
+};
+
+const ZONE = {
+    NONE: 0,
+    RES: 1,
+    COM: 2,
+    IND: 3,       // Generic Industry
+    FARM: 4,      // Agriculture
+    FOREST: 5,    // Forestry
+    OIL: 6        // Oil Industry
+};
+
+const BLD = {
+    GENERIC: 0,
+    POWER: 1,
+    WATER: 2,
+    HOSP: 3,
+    FIRE: 4
+};
+
+// --- 3. DATA MODELS ---
+
+class Tile {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.type = TYPE.EMPTY;
+        this.zone = ZONE.NONE;
+        
+        // Terrain Properties
+        this.elevation = 0;
+        this.resourceVal = 0; // Quantity of oil/ore
+        
+        // Building State
+        this.bldType = BLD.GENERIC;
+        this.level = 0; // 0=Empty, 1-3=Built
+        this.pop = 0;   // Population/Workers
+        
+        // Simulation Flags
+        this.roadDist = 99; // Distance to nearest road
+        this.hasPower = false;
+        this.hasWater = false;
+        this.serviceHealth = 0; // Hospital coverage
+        this.serviceFire = 0;   // Fire coverage
+        
+        this.abandoned = false;
+        this.variant = Math.floor(Math.random()*4); // Sprite variant
+    }
+}
+
+class Agent {
+    constructor(x, y, type) {
+        this.x = x; this.y = y;
+        this.type = type; // 'car', 'person'
+        this.tx = x; this.ty = y;
+        this.color = type==='car' ? ['#ff7675','#74b9ff','#ffeaa7'][Math.floor(Math.random()*3)] : '#fff';
+        this.speed = type==='car' ? 0.2 : 0.05;
+        this.remove = false;
+    }
+}
+
+// --- 4. ENGINE CLASS ---
+
+class Game {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d', { alpha: false });
+        
+        // Game State
+        this.map = [];
+        this.agents = [];
+        this.money = CONFIG.INITIAL_MONEY;
+        this.date = { y: 2025, m: 1, d: 1 };
+        
+        this.speed = 1;   // 0=Pause, 1,2,3
+        this.paused = false;
+        this.tickCounter = 0;
+        
+        // Camera & Input
+        this.cam = { x: 0, y: 0, zoom: 1 };
+        this.drag = { active: false, sx:0, sy:0, cx:0, cy:0 };
+        this.mouse = { x:0, y:0, wx:0, wy:0, tx:0, ty:0 };
+        
+        // Tool State
+        this.tool = 'select';
+        this.drawStart = null; // For drag-box selection
+        this.isDrawing = false;
+
+        // Statistics
+        this.stats = {
+            pSupply:0, pDemand:0,
+            wSupply:0, wDemand:0
+        };
+
+        this.initMap();
+        this.resize();
+        this.setupEvents();
+        
+        // Start Loop
+        this.loop = requestAnimationFrame(() => this.render());
+        this.simInterval = setInterval(() => this.update(), CONFIG.BASE_TICK_RATE);
+        
+        this.notify("Cities2D 起動: 高速道路から街を作りましょう");
+    }
+
+    // --- INITIALIZATION ---
+    initMap() {
+        const center = CONFIG.MAP_SIZE / 2;
+        
+        for(let x=0; x<CONFIG.MAP_SIZE; x++) {
+            this.map[x] = [];
+            for(let y=0; y<CONFIG.MAP_SIZE; y++) {
+                let t = new Tile(x, y);
+                
+                // Terrain Generation (Simplex-ish noise simplified)
+                let nx = x/30, ny = y/30;
+                let h = Math.sin(nx)*Math.cos(ny) + Math.sin(nx*3)*0.2;
+                
+                if (h < -0.7) t.type = TYPE.WATER;
+                else if (h > 0.8) { t.type = TYPE.MOUNTAIN; t.elevation=1; }
+                else if (h > 0.4) { t.type = TYPE.FOREST; }
+                else if (Math.random() < 0.05) { t.type = TYPE.OIL; } // Random oil fields
+                
+                this.map[x][y] = t;
+            }
+        }
+
+        // Guaranteed River
+        for(let x=0; x<CONFIG.MAP_SIZE; x++) {
+            let ry = Math.floor(center + Math.sin(x/10)*5);
+            if(this.isValid(x, ry)) this.map[x][ry].type = TYPE.WATER;
+            if(this.isValid(x, ry+1)) this.map[x][ry+1].type = TYPE.WATER;
+        }
+
+        // Initial Highway Connection (Large Road)
+        for(let y=0; y<CONFIG.MAP_SIZE; y++) {
+            if(this.isValid(10, y)) this.map[10][y].type = TYPE.ROAD_L;
+        }
+
+        // Center Camera on Highway
+        this.cam.x = (10 * CONFIG.TILE_SIZE) - window.innerWidth/2;
+        this.cam.y = (center * CONFIG.TILE_SIZE) - window.innerHeight/2;
+    }
+
+    // --- SIMULATION LOOP ---
+    update() {
+        if(this.paused) return;
+
+        // Speed multiplier loop
+        for(let s=0; s<this.speed; s++) {
+            this.tickCounter++;
+            
+            // 1. Calendar & Economy (Every 300 ticks approx 1 month)
+            if(this.tickCounter % 300 === 0) {
+                this.advanceDate();
+                this.calcEconomy();
+            }
+
+            // 2. Growth & Simulation (Stochastic Update)
+            // Only update a subset of tiles per frame for performance
+            for(let i=0; i<100; i++) {
+                const rx = Math.floor(Math.random() * CONFIG.MAP_SIZE);
+                const ry = Math.floor(Math.random() * CONFIG.MAP_SIZE);
+                this.simTile(this.map[rx][ry]);
+            }
+
+            // 3. Agents
+            this.updateAgents();
+        }
+        
+        // 4. Update Infrastructure Stats (Less frequent)
+        if(this.tickCounter % 50 === 0) this.calcServices();
+    }
+
+    // --- LOGIC: GROWTH & 4-TILE RULE ---
+    simTile(t) {
+        // Calculate Road Distance (Simplified "heat propagation" could be better, but explicit check is ok for now)
+        // Ideally this is cached, but for MVP we check when needed or periodically
+        // Here we assume roadDist is updated when roads are placed (see placeRoad)
+        
+        // A. Construction
+        if (t.type === TYPE.EMPTY && t.zone !== ZONE.NONE) {
+            if (t.roadDist <= CONFIG.MAX_ROAD_DIST) {
+                // Check suitability
+                let chance = 0.02;
+                if (t.zone === ZONE.FARM && t.type !== TYPE.EMPTY) chance = 0; // Farm needs flat land (technically EMPTY is flat)
+                if (t.zone === ZONE.FOREST && this.getTerrainAt(t.x, t.y) !== TYPE.FOREST) chance = 0.001; // Bonus in forest
+                
+                if (Math.random() < chance) {
+                    this.constructBuilding(t);
+                }
+            }
+        }
+        
+        // B. Operation
+        else if (t.type === TYPE.BUILDING && t.bldType === BLD.GENERIC) {
+            // Check Utilities
+            if (!t.hasPower || !t.hasWater) {
+                if(Math.random() < 0.01) t.abandoned = true;
+            } else {
+                t.abandoned = false;
+                // Level Up?
+                if (t.level < 3 && Math.random() < 0.005) {
+                    t.level++;
+                    t.pop += 2;
+                    // Spawn Agent
+                    if(this.agents.length < 300) this.agents.push(new Agent(t.x, t.y, 'person'));
+                }
+            }
+        }
+    }
+
+    constructBuilding(t) {
+        t.type = TYPE.BUILDING;
+        t.level = 1;
+        t.pop = 2;
+        // Effect?
+    }
+
+    // --- LOGIC: INFRASTRUCTURE (Range & Pool) ---
+    calcServices() {
+        // Reset Globals
+        let pSup = 0, pDem = 0;
+        let wSup = 0, wDem = 0;
+
+        // Reset Tile States & Accumulate
+        for(let row of this.map) {
+            for(let t of row) {
+                if(t.type === TYPE.BUILDING) {
+                    if(t.bldType === BLD.POWER) pSup += CONFIG.CAPACITY.POWER;
+                    else if(t.bldType === BLD.WATER) wSup += CONFIG.CAPACITY.WATER;
+                    else if(!t.abandoned) {
+                        pDem += t.level;
+                        wDem += t.level;
+                    }
+                    // Reset Local Coverage
+                    t.serviceHealth = 0;
+                    t.serviceFire = 0;
+                }
+            }
+        }
+
+        // Apply Range Effects (Hospital/Fire)
+        // Optimization: Iterate only service buildings list (omitted for MVP, iterating full map)
+        for(let x=0; x<CONFIG.MAP_SIZE; x++) {
+            for(let y=0; y<CONFIG.MAP_SIZE; y++) {
+                let t = this.map[x][y];
+                if(t.type === TYPE.BUILDING) {
+                    if(t.bldType === BLD.HOSP) this.applyRange(x, y, CONFIG.CAPACITY.HOSP_RADIUS, 'serviceHealth');
+                    if(t.bldType === BLD.FIRE) this.applyRange(x, y, CONFIG.CAPACITY.FIRE_RADIUS, 'serviceFire');
+                }
+            }
+        }
+
+        // Update Global State
+        this.stats.pSupply = pSup; this.stats.pDemand = pDem;
+        this.stats.wSupply = wSup; this.stats.wDemand = wDem;
+
+        // Apply Power/Water to Tiles (Pool Method: if total > demand, everyone gets it)
+        // *Manual Section 10.1 (simplified): Power is connected by grid.* 
+        // For MVP, we use global pool + road connection implies grid.
+        const pOk = pSup >= pDem;
+        const wOk = wSup >= wDem;
+
+        for(let row of this.map) {
+            for(let t of row) {
+                if(t.type === TYPE.BUILDING && t.bldType === BLD.GENERIC) {
+                    t.hasPower = pOk && t.roadDist <= CONFIG.MAX_ROAD_DIST; // Needs grid connection
+                    t.hasWater = wOk && t.roadDist <= CONFIG.MAX_ROAD_DIST;
+                }
+            }
+        }
+        
+        this.updateHUD();
+    }
+
+    applyRange(cx, cy, r, prop) {
+        for(let x = cx-r; x <= cx+r; x++) {
+            for(let y = cy-r; y <= cy+r; y++) {
+                if(this.isValid(x,y)) {
+                    // Simple Box Distance (Manhattan or Euclidean)
+                    if(Math.abs(x-cx) + Math.abs(y-cy) <= r) {
+                        this.map[x][y][prop] = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    // --- LOGIC: ROAD DISTANCE (Flood Fill) ---
+    // Called when roads change.
+    updateRoadDistances() {
+        // Reset
+        let queue = [];
+        for(let x=0; x<CONFIG.MAP_SIZE; x++) {
+            for(let y=0; y<CONFIG.MAP_SIZE; y++) {
+                let t = this.map[x][y];
+                if(t.type === TYPE.ROAD_S || t.type === TYPE.ROAD_L) {
+                    t.roadDist = 0;
+                    queue.push(t);
+                } else {
+                    t.roadDist = 99;
+                }
+            }
+        }
+
+        // BFS
+        let head = 0;
+        const dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+        while(head < queue.length) {
+            let t = queue[head++];
+            if(t.roadDist >= CONFIG.MAX_ROAD_DIST) continue;
+
+            for(let d of dirs) {
+                let nx = t.x + d[0], ny = t.y + d[1];
+                if(this.isValid(nx, ny)) {
+                    let nt = this.map[nx][ny];
+                    if(nt.roadDist > t.roadDist + 1) {
+                        nt.roadDist = t.roadDist + 1;
+                        queue.push(nt);
+                    }
+                }
+            }
+        }
+    }
+
+    // --- AGENTS ---
+    updateAgents() {
+        // Simple car movement (visual only for MVP)
+        // Spawn cars on roads
+        if(this.agents.length < 50 && Math.random() < 0.1) {
+             // Find random road
+             let rx = Math.floor(Math.random()*CONFIG.MAP_SIZE);
+             let ry = Math.floor(Math.random()*CONFIG.MAP_SIZE);
+             if(this.map[rx][ry].type === TYPE.ROAD_L) {
+                 this.agents.push(new Agent(rx, ry, 'car'));
+             }
+        }
+
+        for(let a of this.agents) {
+            // Random walk logic
+            if(Math.abs(a.x - a.tx) < 0.1 && Math.abs(a.y - a.ty) < 0.1) {
+                // Pick new target
+                let dirs = [[0,1],[0,-1],[1,0],[-1,0]];
+                let dir = dirs[Math.floor(Math.random()*4)];
+                let nx = Math.round(a.x) + dir[0];
+                let ny = Math.round(a.y) + dir[1];
+                
+                if(this.isValid(nx, ny)) {
+                    let t = this.map[nx][ny];
+                    let walkable = false;
+                    if(a.type === 'car' && (t.type === TYPE.ROAD_S || t.type === TYPE.ROAD_L)) walkable = true;
+                    if(a.type === 'person' && t.type !== TYPE.WATER) walkable = true;
+                    
+                    if(walkable) { a.tx = nx; a.ty = ny; }
+                }
+            } else {
+                a.x += (a.tx - a.x) * a.speed;
+                a.y += (a.ty - a.y) * a.speed;
+            }
+        }
+    }
+
+    // --- RENDERER ---
+    render() {
+        const ctx = this.ctx;
+        
+        // 1. Clear & Background
+        ctx.fillStyle = '#000';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // 2. Camera Transform
+        ctx.save();
+        ctx.translate(this.canvas.width/2, this.canvas.height/2); // Center Origin
+        ctx.scale(this.cam.zoom, this.cam.zoom);
+        ctx.translate(-this.cam.x, -this.cam.y); // Camera Pan
+
+        // Viewport Culling
+        const TS = CONFIG.TILE_SIZE;
+        const viewW = this.canvas.width / this.cam.zoom;
+        const viewH = this.canvas.height / this.cam.zoom;
+        const startX = Math.floor((this.cam.x - viewW/2) / TS);
+        const endX = Math.ceil((this.cam.x + viewW/2) / TS);
+        const startY = Math.floor((this.cam.y - viewH/2) / TS);
+        const endY = Math.ceil((this.cam.y + viewH/2) / TS);
+
+        // 3. Draw Map
+        for(let x=Math.max(0, startX); x<Math.min(CONFIG.MAP_SIZE, endX); x++) {
+            for(let y=Math.max(0, startY); y<Math.min(CONFIG.MAP_SIZE, endY); y++) {
+                this.drawTile(ctx, this.map[x][y], x*TS, y*TS, TS);
+            }
+        }
+
+        // 4. Draw Agents
+        for(let a of this.agents) {
+            if(a.x < startX || a.x > endX || a.y < startY || a.y > endY) continue;
+            ctx.fillStyle = a.color;
+            let s = a.type==='car' ? TS*0.6 : TS*0.2;
+            ctx.fillRect(a.x*TS + (TS-s)/2, a.y*TS + (TS-s)/2, s, s);
+        }
+
+        // 5. Overlays (Selection Box)
+        if(this.isDrawing && this.drawStart && this.tool.startsWith('zone')) {
+            const sx = Math.min(this.drawStart.x, this.mouse.tx);
+            const ex = Math.max(this.drawStart.x, this.mouse.tx);
+            const sy = Math.min(this.drawStart.y, this.mouse.ty);
+            const ey = Math.max(this.drawStart.y, this.mouse.ty);
+            
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.fillRect(sx*TS, sy*TS, (ex-sx+1)*TS, (ey-sy+1)*TS);
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(sx*TS, sy*TS, (ex-sx+1)*TS, (ey-sy+1)*TS);
+        }
+
+        // Hover Highlight
+        if(this.isValid(this.mouse.tx, this.mouse.ty)) {
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(this.mouse.tx*TS, this.mouse.ty*TS, TS, TS);
+        }
+
+        ctx.restore();
+        
+        requestAnimationFrame(() => this.render());
+    }
+
+    drawTile(ctx, t, px, py, s) {
+        // Base Terrain
+        if(t.type === TYPE.WATER) ctx.fillStyle = '#54a0ff';
+        else if(t.type === TYPE.MOUNTAIN) ctx.fillStyle = '#636e72';
+        else if(t.type === TYPE.FOREST) ctx.fillStyle = '#009432';
+        else if(t.type === TYPE.OIL) ctx.fillStyle = '#2d3436';
+        else ctx.fillStyle = '#222'; // Default Ground
+        ctx.fillRect(px, py, s, s);
+        
+        // Grid (Subtle)
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(px, py, s, s);
+
+        // Zone Overlay
+        if(t.type === TYPE.EMPTY) {
+            if(t.zone === ZONE.RES) { ctx.fillStyle = 'rgba(0, 184, 148, 0.3)'; ctx.fillRect(px, py, s, s); } // Green
+            if(t.zone === ZONE.COM) { ctx.fillStyle = 'rgba(9, 132, 227, 0.3)'; ctx.fillRect(px, py, s, s); } // Blue
+            if(t.zone === ZONE.IND) { ctx.fillStyle = 'rgba(253, 203, 110, 0.3)'; ctx.fillRect(px, py, s, s); } // Yellow
+            if(t.zone === ZONE.FARM) { ctx.fillStyle = 'rgba(255, 234, 167, 0.3)'; ctx.fillRect(px, py, s, s); } // Light Yellow
+            if(t.zone === ZONE.FOREST) { ctx.fillStyle = 'rgba(85, 239, 196, 0.3)'; ctx.fillRect(px, py, s, s); } // Light Green
+        }
+
+        // Roads
+        if(t.type === TYPE.ROAD_S || t.type === TYPE.ROAD_L) {
+            ctx.fillStyle = t.type === TYPE.ROAD_L ? '#2d3436' : '#636e72';
+            ctx.fillRect(px, py, s, s);
+            // Markings
+            ctx.fillStyle = t.type === TYPE.ROAD_L ? '#fdcb6e' : '#b2bec3';
+            if(t.type === TYPE.ROAD_L) ctx.fillRect(px+s/2-1, py, 2, s); // Center line
+        }
+
+        // Buildings
+        if(t.type === TYPE.BUILDING) {
+            // Colors
+            let color = '#ccc';
+            if(t.zone === ZONE.RES) color = '#00b894';
+            else if(t.zone === ZONE.COM) color = '#0984e3';
+            else if(t.zone === ZONE.IND) color = '#fdcb6e';
+            else if(t.zone === ZONE.FARM) color = '#ffeaa7';
+            else if(t.zone === ZONE.FOREST) color = '#006266';
+            else if(t.bldType === BLD.POWER) color = '#e17055';
+            else if(t.bldType === BLD.WATER) color = '#74b9ff';
+            else if(t.bldType === BLD.HOSP) color = '#ff7675';
+            else if(t.bldType === BLD.FIRE) color = '#d63031';
+
+            if(t.abandoned) color = '#636e72'; // Dark Grey for abandoned
+
+            // 3D-ish Block
+            let h = t.level * 4 + 4;
+            if(t.bldType !== BLD.GENERIC) h = 12; // Service bld height
+            
+            ctx.fillStyle = 'rgba(0,0,0,0.5)'; // Shadow
+            ctx.fillRect(px+4, py+4, s-8, s-8);
+
+            ctx.fillStyle = color;
+            ctx.fillRect(px+2, py+2 - h, s-4, s-4+h);
+            
+            // Roof highlight
+            ctx.fillStyle = 'rgba(255,255,255,0.2)';
+            ctx.fillRect(px+2, py+2 - h, s-4, s-4);
+
+            // Icons
+            if(t.bldType === BLD.HOSP) { ctx.fillStyle='#fff'; ctx.fillText('✚', px+8, py-5); }
+            if(t.bldType === BLD.FIRE) { ctx.fillStyle='#fff'; ctx.fillText('🚒', px+8, py-5); }
+            
+            // Warnings (Flash)
+            if(!t.abandoned && t.bldType === BLD.GENERIC && (!t.hasPower || !t.hasWater)) {
+                if(Math.floor(Date.now()/500)%2===0) {
+                    ctx.font = '12px Arial';
+                    ctx.fillStyle = '#ff0';
+                    ctx.fillText(!t.hasPower ? '⚡' : '💧', px+8, py-h);
+                }
+            }
+        }
+    }
+
+    // --- INPUT HANDLING (Corrected Coordinates) ---
+    setupEvents() {
+        // Mouse Move (Track Coords)
+        window.addEventListener('mousemove', e => {
+            this.mouse.x = e.clientX;
+            this.mouse.y = e.clientY;
+            this.updateMouseWorld();
+
+            if(this.drag.active) {
+                this.cam.x = this.drag.cx - (this.mouse.x - this.drag.sx) / this.cam.zoom;
+                this.cam.y = this.drag.cy - (this.mouse.y - this.drag.sy) / this.cam.zoom;
+            } else if (this.isDrawing && !this.tool.startsWith('zone')) {
+                // Drag painting (Roads)
+                this.applyTool(this.mouse.tx, this.mouse.ty, false);
+            }
+        });
+
+        // Mouse Down
+        this.canvas.addEventListener('mousedown', e => {
+            if(e.button === 2) { // Right Click Pan
+                this.drag.active = true;
+                this.drag.sx = e.clientX;
+                this.drag.sy = e.clientY;
+                this.drag.cx = this.cam.x;
+                this.drag.cy = this.cam.y;
+            } else { // Left Click Tool
+                this.isDrawing = true;
+                this.drawStart = {x: this.mouse.tx, y: this.mouse.ty};
+                if(this.tool === 'select') this.showInfo(this.mouse.tx, this.mouse.ty);
+                else this.applyTool(this.mouse.tx, this.mouse.ty, true);
+            }
+        });
+
+        // Mouse Up
+        window.addEventListener('mouseup', e => {
+            this.drag.active = false;
+            if(this.isDrawing && this.tool.startsWith('zone')) {
+                this.applyZoneFill(this.drawStart, {x:this.mouse.tx, y:this.mouse.ty});
+            }
+            this.isDrawing = false;
+        });
+
+        // Zoom
+        this.canvas.addEventListener('wheel', e => {
+            e.preventDefault();
+            const zoomSens = 0.001;
+            const newZoom = Math.min(Math.max(this.cam.zoom * (1 - e.deltaY * zoomSens), CONFIG.ZOOM_MIN), CONFIG.ZOOM_MAX);
+            
+            // Zoom towards mouse pointer logic could go here, staying center for stability
+            this.cam.zoom = newZoom;
+        }, {passive: false});
+
+        // Context Menu
+        window.addEventListener('contextmenu', e => e.preventDefault());
+        window.addEventListener('resize', () => this.resize());
+    }
+
+    updateMouseWorld() {
+        // Center Origin Transform Inverse
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+        
+        // Screen to World
+        this.mouse.wx = (this.mouse.x - cx) / this.cam.zoom + this.cam.x;
+        this.mouse.wy = (this.mouse.y - cy) / this.cam.zoom + this.cam.y;
+        
+        this.mouse.tx = Math.floor(this.mouse.wx / CONFIG.TILE_SIZE);
+        this.mouse.ty = Math.floor(this.mouse.wy / CONFIG.TILE_SIZE);
+    }
+
+    // --- TOOL LOGIC ---
+    setTool(name) {
+        this.tool = name;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        // Find button by onclick attribute (simple hack)
+        const btn = document.querySelector(`.tool-btn[onclick="game.setTool('${name}')"]`);
+        if(btn) btn.classList.add('active');
+        this.notify("ツール: " + name);
+    }
+
+    applyTool(x, y, isClick) {
+        if(!this.isValid(x, y)) return;
+        const t = this.map[x][y];
+        let cost = 0;
+        let applied = false;
+
+        // Roads
+        if(this.tool === 'road_s' || this.tool === 'road_l') {
+            cost = this.tool === 'road_s' ? CONFIG.COST.ROAD_S : CONFIG.COST.ROAD_L;
+            if(t.type !== TYPE.ROAD_S && t.type !== TYPE.ROAD_L && t.type !== TYPE.WATER) {
+                if(this.spend(cost)) {
+                    t.type = this.tool === 'road_s' ? TYPE.ROAD_S : TYPE.ROAD_L;
+                    t.zone = ZONE.NONE; 
+                    t.bldType = BLD.GENERIC;
+                    applied = true;
+                }
+            }
+        }
+        // Bulldoze
+        else if(this.tool === 'bulldoze') {
+            if(t.type !== TYPE.EMPTY && t.type !== TYPE.WATER) {
+                if(this.spend(CONFIG.COST.DEMOLISH)) {
+                    t.type = TYPE.EMPTY;
+                    t.zone = ZONE.NONE;
+                    t.bldType = BLD.GENERIC;
+                    t.level = 0; t.pop = 0;
+                    applied = true;
+                }
+            }
+        }
+        // Buildings (Click Only)
+        else if(isClick && this.tool.startsWith('bld_')) {
+            let bType = BLD.GENERIC;
+            if(this.tool === 'bld_power') { bType = BLD.POWER; cost = CONFIG.COST.POWER; }
+            if(this.tool === 'bld_water') { bType = BLD.WATER; cost = CONFIG.COST.WATER; }
+            if(this.tool === 'bld_hosp')  { bType = BLD.HOSP;  cost = CONFIG.COST.HOSP; }
+            if(this.tool === 'bld_fire')  { bType = BLD.FIRE;  cost = CONFIG.COST.FIRE; }
+
+            // Constraints
+            if(bType === BLD.WATER && !this.isNearWater(x, y)) { this.notify("水辺が必要です", true); return; }
+            if(bType !== BLD.WATER && !this.isNearRoad(x, y)) { this.notify("道路接続が必要です", true); return; }
+
+            if(t.type === TYPE.EMPTY && this.spend(cost)) {
+                t.type = TYPE.BUILDING;
+                t.bldType = bType;
+                applied = true;
+            }
+        }
+        
+        if(applied) {
+            // Recalculate Road distances if road changed
+            if(this.tool.includes('road') || this.tool === 'bulldoze') {
+                this.updateRoadDistances();
+            }
+        }
+    }
+
+    applyZoneFill(start, end) {
+        const sx = Math.min(start.x, end.x), ex = Math.max(start.x, end.x);
+        const sy = Math.min(start.y, end.y), ey = Math.max(start.y, end.y);
+        
+        let z = ZONE.NONE;
+        if(this.tool === 'zone_res') z = ZONE.RES;
+        if(this.tool === 'zone_com') z = ZONE.COM;
+        if(this.tool === 'zone_ind') z = ZONE.IND;
+        if(this.tool === 'zone_farm') z = ZONE.FARM;
+        if(this.tool === 'zone_forest') z = ZONE.FOREST;
+
+        let cost = 0;
+        let count = 0;
+
+        for(let x=sx; x<=ex; x++) {
+            for(let y=sy; y<=ey; y++) {
+                if(this.isValid(x,y) && this.map[x][y].type === TYPE.EMPTY) {
+                    cost += CONFIG.COST.ZONE;
+                    count++;
+                }
+            }
+        }
+
+        if(this.spend(cost)) {
+            for(let x=sx; x<=ex; x++) {
+                for(let y=sy; y<=ey; y++) {
+                    if(this.isValid(x,y) && this.map[x][y].type === TYPE.EMPTY) {
+                        this.map[x][y].zone = z;
+                    }
+                }
+            }
+        }
+    }
+
+    // --- ECONOMY & TIME ---
+    spend(amt) {
+        if(this.money >= amt) {
+            this.money -= amt;
+            this.updateUI();
+            return true;
+        }
+        this.notify("資金不足!", true);
+        return false;
+    }
+
+    advanceDate() {
+        this.date.d++;
+        if(this.date.d > 30) {
+            this.date.d = 1; this.date.m++;
+        }
+        if(this.date.m > 12) {
+            this.date.m = 1; this.date.y++;
+        }
+    }
+
+    calcEconomy() {
+        let tax = 0;
+        let maint = 0;
+        let pop = 0;
+
+        for(let col of this.map) {
+            for(let t of col) {
+                // Maintenance
+                if(t.type === TYPE.ROAD_S) maint += CONFIG.MAINTENANCE.ROAD_S;
+                if(t.type === TYPE.ROAD_L) maint += CONFIG.MAINTENANCE.ROAD_L;
+                if(t.type === TYPE.BUILDING) {
+                    if(t.bldType === BLD.POWER) maint += CONFIG.MAINTENANCE.POWER;
+                    else if(t.bldType === BLD.WATER) maint += CONFIG.MAINTENANCE.WATER;
+                    else if(t.bldType === BLD.HOSP) maint += CONFIG.MAINTENANCE.HOSP;
+                    else if(t.bldType === BLD.FIRE) maint += CONFIG.MAINTENANCE.FIRE;
+                    else if(!t.abandoned) {
+                        // Tax Income
+                        let rate = 5; // Base
+                        if(t.zone === ZONE.COM) rate = 8;
+                        if(t.zone === ZONE.IND || t.zone === ZONE.OIL) rate = 10;
+                        tax += rate * t.level;
+                        pop += t.pop;
+                    }
+                }
+            }
+        }
+        this.money += (tax - maint);
+        this.notify(`月次報告: 収支 ${tax-maint > 0 ? '+' : ''}${tax-maint} (税${tax} - 維持${maint})`);
+    }
+
+    setSpeed(s) {
+        this.speed = s;
+        this.paused = false;
+        // Update UI buttons
+        document.querySelectorAll('.time-btn').forEach((b, i) => {
+            if(i < 3) b.classList.toggle('active', i+1 === s);
+        });
+    }
+
+    togglePause() {
+        this.paused = !this.paused;
+        this.notify(this.paused ? "一時停止" : "再開");
+    }
+
+    // --- UI HELPERS ---
+    updateUI() {
+        document.getElementById('ui-money').innerText = `¥${this.money.toLocaleString()}`;
+        
+        let pop = 0; 
+        for(let r of this.map) for(let t of r) pop += t.pop;
+        document.getElementById('ui-pop').innerText = pop.toLocaleString();
+        
+        document.getElementById('ui-date').innerText = `${this.date.y}/${this.date.m}/${this.date.d}`;
+
+        // Utility Bars
+        let pPct = this.stats.pDemand > 0 ? Math.floor(this.stats.pSupply/this.stats.pDemand*100) : 100;
+        let wPct = this.stats.wDemand > 0 ? Math.floor(this.stats.wSupply/this.stats.wDemand*100) : 100;
+        
+        const elP = document.getElementById('ui-elec');
+        const elW = document.getElementById('ui-water');
+        
+        elP.innerText = `${pPct}%`;
+        elP.className = 'val ' + (pPct < 100 ? 'err' : '');
+        
+        elW.innerText = `${wPct}%`;
+        elW.className = 'val ' + (wPct < 100 ? 'err' : '');
+    }
+
+    showInfo(x, y) {
+        if(!this.isValid(x, y)) return;
+        const t = this.map[x][y];
+        const p = document.getElementById('panel-info');
+        const c = document.getElementById('info-content');
+        p.style.display = 'block';
+
+        let typeStr = "空き地";
+        if(t.type === TYPE.ROAD_S) typeStr = "小道";
+        if(t.type === TYPE.ROAD_L) typeStr = "大通り";
+        if(t.type === TYPE.BUILDING) {
+            if(t.bldType === BLD.GENERIC) typeStr = "一般建物";
+            if(t.bldType === BLD.POWER) typeStr = "発電所";
+            if(t.bldType === BLD.WATER) typeStr = "ポンプ";
+            if(t.bldType === BLD.HOSP) typeStr = "病院";
+            if(t.bldType === BLD.FIRE) typeStr = "消防署";
+        }
+        
+        let zoneStr = "指定なし";
+        if(t.zone === ZONE.RES) zoneStr = "住宅";
+        if(t.zone === ZONE.COM) zoneStr = "商業";
+        if(t.zone === ZONE.IND) zoneStr = "産業";
+        if(t.zone === ZONE.FARM) zoneStr = "農業";
+        if(t.zone === ZONE.FOREST) zoneStr = "林業";
+
+        c.innerHTML = `
+            <b>座標:</b> ${x}, ${y}<br>
+            <b>種類:</b> ${typeStr}<br>
+            <b>区画:</b> ${zoneStr}<br>
+            <b>道路距離:</b> ${t.roadDist}マス<br>
+            <hr>
+            人口/雇用: ${t.pop}<br>
+            レベル: ${t.level}<br>
+            ${t.type===TYPE.BUILDING && t.bldType===BLD.GENERIC ? 
+                `電力: ${t.hasPower?'OK':'<span style="color:red">切断</span>'}<br>
+                 水道: ${t.hasWater?'OK':'<span style="color:red">切断</span>'}<br>
+                 健康度: ${t.serviceHealth ? '高' : '低'}<br>
+                 火災対策: ${t.serviceFire ? '高' : '低'}` : ''
+            }
+        `;
+    }
+
+    notify(msg, err=false) {
+        const d = document.createElement('div');
+        d.className = 'msg';
+        d.style.borderLeft = err ? '4px solid #d63031' : '4px solid #00b894';
+        d.innerText = msg;
+        document.getElementById('msg-area').appendChild(d);
+        setTimeout(()=>d.remove(), 4000);
+    }
+
+    // --- UTILS ---
+    isValid(x, y) { return x>=0 && x<CONFIG.MAP_SIZE && y>=0 && y<CONFIG.MAP_SIZE; }
+    getTerrainAt(x, y) { return this.isValid(x,y) ? this.map[x][y].type : TYPE.EMPTY; }
+    isNearWater(x, y) {
+        return [[0,1],[0,-1],[1,0],[-1,0]].some(d => {
+            let nx=x+d[0], ny=y+d[1];
+            return this.isValid(nx,ny) && this.map[nx][ny].type === TYPE.WATER;
+        });
+    }
+    isNearRoad(x, y) {
+        return [[0,1],[0,-1],[1,0],[-1,0]].some(d => {
+            let nx=x+d[0], ny=y+d[1];
+            return this.isValid(nx,ny) && (this.map[nx][ny].type === TYPE.ROAD_S || this.map[nx][ny].type === TYPE.ROAD_L);
+        });
+    }
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+    save() {
+        const data = { money:this.money, date:this.date, map: this.map.map(r => r.map(t => ({
+            type: t.type, zone: t.zone, bldType: t.bldType, level: t.level
+        })))};
+        localStorage.setItem('c2d_save', JSON.stringify(data));
+        this.notify("セーブしました");
+    }
+}
+
+// Start
+const game = new Game();
+
+</script>
+</body>
+</html>
