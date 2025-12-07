@@ -33,6 +33,7 @@ const items = [
 { title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "試験運用中", category: "fun" },
 { title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/選択.html", recommend: "作るの頑張った", category: "fun" },
 { title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
+{ title: "街づくり", description: "大きな町を作ろう", thumbnail: "./apps/appcity/thumbnail.png", url: "./apps/appctyi/index.html", recommend: null, category: "fun" },   
 { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
 { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
 { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
