@@ -2,25 +2,330 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
 <title>翻訳</title>
 <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;800;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
-<link rel="stylesheet" href="style.css">
+
+<style>
+/* =========================================
+   CSS Styles: Final Version with Menu & GAS
+   ========================================= */
+:root {
+  --bg-color: #587096;
+  --board-bg: #273142;
+  --cell-empty: #1f2735;
+  --text-color: #ffffff;
+  
+  /* Block Colors */
+  --color-red: #E55B5B;
+  --color-pink: #D969B6;
+  --color-blue: #4FA3D6;
+  --color-purple: #9C6AD6;
+  --color-yellow: #F4C430;
+  --color-cyan: #4DD0E1;
+  --color-orange: #FF9800;
+
+  /* Dynamic Variables */
+  --tile-size: 40px; 
+  --board-padding: 8px;
+  --piece-area-height: 180px;
+  --piece-scale: 1.0;
+}
+
+html, body {
+  height: 100%; width: 100%; margin: 0; padding: 0;
+  font-family: "M PLUS Rounded 1c", sans-serif;
+  background-color: var(--bg-color); color: var(--text-color);
+  user-select: none; overflow: hidden; touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.hidden { display: none !important; }
+
+/* Loader */
+#loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+#skipBtn {
+  position: absolute; bottom: 40px; right: 20px; padding: 12px 30px;
+  background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.4);
+  color: #fff; border-radius: 30px; cursor: pointer; z-index: 10000; font-weight: 800; backdrop-filter: blur(5px);
+}
+#staffRollContainer { width: 100%; height: 100%; position: relative; overflow: hidden; }
+.credits-list {
+  position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  width: 90%; max-width: 600px; color: #ccc; text-align: center;
+  font-size: 14px; animation: scroll-up 14s linear forwards;
+}
+.credits-list pre { font-family: inherit; font-size: 1.1em; line-height: 2; text-align: left; margin: 0; white-space: pre-wrap; }
+@keyframes scroll-up { 0% { top: 100%; } 100% { top: -120%; } }
+#loadComplete { text-align: center; opacity: 0; }
+#loadComplete h1 { font-size: 40px; font-weight: 800; color: #fff; text-shadow: 0 0 15px #4D96FF; }
+.fade-in { animation: fadeIn 0.5s ease-out forwards; }
+.fade-out { animation: fadeOut 0.5s ease-in forwards; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* --- Main Menu --- */
+#mainMenuScreen {
+  position: fixed; inset: 0; background: var(--bg-color); z-index: 8000;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.menu-title { font-size: 60px; font-weight: 900; margin-bottom: 50px; text-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+.menu-btn-large {
+  width: 240px; padding: 20px; margin: 10px; border-radius: 16px;
+  font-size: 24px; font-weight: 800; color: #fff; border: none; cursor: pointer;
+  box-shadow: 0 8px 0 rgba(0,0,0,0.2); transition: transform 0.1s;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.menu-btn-large:active { transform: translateY(4px); box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+#playGameBtn { background: linear-gradient(135deg, #4D96FF, #2196F3); }
+#viewRankingBtn { background: linear-gradient(135deg, #FFD54F, #FFCA28); color: #333; }
+
+/* Control Select Modal */
+#controlSelectModal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 9500;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(8px);
+}
+.cs-content {
+  background: var(--board-bg); padding: 40px; border-radius: 20px;
+  text-align: center; max-width: 600px; width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1);
+}
+.cs-title { font-size: 32px; font-weight: 900; margin-bottom: 30px; color: #fff; }
+.cs-options { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; }
+.cs-btn {
+  flex: 1; min-width: 200px; padding: 20px; border-radius: 12px;
+  background: rgba(255,255,255,0.1); border: 2px solid rgba(255,255,255,0.2);
+  color: #fff; cursor: pointer; transition: all 0.2s;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+}
+.cs-btn:hover { background: rgba(77, 150, 255, 0.2); border-color: #4D96FF; transform: translateY(-5px); }
+.cs-icon { font-size: 40px; margin-bottom: 10px; }
+.cs-label { font-size: 20px; font-weight: 800; }
+.cs-desc { font-size: 13px; color: #aaa; line-height: 1.4; }
+
+/* --- App Layout --- */
+.app-container {
+  width: 100%; height: 100%; display: flex; flex-direction: column; 
+  align-items: center; justify-content: space-between; position: relative; transition: all 0.3s ease;
+}
+.info-section {
+  width: 100%; flex: 0 0 auto; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; position: relative; padding: 10px 0; z-index: 20;
+}
+.score-display {
+  font-size: 60px; font-weight: 900; color: #fff; text-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  line-height: 1; transition: transform 0.1s;
+}
+.score-display.bump { transform: scale(1.2); }
+.best-score-display {
+  display: flex; align-items: center; gap: 6px;
+  background: rgba(0,0,0,0.2); padding: 4px 12px; border-radius: 12px;
+  margin-top: 5px; font-size: 14px; font-weight: 700; color: #FFD54F;
+}
+.menu-btn {
+  width: 44px; height: 44px; background: rgba(255,255,255,0.15); border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  position: absolute; top: 10px; right: 10px;
+}
+.hamburger span { display: block; width: 22px; height: 3px; background: #fff; margin: 4px auto; border-radius: 2px; }
+
+.board-section { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; position: relative; }
+.board-container {
+  background: var(--board-bg); padding: var(--board-padding); border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.board { display: grid; grid-template-columns: repeat(8, var(--tile-size)); grid-template-rows: repeat(8, var(--tile-size)); gap: 3px; }
+.cell {
+  width: var(--tile-size); height: var(--tile-size); background: var(--cell-empty);
+  border-radius: 4px; position: relative; box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
+}
+
+.pieces-section {
+  width: 100%; height: var(--piece-area-height); flex: 0 0 auto;
+  display: flex; justify-content: center; align-items: center; gap: 20px; padding-bottom: 20px;
+}
+.piece-slot {
+  width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;
+  transition: transform 0.2s; cursor: pointer;
+}
+.piece-slot:active { transform: scale(0.95); }
+.piece-slot.selected {
+  background: rgba(255,255,255,0.1); border-radius: 12px; box-shadow: 0 0 15px rgba(77, 150, 255, 0.5); transform: scale(1.05);
+}
+
+@media (min-aspect-ratio: 1.1/1) and (min-height: 500px) {
+  :root { --piece-scale: 1.1; }
+  .app-container { flex-direction: row; justify-content: center; align-items: stretch; padding-top: 40px; box-sizing: border-box; }
+  .info-section {
+    width: 250px; height: 100%; border-right: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0,0,0,0.1); justify-content: flex-start; padding-top: 40px; margin-top: -40px; padding-bottom: 40px;
+  }
+  .menu-btn { top: 20px; left: 20px; right: auto; }
+  .score-display { font-size: 50px; margin-top: 40px; }
+}
+@media (max-width: 600px) {
+  :root { --piece-scale: 0.85; --piece-area-height: 140px; }
+  .piece-slot { width: 80px; height: 80px; }
+}
+
+/* Tiles & Effects */
+.tile {
+  width: 100%; height: 100%; border-radius: 4px; position: absolute; top: 0; left: 0; box-sizing: border-box;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2), 0 3px 6px rgba(0,0,0,0.4);
+  border: 1px solid rgba(0,0,0,0.1); transition: transform 0.1s;
+}
+.tile::after {
+  content: ''; position: absolute; top: 10%; left: 10%; width: 40%; height: 40%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%); border-radius: 50%; pointer-events: none;
+}
+.tile[data-color="#E55B5B"] { background: var(--color-red); }
+.tile[data-color="#D969B6"] { background: var(--color-pink); }
+.tile[data-color="#4FA3D6"] { background: var(--color-blue); }
+.tile[data-color="#9C6AD6"] { background: var(--color-purple); }
+.tile[data-color="#F4C430"] { background: var(--color-yellow); }
+.tile[data-color="#4DD0E1"] { background: var(--color-cyan); }
+.tile[data-color="#FF9800"] { background: var(--color-orange); }
+
+.draggable-piece {
+  display: grid; gap: 2px; touch-action: none; pointer-events: none;
+  transform: scale(var(--piece-scale)); transform-origin: center; transition: transform 0.1s;
+  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+@keyframes slideUp { from { opacity: 0; transform: scale(0.5) translateY(30px); } to { opacity: 1; transform: scale(var(--piece-scale)) translateY(0); } }
+
+.dragging-clone {
+  position: fixed; z-index: 9000; pointer-events: none; display: grid; gap: 2px; opacity: 0.95;
+  filter: drop-shadow(0 20px 40px rgba(0,0,0,0.6)); transform: translate(-50%, -50%) scale(1.1); will-change: left, top;
+}
+.dragging-clone .mini-tile {
+  width: var(--tile-size); height: var(--tile-size); border-radius: 4px;
+  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2);
+}
+.dragging-clone.mobile-offset { margin-top: -100px; }
+.ghost-tile {
+  background: rgba(255, 255, 255, 0.3); position: absolute; inset: 0; border-radius: 4px; z-index: 5;
+  box-shadow: 0 0 8px rgba(255,255,255,0.6);
+}
+.particle {
+  position: absolute; width: 100%; height: 100%; top:0; left:0; border-radius: 2px;
+  pointer-events: none; z-index: 25; animation: particleBurst 0.6s ease-out forwards;
+}
+@keyframes particleBurst {
+  0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
+  100% { transform: translate(var(--tx), var(--ty)) scale(0) rotate(var(--rot)); opacity: 0; }
+}
+.clearing .tile {
+  background-color: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.1); z-index: 30; opacity: 1;
+  animation: flashFade 0.2s ease-out forwards;
+}
+@keyframes flashFade { 0% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(0.5); } }
+.line-effect {
+  position: absolute; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.9), transparent);
+  z-index: 20; pointer-events: none; mix-blend-mode: overlay; animation: shine 0.3s ease-out forwards;
+}
+@keyframes shine { 0% { opacity: 0; transform: scaleX(0.5); } 50% { opacity: 1; transform: scaleX(1.2); } 100% { opacity: 0; transform: scaleX(1.5); } }
+
+/* Feedback */
+.feedback-popup {
+  position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
+  pointer-events: none; z-index: 100; text-align: center; width: 100%;
+  animation: bouncePop 2.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+@keyframes bouncePop {
+  0% { opacity: 0; transform: translate(-50%, 0) scale(0.3) rotate(-10deg); }
+  15% { opacity: 1; transform: translate(-50%, -50%) scale(1.3) rotate(0deg); }
+  25% { transform: translate(-50%, -50%) scale(1.0); }
+  75% { opacity: 1; transform: translate(-50%, -50%) scale(1.0); }
+  100% { opacity: 0; transform: translate(-50%, -150%) scale(1.5); }
+}
+.feedback-text {
+  font-size: 64px; font-weight: 900;
+  background: linear-gradient(to bottom, #FFF 20%, #FFEB3B 50%, #FF9800 80%); -webkit-background-clip: text; color: transparent;
+  -webkit-text-stroke: 3px #E65100; text-shadow: 0 5px 15px rgba(0,0,0,0.5); font-style: italic; display: block; letter-spacing: 2px;
+}
+.feedback-combo {
+  font-size: 72px; font-weight: 900;
+  background: linear-gradient(to bottom, #FFF 10%, #FF4081 50%, #C51162 90%); -webkit-background-clip: text; color: transparent;
+  -webkit-text-stroke: 3px #880E4F; text-shadow: 0 0 30px rgba(255, 64, 129, 0.8); display: block; transform: rotate(-5deg);
+}
+.feedback-sub {
+  font-size: 32px; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display: block; margin-top: 5px;
+}
+
+/* Modals & Overlays */
+.game-over-overlay {
+  position: fixed; inset: 0; background: linear-gradient(135deg, #2196F3, #1976D2);
+  z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.5s ease-out;
+}
+.go-title { font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.3); margin-bottom: 20px; }
+.go-score-val { font-size: 64px; color: #fff; font-weight: 900; margin-bottom: 10px; text-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+.go-best-val { font-size: 24px; color: #FFD54F; font-weight: 800; margin-bottom: 40px; }
+.go-btn {
+  width: 80px; height: 80px; border-radius: 50%; background: #64DD17; border: 4px solid #fff;
+  display: flex; align-items: center; justify-content: center; cursor: pointer;
+  box-shadow: 0 10px 20px rgba(0,0,0,0.3); transition: transform 0.1s;
+}
+.go-btn:active { transform: scale(0.9); }
+.go-btn::after {
+  content: ''; width: 0; height: 0; margin-left: 6px; border-left: 24px solid #fff;
+  border-top: 16px solid transparent; border-bottom: 16px solid transparent;
+}
+
+#menu-panel {
+  position: fixed; top: 0; right: -300px; width: 260px; height: 100%;
+  background: #273142; box-shadow: -5px 0 30px rgba(0,0,0,0.5);
+  z-index: 6000; transition: right 0.3s ease; padding: 60px 20px; box-sizing: border-box;
+}
+#menu-panel.open { right: 0; }
+.menu-item {
+  padding: 16px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #fff;
+  cursor: pointer; font-weight: 700; display: flex; align-items: center; gap: 10px;
+}
+.menu-close-area { position: fixed; inset: 0; z-index: 5999; display: none; }
+.menu-close-area.open { display: block; }
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 7000;
+  display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
+}
+.modal-content {
+  background: #273142; width: 90%; max-width: 360px; padding: 24px;
+  border-radius: 16px; text-align: center; color: #fff; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+}
+.btn {
+  padding: 10px 20px; border-radius: 20px; background: #4D96FF; color: #fff;
+  border: none; font-weight: 800; cursor: pointer; font-size: 16px; margin-top: 10px;
+}
+#fake-translator {
+  position: fixed; inset: 0; background: #fff; z-index: 10000; color: #222; font-family: sans-serif; display: flex; flex-direction: column;
+}
+.trans-head { padding: 15px; border-bottom: 1px solid #ddd; display: flex; gap: 10px; color: #666; font-size: 20px; align-items: center; }
+.trans-body { flex: 1; padding: 20px; background: #f5f5f5; display: flex; flex-direction: column; gap: 10px; }
+.trans-area { background: #fff; border: 1px solid #ccc; border-radius: 8px; padding: 10px; flex: 1; display:flex; flex-direction:column; }
+.trans-area textarea { border:none; resize:none; font-size:18px; flex:1; outline:none; }
+
+/* New Record Modal */
+#newRecordModal .modal-content { border: 2px solid #FFD54F; }
+#newRecordName { width: 80%; padding: 12px; margin: 15px 0; border-radius: 8px; border: none; font-size: 18px; text-align: center; }
+</style>
 </head>
 <body>
-  <!-- 開発者モードHUD -->
-  <div id="dev-hud" class="hidden"></div>
-  <div id="dev-console" class="hidden"></div>
-  <!-- Sokohara Record -->
-  <div id="sokohara-record" class="hidden"></div>
 
-  <div class="container">
-    <div id="loader">
-      <button id="skipBtn">スキップ</button>
-      <div id="staffRollContainer">
-        <div class="credits-list">
-          <pre>
+  <!-- GAS URL SETTING -->
+  <script>
+    // ↓↓↓↓↓ ここにGASのURLを貼る ↓↓↓↓↓
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyuXGluUKK1eC_iZpaFwrFiMz4obZ1LlMWadzBiZnoEASbMlHJarKsjjdp6wTsPJjeg/exec"; 
+    // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
+  </script>
+
+  <!-- Load Screen -->
+  <div id="loader">
+    <button id="skipBtn">スキップ ⏩</button>
+    <div id="staffRollContainer">
+      <div class="credits-list">
+        <pre>
 プロデューサー .................. とわ
 ディレクター .................... とわ
 エグゼクティブプロデューサー .... とわ
@@ -66,185 +371,118 @@ PR .............................. とわ
 コミュニティマネージャー ........ とわ
 公式サイト運営 .................. とわ
 スペシャルサンクス .............. とわ
-          </pre>
-        </div>
-      </div>
-      <div id="loadComplete" class="hidden">
-        <h1>とわ作成</h1>
+        </pre>
       </div>
     </div>
+  </div>
 
-    <div id="hamburger-icon">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-    <div id="menu-panel">
-      <div class="menu-item" id="menu-restart-btn">
-        <span>やり直す</span>
-      </div>
-       <div class="menu-item" id="menu-ranking-btn">
-        <span>ランキング</span>
-      </div>
-      <div class="menu-item">
-        <span>サウンド</span>
-        <label class="switch">
-          <input type="checkbox" id="sound-toggle" checked>
-          <span class="slider"></span>
-        </label>
-      </div>
-      <div class="menu-item" id="menu-share-btn">
-          <span>共有する</span>
-      </div>
-      <div class="menu-item" id="menu-dev-mode-btn">
-          <span>開発者モード</span>
+  <!-- PC Control Selection -->
+  <div id="controlSelectModal" class="hidden">
+    <div class="cs-content">
+      <div class="cs-title">操作方法を選択</div>
+      <div class="cs-options">
+        <div class="cs-btn" id="modeDragBtn">
+          <div class="cs-icon">👆</div>
+          <div class="cs-label">直感操作</div>
+          <div class="cs-desc">スマホのようにドラッグ&ドロップでブロックを配置します。</div>
+        </div>
+        <div class="cs-btn" id="modeClickBtn">
+          <div class="cs-icon">🖱️</div>
+          <div class="cs-label">精密操作</div>
+          <div class="cs-desc">ブロックをクリック選択後、盤面をクリックして配置します。</div>
+        </div>
       </div>
     </div>
+  </div>
 
-    <div class="app hidden" role="application" aria-label="ブロックトレーニング" id="appContainer">
-      <!-- CPU対戦用パネル (ここから) -->
-      <div class="game-panel hidden" id="cpuPanel">
-        <div class="header">
-          <div class="title">CPU</div>
-          <div class="meta">
-            <div class="box" id="cpuLevelBox">Level: 1</div>
-            <div class="box" id="cpuScoreBox">Score: 0</div>
-          </div>
-        </div>
-        <div class="board-wrap">
-          <div class="board" id="cpuBoard" aria-label="CPUの盤面"></div>
-        </div>
-      </div>
-      <!-- CPU対戦用パネル (ここまで) -->
-      
-      <div class="game-panel" id="gamePanel">
-        <div class="header">
-          <div class="title">ブロックトレーニング</div>
-          <div class="meta">
-            <div class="box" id="modeBox">通常モード</div>
-            <div class="box hidden" id="timerBox">Time: 03:00</div>
-            <div class="box" id="scoreBox">Score: 0</div>
-            <div class="box" id="highBox">High: 0</div>
-          </div>
-        </div>
-        <div class="board-wrap">
-          <div class="board" id="board" aria-label="トレーニング盤"></div>
-          <div style="display:flex;flex-direction:column;gap:10px;width:220px;">
-            <div class="note">操作方法: 右側のピースをクリック → 盤面のセルをクリックで配置</div>
-            <div class="note">プレビュー: ピース選択中にセルにマウスを乗せると置けるか透過で表示</div>
-            <div class="note muted">回転は無し（必要なら追加可）</div>
-          </div>
-        </div>
-      </div>
+  <!-- Main Menu -->
+  <div id="mainMenuScreen" class="hidden">
+    <div class="menu-title">Block Training</div>
+    <button class="menu-btn-large" id="playGameBtn">▶ PLAY</button>
+    <button class="menu-btn-large" id="viewRankingBtn">👑 RANKING</button>
+  </div>
 
-      <aside class="side" id="side">
-        <h3>Available Pieces</h3>
-        <div class="pieces" id="piecesContainer" role="list"></div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          <div class="scorebox">
-            <div class="muted">Current:</div>
-            <div id="currentScore" style="font-weight:800">0</div>
-          </div>
-          <div class="scorebox">
-            <div class="muted">Best:</div>
-            <div id="bestScore" style="font-weight:800">0</div>
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:6px;">
-          <button class="btn" id="restartBtn">やり直す</button>
-          <button class="btn ghost" id="hintBtn">ヒント</button>
-        </div>
-        <div style="margin-top:auto">
-          <div class="muted">遊び方</div>
-          <div class="note">行または列が埋まると消える。1列 = 100点。複数同時消去はコンボボーナス。</div>
-        </div>
-        <div style="margin-top:12px;">
-          <div class="muted">フィードバック</div>
-          <div class="note">
-              <a href="https://forms.gle/Twv47c7AG9uAM2fG6" target="_blank" rel="noopener noreferrer" style="color: #9fb0d3;">アンケートにご協力ください</a>
-          </div>
-          <div class="note" style="margin-top: 8px;">
-              【ヒント】エンターキーで偽サイトモードON/OFF
-          </div>
-        </div>
-      </aside>
+  <!-- Game Over -->
+  <div id="gameOverScreen" class="game-over-overlay hidden">
+    <div class="go-title">Game Over</div>
+    <div class="go-score-label">Score</div>
+    <div class="go-score-val" id="goScore">0</div>
+    <div class="go-best-val" id="goBest">Best Score: 0</div>
+    <div class="go-btn" id="retryBtn"></div>
+  </div>
+
+  <!-- New Record Input Modal -->
+  <div id="newRecordModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2 style="color:#FFD54F">New Record!</h2>
+      <p>ランキングに登録する名前を入力してください</p>
+      <input type="text" id="newRecordName" placeholder="Name" maxlength="10">
+      <button class="btn" id="submitScoreBtn">登録</button>
+      <button class="btn" style="background:#555; margin-left:10px;" onclick="document.getElementById('newRecordModal').classList.add('hidden')">スキップ</button>
     </div>
+  </div>
 
-    <!-- モーダルウィンドウ集 -->
-    <div id="noticeModal" class="modal-overlay hidden"></div>
-    <div id="rankingModal" class="modal-overlay hidden"></div>
-    <div id="modeSelectModal" class="modal-overlay hidden"></div>
-    <div id="cpuLevelSelectModal" class="modal-overlay hidden"></div>
-
-    <div id="cheatCodeModal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h2>コード入力</h2>
-        <p class="note">コードを入力してください。</p>
-        <input type="password" id="cheatInput" class="cheat-input">
-        <div class="modal-footer">
-          <button class="btn" id="submitCheatBtn">実行</button>
-          <button class="btn ghost" id="closeCheatBtn">キャンセル</button>
-        </div>
+  <!-- App -->
+  <div class="app-container hidden" id="appContainer">
+    <div class="info-section">
+      <div class="score-display" id="currentScore">0</div>
+      <div class="best-score-display"><span>🏆</span><span id="bestScore">0</span></div>
+      <div class="menu-btn" id="menuBtn">
+        <div class="hamburger"><span></span><span></span><span></span></div>
       </div>
     </div>
-    
-    <div id="devPasswordModal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h2>開発者モード</h2>
-        <p class="note">パスワードを入力してください。</p>
-        <input type="password" id="devPasswordInput" class="password-input">
-        <div class="modal-footer">
-          <button class="btn" id="submitDevPasswordBtn">認証</button>
-          <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
+    <div id="gameMainWrapper" style="display:flex; flex-direction:column; flex:1; width:100%; height:100%; justify-content:center; align-items:center;">
+      <div class="board-section">
+        <div class="board-container">
+          <div class="board" id="board"></div>
         </div>
       </div>
+      <div class="pieces-section" id="piecesContainer">
+        <div class="piece-slot" data-idx="0"></div>
+        <div class="piece-slot" data-idx="1"></div>
+        <div class="piece-slot" data-idx="2"></div>
+      </div>
     </div>
+  </div>
 
-    <div id="shareModal" class="modal-overlay hidden">
-      <div class="modal-content">
-        <h2>共有</h2>
-        <div id="qrcode"></div>
-        <p class="note center">QRコードをスキャンするか、以下のURLをコピーしてください。</p>
-        <div class="url-container">
-          <input type="text" id="urlInput" class="url-input" readonly>
-          <button class="btn" id="copyUrlBtn">コピー</button>
-        </div>
-        <div class="modal-footer">
-          <button class="btn" id="closeShareBtn">閉じる</button>
-        </div>
+  <!-- Menu Panel -->
+  <div class="menu-close-area" id="menuOverlay"></div>
+  <div id="menu-panel">
+    <div style="font-size:20px; font-weight:800; color:#4D96FF; margin-bottom:30px;">MENU</div>
+    <div class="menu-item" id="menu-ranking">🏆 ランキング</div>
+    <div class="menu-item" id="menu-share">🔗 共有</div>
+    <div class="menu-item" id="menu-cheat">🛠 開発者モード</div>
+    <div class="menu-item" id="menu-restart" style="color:#FF6B6B;">🔄 リスタート</div>
+    <div class="menu-item" onclick="location.reload()" style="color:#aaa; margin-top:20px;">🏠 メインメニューへ</div>
+  </div>
+
+  <!-- Ranking Modal -->
+  <div id="rankingModal" class="modal-overlay hidden">
+    <div class="modal-content" style="max-width:400px;">
+      <h2>🏆 Ranking</h2>
+      <div id="rankingList" style="max-height:300px; overflow-y:auto; text-align:left; color:#fff; font-size:14px; margin-bottom:15px;">
+        読み込み中...
       </div>
+      <button class="btn" onclick="document.getElementById('rankingModal').classList.add('hidden')">閉じる</button>
     </div>
-    
-    <div id="fake-translator" class="hidden">
-      <div class="translator-header">
-        <div class="logo">
-          <svg focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24"><path d="M12.87 15.07l-2.54-2.51.03-.03c1.74-1.94 2.98-4.17 3.71-6.53H17V4h-7V2H8v2H1v1.99h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56l-5.09 5.02L4 19l5-5 3.11 3.11.76-2.04zM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12zm-2.62 7l1.62-4.33L19.12 17h-3.24z"></path></svg>
-          <span>翻訳</span>
-        </div>
-      </div>
-      <div class="translator-body">
-        <div class="translator-panel">
-          <div class="lang-selector-bar">
-            <select class="lang-selector">
-              <option>日本語</option>
-              <option>英語</option>
-            </select>
-          </div>
-          <textarea id="translator-input" class="translator-textarea" placeholder="テキストを入力"></textarea>
-        </div>
-        <div class="translator-controls">
-          <button id="translate-btn" title="翻訳する">→</button>
-        </div>
-        <div class="translator-panel">
-          <div class="lang-selector-bar">
-            <select class="lang-selector">
-              <option>英語</option>
-              <option>日本語</option>
-            </select>
-          </div>
-          <textarea id="translator-output" class="translator-textarea" readonly></textarea>
-        </div>
-      </div>
+  </div>
+
+  <!-- Cheat -->
+  <div id="cheatModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <h2>Cheat Code</h2>
+      <input type="password" id="cheatInput" style="width:100%; padding:10px; border-radius:5px; border:none; margin:15px 0; box-sizing:border-box;">
+      <button class="btn" id="runCheatBtn">実行</button>
+      <div style="margin-top:10px; font-size:12px; color:#aaa;">towa.soko0406 / reset</div>
+      <button class="btn" onclick="document.getElementById('cheatModal').classList.add('hidden')" style="background:transparent; border:1px solid #666; color:#aaa;">閉じる</button>
+    </div>
+  </div>
+
+  <div id="fake-translator" class="hidden">
+    <div class="trans-head"><span style="font-size:24px;">🌐</span> 翻訳</div>
+    <div class="trans-body">
+      <div class="trans-area"><div style="color:#1a73e8; font-weight:bold; margin-bottom:5px;">日本語</div><textarea placeholder="テキストを入力"></textarea></div>
+      <div class="trans-area" style="background:#f0f0f0;"><div style="color:#1a73e8; font-weight:bold; margin-bottom:5px;">英語</div><textarea readonly></textarea></div>
     </div>
   </div>
 
@@ -252,6 +490,731 @@ PR .............................. とわ
   <audio id="pushAudio" src="push.mp3"></audio>
   <audio id="delAudio" src="del.mp3"></audio>
 
-  <script src="script.js"></script>
+<script>
+// ===================================================================================
+// Settings
+// ===================================================================================
+const CONFIG = { ROWS: 8, COLS: 8 };
+const COLORS = ['#E55B5B','#D969B6','#4FA3D6','#9C6AD6','#F4C430','#4DD0E1','#FF9800'];
+const SHAPES = [
+  [[0,0]], [[0,0],[0,1]], [[0,0],[1,0]], [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],
+  [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[0,2],[0,3],[0,4]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
+  [[0,0],[0,1],[1,0],[1,1]], [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]],
+  [[0,0],[0,1],[1,1]], [[0,1],[1,0],[1,1]], [[0,0],[1,0],[1,1]], [[0,0],[0,1],[1,0]],
+  [[0,0],[1,0],[2,0],[2,1]], [[0,1],[1,1],[2,1],[2,0]], [[0,0],[0,1],[0,2],[1,0]], [[0,0],[0,1],[0,2],[1,2]],
+  [[0,0],[0,1],[0,2],[1,1]], [[0,1],[1,0],[1,1],[1,2]], [[0,1],[1,0],[1,1],[2,1]], [[0,0],[1,0],[1,1],[2,0]]
+];
+
+let board = Array.from({length: CONFIG.ROWS}, () => Array(CONFIG.COLS).fill(null));
+let piecesInHand = [null, null, null];
+let score = 0, bestScore = 0, comboCount = 0, isGameOver = false, isSoundEnabled = true;
+let controlMode = 'drag'; 
+let selectedPieceSlot = -1;
+
+const el = {
+  board: document.getElementById('board'),
+  slots: document.querySelectorAll('.piece-slot'),
+  currentScore: document.getElementById('currentScore'),
+  bestScore: document.getElementById('bestScore'),
+  app: document.getElementById('appContainer'),
+  gameOverScreen: document.getElementById('gameOverScreen'),
+  goScore: document.getElementById('goScore'),
+  goBest: document.getElementById('goBest'),
+  menuPanel: document.getElementById('menu-panel'),
+  menuOverlay: document.getElementById('menuOverlay'),
+  controlModal: document.getElementById('controlSelectModal'),
+  mainMenu: document.getElementById('mainMenuScreen'),
+  rankingModal: document.getElementById('rankingModal'),
+  rankingList: document.getElementById('rankingList'),
+  newRecordModal: document.getElementById('newRecordModal'),
+  newRecordName: document.getElementById('newRecordName'),
+  submitScoreBtn: document.getElementById('submitScoreBtn')
+};
+
+// ===================================================================================
+// Init & Flow
+// ===================================================================================
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    document.getElementById('staffRollContainer').classList.add('fade-out');
+    document.getElementById('loadComplete').classList.remove('hidden');
+    document.getElementById('loadComplete').classList.add('fade-in');
+  }, 10000); 
+
+  const showControlOrMenu = () => {
+    document.getElementById('loader').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('loader').remove();
+      checkControlMode();
+    }, 800);
+  };
+  
+  document.getElementById('skipBtn').addEventListener('click', showControlOrMenu);
+  setTimeout(showControlOrMenu, 14000);
+
+  setupEvents();
+  loadBest();
+  window.addEventListener('resize', () => { requestAnimationFrame(calcTileSize); });
+  
+  el.slots.forEach((slot, idx) => {
+    slot.addEventListener('mousedown', (e) => onSlotDragStart(e, idx));
+    slot.addEventListener('touchstart', (e) => onSlotDragStart(e, idx), {passive: false});
+    slot.addEventListener('click', (e) => {
+      if(controlMode === 'click') onPieceClick(e, idx);
+    });
+  });
+});
+
+function calcTileSize() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const isLandscape = (w / h) > 1.1 && h > 500;
+  let size;
+
+  if (isLandscape) {
+    const availableHeight = h - 220; 
+    const sizeByHeight = Math.floor(availableHeight / 8);
+    const availableWidth = w - 280; 
+    const sizeByWidth = Math.floor(availableWidth / 8);
+    size = Math.min(sizeByHeight, sizeByWidth);
+  } else {
+    const containerW = Math.min(w, 600);
+    const availableWidth = containerW - 20;
+    size = Math.floor((availableWidth - 14) / 8);
+  }
+  size = Math.max(24, Math.min(size, 70));
+  document.documentElement.style.setProperty('--tile-size', `${size}px`);
+}
+
+function checkControlMode() {
+  calcTileSize();
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const isLandscape = (w / h) > 1.1 && h > 500;
+
+  if (isLandscape) {
+    el.controlModal.classList.remove('hidden');
+  } else {
+    controlMode = 'drag';
+    showMainMenu();
+  }
+}
+
+document.getElementById('modeDragBtn').addEventListener('click', () => {
+  controlMode = 'drag';
+  el.controlModal.classList.add('hidden');
+  showMainMenu();
+});
+document.getElementById('modeClickBtn').addEventListener('click', () => {
+  controlMode = 'click';
+  el.app.setAttribute('data-mode', 'click');
+  el.controlModal.classList.add('hidden');
+  showMainMenu();
+});
+
+function showMainMenu() {
+  el.mainMenu.classList.remove('hidden');
+}
+
+// ===================================================================================
+// GAS API Functions
+// ===================================================================================
+async function fetchRanking() {
+  el.rankingList.innerHTML = '読み込み中...';
+  try {
+    const res = await fetch(GAS_API_URL);
+    const data = await res.json();
+    
+    if (data.length === 0) {
+      el.rankingList.innerHTML = 'データがありません';
+      return;
+    }
+    
+    let html = '<table style="width:100%; border-collapse:collapse;">';
+    data.forEach((row, index) => {
+      let rankColor = '#fff';
+      if(index===0) rankColor='#FFD54F';
+      if(index===1) rankColor='#C0C0C0';
+      if(index===2) rankColor='#CD7F32';
+      
+      html += `<tr style="border-bottom:1px solid #444;">
+        <td style="padding:8px; color:${rankColor}; font-weight:bold;">${index+1}</td>
+        <td style="padding:8px;">${row.name}</td>
+        <td style="padding:8px; text-align:right;">${row.score}</td>
+      </tr>`;
+    });
+    html += '</table>';
+    el.rankingList.innerHTML = html;
+  } catch (err) {
+    el.rankingList.innerHTML = '読み込みエラー: ' + err.message;
+  }
+}
+
+async function sendScore(name, score) {
+  try {
+    await fetch(GAS_API_URL, {
+      method: 'POST',
+      mode: 'no-cors', // GAS simple post usually needs no-cors for simple trigger
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, score: score })
+    });
+    alert('ランキングに登録しました！');
+    el.newRecordModal.classList.add('hidden');
+  } catch (err) {
+    alert('送信エラー: ' + err.message);
+  }
+}
+
+// ===================================================================================
+// Game Logic
+// ===================================================================================
+function initGame() {
+  board = Array.from({length: CONFIG.ROWS}, () => Array(CONFIG.COLS).fill(null));
+  score = 0; comboCount = 0; isGameOver = false;
+  piecesInHand = [null, null, null];
+  selectedPieceSlot = -1;
+  el.gameOverScreen.classList.add('hidden');
+  createBoardDOM();
+  updateScoreUI();
+  replenishPieces();
+}
+
+function createBoardDOM() {
+  el.board.innerHTML = '';
+  for(let i=0; i<CONFIG.ROWS*CONFIG.COLS; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.index = i; 
+    el.board.appendChild(cell);
+  }
+  renderBoard();
+  
+  el.board.addEventListener('mousemove', onBoardMove);
+  el.board.addEventListener('click', onBoardClick);
+  el.board.addEventListener('mouseleave', clearGhost);
+}
+
+function renderBoard() {
+  const cells = el.board.children;
+  for(let r=0; r<CONFIG.ROWS; r++) {
+    for(let c=0; c<CONFIG.COLS; c++) {
+      const idx = r*CONFIG.COLS + c;
+      const cell = cells[idx];
+      const val = board[r][c];
+      
+      const existingTile = cell.querySelector('.tile');
+      if(existingTile) existingTile.remove();
+      
+      if(val) {
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        tile.style.backgroundColor = val; 
+        tile.setAttribute('data-color', val);
+        cell.appendChild(tile);
+      }
+    }
+  }
+}
+
+function replenishPieces() {
+  if(piecesInHand.every(p => p === null)) {
+    piecesInHand = [createRandomPiece(), createRandomPiece(), createRandomPiece()];
+  }
+  renderPiecesInHand();
+  checkGameOver();
+}
+
+function createRandomPiece() {
+  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+  const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+  return { shape: shape, color: color, id: Math.random() };
+}
+
+function renderPiecesInHand() {
+  el.slots.forEach((slot, idx) => {
+    slot.innerHTML = '';
+    slot.classList.remove('selected');
+    const piece = piecesInHand[idx];
+    if(piece) {
+      const pDiv = document.createElement('div');
+      pDiv.className = 'draggable-piece';
+      
+      const rows = piece.shape.map(p=>p[0]), cols = piece.shape.map(p=>p[1]);
+      const w = Math.max(...cols)+1, h = Math.max(...rows)+1;
+      
+      pDiv.style.gridTemplateColumns = `repeat(${w}, 20px)`;
+      pDiv.style.gridTemplateRows = `repeat(${h}, 20px)`;
+      
+      const mat = Array.from({length:h},()=>Array(w).fill(0));
+      piece.shape.forEach(([r,c]) => mat[r][c] = 1);
+      
+      for(let r=0; r<h; r++) {
+        for(let c=0; c<w; c++) {
+          const block = document.createElement('div');
+          if(mat[r][c]) {
+            block.className = 'mini-tile';
+            block.style.backgroundColor = piece.color;
+            block.style.width = '20px'; block.style.height = '20px';
+            block.style.borderRadius = '2px';
+            block.style.boxShadow = "inset 1px 1px 0 rgba(255,255,255,0.4)";
+          }
+          pDiv.appendChild(block);
+        }
+      }
+      
+      slot.appendChild(pDiv);
+    }
+  });
+}
+
+// --- Click Mode Logic ---
+function onPieceClick(e, idx) {
+  if (isGameOver) return;
+  if(!piecesInHand[idx]) return;
+
+  if (selectedPieceSlot === idx) {
+    selectedPieceSlot = -1;
+    renderPiecesInHand(); 
+    clearGhost();
+  } else {
+    selectedPieceSlot = idx;
+    el.slots.forEach((s, i) => {
+      if (i === idx) s.classList.add('selected');
+      else s.classList.remove('selected');
+    });
+  }
+}
+
+function onBoardMove(e) {
+  if (controlMode !== 'click' || selectedPieceSlot === -1 || isGameOver) return;
+  const target = e.target.closest('.cell');
+  if (!target) return;
+  
+  const idx = parseInt(target.dataset.index);
+  const r = Math.floor(idx / CONFIG.COLS);
+  const c = idx % CONFIG.COLS;
+  
+  const piece = piecesInHand[selectedPieceSlot];
+  clearGhost();
+  if (canPlace(piece, r, c)) {
+    showGhost(piece, r, c);
+  }
+}
+
+function onBoardClick(e) {
+  if (controlMode !== 'click' || selectedPieceSlot === -1 || isGameOver) return;
+  const target = e.target.closest('.cell');
+  if (!target) return;
+  
+  const idx = parseInt(target.dataset.index);
+  const r = Math.floor(idx / CONFIG.COLS);
+  const c = idx % CONFIG.COLS;
+  
+  const piece = piecesInHand[selectedPieceSlot];
+  if (canPlace(piece, r, c)) {
+    placePiece(piece, r, c);
+    piecesInHand[selectedPieceSlot] = null;
+    selectedPieceSlot = -1;
+    clearGhost();
+    playSound('push'); 
+    checkLines();
+    if(piecesInHand.every(p => p === null)) setTimeout(replenishPieces, 250);
+    else { renderPiecesInHand(); checkGameOver(); }
+  } else {
+    playSound('del');
+  }
+}
+
+
+// --- Drag Mode Logic ---
+let draggingPiece = null, dragClone = null, currentSlotIdx = -1;
+
+function onSlotDragStart(e, idx) {
+  if(isGameOver || controlMode !== 'drag') return;
+  const pieceData = piecesInHand[idx];
+  if(!pieceData) return;
+
+  e.preventDefault();
+  
+  const slotEl = el.slots[idx];
+  const pDiv = slotEl.querySelector('.draggable-piece');
+  if(!pDiv) return;
+
+  currentSlotIdx = idx;
+  draggingPiece = pieceData;
+  
+  dragClone = pDiv.cloneNode(true);
+  dragClone.className = 'dragging-clone';
+  dragClone.style.animation = 'none'; 
+  
+  const rows = pieceData.shape.map(p=>p[0]), cols = pieceData.shape.map(p=>p[1]);
+  const w = Math.max(...cols)+1, h = Math.max(...rows)+1;
+  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
+  
+  dragClone.style.gridTemplateColumns = `repeat(${w}, ${tileSize}px)`;
+  dragClone.style.gridTemplateRows = `repeat(${h}, ${tileSize}px)`;
+  dragClone.style.transform = 'translate(-50%, -50%) scale(1.1)'; 
+  
+  dragClone.querySelectorAll('.mini-tile').forEach(m => {
+    m.style.width = `${tileSize}px`; m.style.height = `${tileSize}px`;
+    m.style.borderRadius = '4px';
+    m.style.boxShadow = "inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2)";
+  });
+  
+  if(e.type === 'touchstart') dragClone.classList.add('mobile-offset');
+  document.body.appendChild(dragClone);
+  
+  pDiv.style.opacity = '0';
+  
+  if(e.type === 'mousedown') {
+    document.addEventListener('mousemove', onDragMove);
+    document.addEventListener('mouseup', onDragEnd);
+  } else {
+    document.addEventListener('touchmove', onDragMove, {passive: false});
+    document.addEventListener('touchend', onDragEnd);
+  }
+  moveClone(e);
+}
+
+function onDragMove(e) {
+  e.preventDefault();
+  moveClone(e);
+  const {r, c} = getBoardPos(e);
+  clearGhost();
+  if(r !== null && c !== null && canPlace(draggingPiece, r, c)) {
+    showGhost(draggingPiece, r, c);
+  }
+}
+
+function moveClone(e) {
+  if(!dragClone) return;
+  const cx = e.clientX || e.touches[0].clientX;
+  const cy = e.clientY || e.touches[0].clientY;
+  dragClone.style.left = cx + 'px';
+  dragClone.style.top = cy + 'px';
+}
+
+function onDragEnd(e) {
+  document.removeEventListener('mousemove', onDragMove);
+  document.removeEventListener('mouseup', onDragEnd);
+  document.removeEventListener('touchmove', onDragMove);
+  document.removeEventListener('touchend', onDragEnd);
+  
+  const {r, c} = getBoardPos(e);
+  clearGhost();
+  
+  let placed = false;
+  if(r !== null && c !== null && canPlace(draggingPiece, r, c)) {
+    placePiece(draggingPiece, r, c);
+    piecesInHand[currentSlotIdx] = null;
+    placed = true;
+  }
+  
+  if(dragClone) dragClone.remove();
+  dragClone = null; draggingPiece = null;
+  
+  if(placed) {
+    playSound('push'); checkLines();
+    if(piecesInHand.every(p => p === null)) setTimeout(replenishPieces, 250);
+    else { renderPiecesInHand(); checkGameOver(); }
+  } else {
+    playSound('del'); renderPiecesInHand(); 
+  }
+}
+
+function getBoardPos(e) {
+  const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+  let cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+  if(e.type === 'touchend' || e.type === 'touchmove') cy -= 100;
+  
+  const rect = el.board.getBoundingClientRect();
+  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
+  
+  if(!draggingPiece) return {r:null, c:null};
+  
+  // Calculate relative position based on piece CENTER
+  const cols = draggingPiece.shape.map(p=>p[1]);
+  const rows = draggingPiece.shape.map(p=>p[0]);
+  const w = Math.max(...cols)+1; 
+  const h = Math.max(...rows)+1;
+  
+  const pxW = w * (tileSize+2);
+  const pxH = h * (tileSize+2);
+  
+  // Center of cursor = Center of Piece
+  const tlx = cx - (pxW / 2);
+  const tly = cy - (pxH / 2);
+  
+  const relX = tlx - rect.left;
+  const relY = tly - rect.top;
+  
+  // Simple Rounding
+  const cBase = Math.round(relX / (tileSize+2));
+  const rBase = Math.round(relY / (tileSize+2));
+  
+  // 1. Exact match
+  if(canPlace(draggingPiece, rBase, cBase)) return {r:rBase, c:cBase};
+
+  // 2. Immediate Neighbors (Radius 1) - Smart Detection
+  const neighbors = [
+    {dr:0, dc:1}, {dr:0, dc:-1}, {dr:1, dc:0}, {dr:-1, dc:0},
+    {dr:1, dc:1}, {dr:1, dc:-1}, {dr:-1, dc:1}, {dr:-1, dc:-1}
+  ];
+  let bestCandidate = null;
+  let minDist = Infinity;
+  const floatR = relY / (tileSize+2);
+  const floatC = relX / (tileSize+2);
+
+  for(let n of neighbors) {
+    const nr = rBase + n.dr;
+    const nc = cBase + n.dc;
+    if(canPlace(draggingPiece, nr, nc)) {
+      const dist = Math.sqrt(Math.pow(nr - floatR, 2) + Math.pow(nc - floatC, 2));
+      if (dist < minDist) {
+        minDist = dist;
+        bestCandidate = {r:nr, c:nc};
+      }
+    }
+  }
+  
+  if (bestCandidate) return bestCandidate;
+  
+  return {r:null, c:null};
+}
+
+function canPlace(piece, r, c) {
+  for(let [dr, dc] of piece.shape) {
+    const nr = r+dr, nc = c+dc;
+    if(nr<0||nr>=CONFIG.ROWS||nc<0||nc>=CONFIG.COLS) return false;
+    if(board[nr][nc] !== null) return false;
+  }
+  return true;
+}
+
+function placePiece(piece, r, c) {
+  piece.shape.forEach(([dr, dc]) => board[r+dr][c+dc] = piece.color);
+  renderBoard();
+}
+
+function showGhost(piece, r, c) {
+  piece.shape.forEach(([dr, dc]) => {
+    const nr = r+dr, nc = c+dc;
+    if(nr>=0 && nr<CONFIG.ROWS && nc>=0 && nc<CONFIG.COLS) {
+      const g = document.createElement('div');
+      g.className = 'ghost-tile';
+      el.board.children[nr*CONFIG.COLS+nc].appendChild(g);
+    }
+  });
+}
+function clearGhost() { document.querySelectorAll('.ghost-tile').forEach(e => e.remove()); }
+
+// ===================================================================================
+// Score & Animation
+// ===================================================================================
+function checkLines() {
+  const rowsToClear = [], colsToClear = [];
+  for(let r=0; r<CONFIG.ROWS; r++) if(board[r].every(c => c !== null)) rowsToClear.push(r);
+  for(let c=0; c<CONFIG.COLS; c++) {
+    let full = true; for(let r=0; r<CONFIG.ROWS; r++) if(board[r][c] === null) full = false;
+    if(full) colsToClear.push(c);
+  }
+  
+  const lines = rowsToClear.length + colsToClear.length;
+  if(lines > 0) {
+    comboCount++;
+    const base = lines * 100;
+    const comboBonus = (comboCount-1) * 30;
+    const multiBonus = (lines>1) ? lines * 50 : 0;
+    const totalAdd = base + comboBonus + multiBonus;
+    score += totalAdd;
+    
+    let mainText = "";
+    let subText = `+${totalAdd}`;
+    
+    if(comboCount >= 2) {
+      mainText = `<span class="feedback-combo">Combo ${comboCount}</span>`;
+      if(lines >= 4) subText = "Perfect!";
+      else if(lines >= 3) subText = "Amazing!";
+      else if(lines >= 2) subText = "Good!";
+    } else {
+      if(lines >= 4) mainText = "Perfect!";
+      else if(lines >= 3) mainText = "Amazing!";
+      else if(lines >= 2) mainText = "Good!";
+      else mainText = "Nice";
+    }
+    
+    showFeedback(mainText, subText); 
+    playSound('del');
+    
+    // Identify cells & Effect
+    const cellsToClear = new Set();
+    rowsToClear.forEach(r => {
+      const le = document.createElement('div'); le.className = 'line-effect';
+      le.style.width = '100%'; le.style.height = `var(--tile-size)`;
+      le.style.left = '0'; le.style.top = `calc(${r}*(var(--tile-size)+3px))`;
+      el.board.appendChild(le); setTimeout(()=>le.remove(), 250);
+      for(let c=0; c<CONFIG.COLS; c++) cellsToClear.add(`${r},${c}`);
+    });
+    colsToClear.forEach(c => {
+      const le = document.createElement('div'); le.className = 'line-effect';
+      le.style.height = '100%'; le.style.width = `var(--tile-size)`;
+      le.style.top = '0'; le.style.left = `calc(${c}*(var(--tile-size)+3px))`;
+      el.board.appendChild(le); setTimeout(()=>le.remove(), 250);
+      for(let r=0; r<CONFIG.ROWS; r++) cellsToClear.add(`${r},${c}`);
+    });
+    
+    cellsToClear.forEach(key => {
+      const [r,c] = key.split(',').map(Number);
+      const cell = el.board.children[r*CONFIG.COLS + c];
+      const tile = cell.querySelector('.tile');
+      if(tile) {
+        // Particles
+        const rect = tile.getBoundingClientRect();
+        createExplosion(rect, tile.style.backgroundColor);
+        tile.classList.add('clearing');
+      }
+      board[r][c] = null;
+    });
+    
+    el.currentScore.classList.add('bump');
+    setTimeout(()=>el.currentScore.classList.remove('bump'), 150);
+    setTimeout(renderBoard, 250);
+  } else {
+    comboCount = 0;
+  }
+  updateScoreUI();
+}
+
+function createExplosion(rect, color) {
+  for (let i = 0; i < 4; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.backgroundColor = color;
+    p.style.left = rect.left + 'px';
+    p.style.top = rect.top + 'px';
+    
+    const angle = (Math.random() * 360) * (Math.PI / 180);
+    const velocity = 30 + Math.random() * 50;
+    const tx = Math.cos(angle) * velocity;
+    const ty = Math.sin(angle) * velocity;
+    const rot = (Math.random() - 0.5) * 720;
+    
+    p.style.setProperty('--tx', `${tx}px`);
+    p.style.setProperty('--ty', `${ty}px`);
+    p.style.setProperty('--rot', `${rot}deg`);
+    
+    const size = 15 + Math.random() * 10;
+    p.style.width = `${size}px`; p.style.height = `${size}px`;
+    
+    document.body.appendChild(p);
+    setTimeout(() => p.remove(), 600);
+  }
+}
+
+function checkGameOver() {
+  const active = piecesInHand.filter(p => p !== null);
+  if(active.length === 0) return;
+  let canMove = false;
+  for(const p of active) {
+    for(let r=0; r<CONFIG.ROWS; r++) {
+      for(let c=0; c<CONFIG.COLS; c++) {
+        if(canPlace(p, r, c)) { canMove = true; break; }
+      }
+      if(canMove) break;
+    }
+    if(canMove) break;
+  }
+  if(!canMove) { isGameOver = true; setTimeout(showGameOver, 800); }
+}
+
+function showGameOver() {
+  if(score > bestScore) {
+    bestScore = score; localStorage.setItem('blockblast_best_v4', bestScore);
+  }
+  // Check for New Record (Simple Logic: if score > 0, prompt. In real app, check against global ranking logic)
+  if(score > 0) {
+    el.newRecordModal.classList.remove('hidden');
+  } else {
+    el.goScore.textContent = score;
+    el.goBest.textContent = `Best Score: ${bestScore}`;
+    el.gameOverScreen.classList.remove('hidden');
+  }
+  
+  // If user skips modal, show game over screen
+  el.newRecordModal.querySelector('button[onclick]').onclick = () => {
+    el.newRecordModal.classList.add('hidden');
+    el.goScore.textContent = score;
+    el.goBest.textContent = `Best Score: ${bestScore}`;
+    el.gameOverScreen.classList.remove('hidden');
+  };
+}
+
+function updateScoreUI() { el.currentScore.textContent = score; el.bestScore.textContent = bestScore; }
+function loadBest() { bestScore = parseInt(localStorage.getItem('blockblast_best_v4')) || 0; updateScoreUI(); }
+
+function showFeedback(m, s) {
+  const existing = document.querySelector('.feedback-popup');
+  if(existing) existing.remove();
+  
+  const d = document.createElement('div'); d.className = 'feedback-popup';
+  d.innerHTML = `<span class="feedback-text">${m}</span>${s ? `<span class="feedback-sub">${s}</span>` : ''}`;
+  el.app.appendChild(d); 
+  setTimeout(()=>d.remove(), 2500);
+}
+
+function playSound(t) {
+  if(!isSoundEnabled) return;
+  const a = document.getElementById(t==='push'?'pushAudio':'delAudio');
+  if(a) { a.currentTime=0; a.play().catch(()=>{}); }
+}
+
+function setupEvents() {
+  const toggle = () => { el.menuPanel.classList.toggle('open'); el.menuOverlay.classList.toggle('open'); };
+  document.getElementById('menuBtn').addEventListener('click', toggle);
+  el.menuOverlay.addEventListener('click', toggle);
+  
+  // Menu Buttons
+  document.getElementById('playGameBtn').addEventListener('click', () => {
+    el.mainMenu.classList.add('hidden');
+    el.app.classList.remove('hidden');
+    el.app.classList.add('fade-in');
+    initGame();
+  });
+  document.getElementById('viewRankingBtn').addEventListener('click', () => {
+    el.rankingModal.classList.remove('hidden');
+    fetchRanking();
+  });
+  
+  // Sidebar Buttons
+  document.getElementById('menu-ranking').addEventListener('click', () => { document.getElementById('rankingModal').classList.remove('hidden'); fetchRanking(); toggle(); });
+  document.getElementById('menu-cheat').addEventListener('click', () => { document.getElementById('cheatModal').classList.remove('hidden'); toggle(); });
+  document.getElementById('menu-restart').addEventListener('click', () => { if(confirm('リスタート？')) initGame(); toggle(); });
+  
+  document.getElementById('retryBtn').addEventListener('click', initGame);
+  document.getElementById('runCheatBtn').addEventListener('click', () => {
+    const v = document.getElementById('cheatInput').value;
+    if(v==='reset') { localStorage.clear(); location.reload(); }
+    else if(v==='towa.soko0406') { const p=prompt('Score?'); if(p) { score=parseInt(p); updateScoreUI(); }}
+    document.getElementById('cheatModal').classList.add('hidden');
+  });
+  
+  document.getElementById('submitScoreBtn').addEventListener('click', () => {
+    const name = el.newRecordName.value.trim();
+    if(!name) { alert('名前を入力してください'); return; }
+    sendScore(name, score);
+    // After send
+    el.goScore.textContent = score;
+    el.goBest.textContent = `Best Score: ${bestScore}`;
+    el.gameOverScreen.classList.remove('hidden');
+  });
+
+  window.addEventListener('keydown', e => {
+    const ft = document.getElementById('fake-translator');
+    if(!ft.classList.contains('hidden')) { if(e.key==='Enter') { ft.classList.add('hidden'); document.title = "翻訳"; } return; }
+    if(e.key==='Enter') ft.classList.remove('hidden');
+  });
+  document.body.addEventListener('click', () => { const b=document.getElementById('bgmAudio'); if(b&&b.paused) b.play().catch(()=>{}); }, {once:true});
+}
+</script>
 </body>
 </html>
