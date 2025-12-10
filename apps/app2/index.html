@@ -12,7 +12,7 @@
 
 <style>
 /* =========================================
-   CSS Styles: Final Version with Menu & GAS
+   CSS Styles
    ========================================= */
 :root {
   --bg-color: #587096;
@@ -66,6 +66,23 @@ html, body {
 .fade-out { animation: fadeOut 0.5s ease-in forwards; }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+/* --- Landscape Warning --- */
+#landscapeWarning {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9800;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  color: #fff; text-align: center; cursor: pointer;
+}
+.phone-icon {
+  font-size: 80px; margin-bottom: 20px;
+  animation: rotatePhone 2s infinite ease-in-out;
+}
+@keyframes rotatePhone {
+  0% { transform: rotate(-90deg); }
+  20% { transform: rotate(0deg); }
+  80% { transform: rotate(0deg); }
+  100% { transform: rotate(-90deg); }
+}
 
 /* --- Main Menu --- */
 #mainMenuScreen {
@@ -175,11 +192,14 @@ html, body {
 .tile {
   width: 100%; height: 100%; border-radius: 4px; position: absolute; top: 0; left: 0; box-sizing: border-box;
   box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2), 0 3px 6px rgba(0,0,0,0.4);
-  border: 1px solid rgba(0,0,0,0.1); transition: transform 0.1s;
+  border-top: 2px solid rgba(255,255,255,0.5); border-left: 2px solid rgba(255,255,255,0.5);
+  border-bottom: 2px solid rgba(0,0,0,0.2); border-right: 2px solid rgba(0,0,0,0.2);
+  transition: transform 0.1s;
 }
 .tile::after {
-  content: ''; position: absolute; top: 10%; left: 10%; width: 40%; height: 40%;
-  background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%); border-radius: 50%; pointer-events: none;
+  content: ''; position: absolute; top: 15%; left: 15%; right: 15%; bottom: 15%;
+  background: linear-gradient(135deg, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0) 100%);
+  border-radius: 3px; box-shadow: inset 1px 1px 0 rgba(255,255,255,0.3); pointer-events: none;
 }
 .tile[data-color="#E55B5B"] { background: var(--color-red); }
 .tile[data-color="#D969B6"] { background: var(--color-pink); }
@@ -188,6 +208,11 @@ html, body {
 .tile[data-color="#F4C430"] { background: var(--color-yellow); }
 .tile[data-color="#4DD0E1"] { background: var(--color-cyan); }
 .tile[data-color="#FF9800"] { background: var(--color-orange); }
+
+.tile.will-clear {
+  box-shadow: 0 0 15px #4DD0E1, inset 0 0 10px #fff !important;
+  border-color: #fff !important; z-index: 20; filter: brightness(1.3);
+}
 
 .draggable-piece {
   display: grid; gap: 2px; touch-action: none; pointer-events: none;
@@ -202,7 +227,8 @@ html, body {
 }
 .dragging-clone .mini-tile {
   width: var(--tile-size); height: var(--tile-size); border-radius: 4px;
-  box-shadow: inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2);
+  border-top: 2px solid rgba(255,255,255,0.5); border-left: 2px solid rgba(255,255,255,0.5);
+  box-shadow: inset 0 0 5px rgba(0,0,0,0.1);
 }
 .dragging-clone.mobile-offset { margin-top: -100px; }
 .ghost-tile {
@@ -211,14 +237,15 @@ html, body {
 }
 .particle {
   position: absolute; width: 100%; height: 100%; top:0; left:0; border-radius: 2px;
-  pointer-events: none; z-index: 25; animation: particleBurst 0.6s ease-out forwards;
+  pointer-events: none; z-index: 50; animation: particleBurst 0.6s ease-out forwards;
 }
 @keyframes particleBurst {
   0% { transform: translate(0, 0) scale(1) rotate(0deg); opacity: 1; }
   100% { transform: translate(var(--tx), var(--ty)) scale(0) rotate(var(--rot)); opacity: 0; }
 }
 .clearing .tile {
-  background-color: #fff !important; box-shadow: 0 0 20px #fff; transform: scale(1.1); z-index: 30; opacity: 1;
+  background-color: #fff !important; box-shadow: 0 0 20px #fff;
+  transform: scale(1.1); z-index: 30; opacity: 1;
   animation: flashFade 0.2s ease-out forwards;
 }
 @keyframes flashFade { 0% { opacity: 1; transform: scale(1.1); } 100% { opacity: 0; transform: scale(0.5); } }
@@ -255,7 +282,18 @@ html, body {
   font-size: 32px; font-weight: 800; color: #fff; text-shadow: 0 2px 4px rgba(0,0,0,0.8); display: block; margin-top: 5px;
 }
 
-/* Modals & Overlays */
+/* Thumbs Up Effect */
+.thumbs-up-effect {
+  position: absolute; pointer-events: none; z-index: 60; font-size: 40px;
+  animation: floatUp 1.2s ease-out forwards;
+}
+@keyframes floatUp {
+  0% { transform: translateY(0) scale(0.5); opacity: 0; }
+  20% { transform: translateY(-20px) scale(1.2); opacity: 1; }
+  100% { transform: translateY(-80px) scale(1); opacity: 0; }
+}
+
+/* Modals */
 .game-over-overlay {
   position: fixed; inset: 0; background: linear-gradient(135deg, #2196F3, #1976D2);
   z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.5s ease-out;
@@ -286,8 +324,10 @@ html, body {
 }
 .menu-close-area { position: fixed; inset: 0; z-index: 5999; display: none; }
 .menu-close-area.open { display: block; }
+
+/* Modal Z-Index: Higher than Menu(8000) & Warning(9800) */
 .modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 7000;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 9900;
   display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px);
 }
 .modal-content {
@@ -316,7 +356,7 @@ html, body {
   <!-- GAS URL SETTING -->
   <script>
     // ↓↓↓↓↓ ここにGASのURLを貼る ↓↓↓↓↓
-    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyuXGluUKK1eC_iZpaFwrFiMz4obZ1LlMWadzBiZnoEASbMlHJarKsjjdp6wTsPJjeg/exec"; 
+    const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyuXGluUKK1eC_iZpaFwrFiMz4obZ1LlMWadzBiZnoEASbMlHJarKsjjdp6wTsPJjeg/exec"; // Dummy URL
     // ↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑↑
   </script>
 
@@ -376,6 +416,13 @@ PR .............................. とわ
     </div>
   </div>
 
+  <!-- Landscape Warning -->
+  <div id="landscapeWarning" class="hidden">
+    <div class="phone-icon">📱</div>
+    <p style="font-size:24px; font-weight:bold;">縦画面推奨です</p>
+    <p style="font-size:14px; color:#ccc;">画面をタップしてスキップ</p>
+  </div>
+
   <!-- PC Control Selection -->
   <div id="controlSelectModal" class="hidden">
     <div class="cs-content">
@@ -383,13 +430,13 @@ PR .............................. とわ
       <div class="cs-options">
         <div class="cs-btn" id="modeDragBtn">
           <div class="cs-icon">👆</div>
-          <div class="cs-label">直感操作</div>
+          <div class="cs-label">本家操作</div>
           <div class="cs-desc">スマホのようにドラッグ&ドロップでブロックを配置します。</div>
         </div>
         <div class="cs-btn" id="modeClickBtn">
           <div class="cs-icon">🖱️</div>
           <div class="cs-label">精密操作</div>
-          <div class="cs-desc">ブロックをクリック選択後、盤面をクリックして配置します。</div>
+          <div class="cs-desc">今までと同じ操作！ブロックをクリック選択後、盤面をクリックして配置します。</div>
         </div>
       </div>
     </div>
@@ -492,24 +539,36 @@ PR .............................. とわ
 
 <script>
 // ===================================================================================
-// Settings
+// Settings & Shapes
 // ===================================================================================
 const CONFIG = { ROWS: 8, COLS: 8 };
 const COLORS = ['#E55B5B','#D969B6','#4FA3D6','#9C6AD6','#F4C430','#4DD0E1','#FF9800'];
-const SHAPES = [
-  [[0,0]], [[0,0],[0,1]], [[0,0],[1,0]], [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]],
-  [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], [[0,0],[0,1],[0,2],[0,3],[0,4]], [[0,0],[1,0],[2,0],[3,0],[4,0]],
-  [[0,0],[0,1],[1,0],[1,1]], [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]],
-  [[0,0],[0,1],[1,1]], [[0,1],[1,0],[1,1]], [[0,0],[1,0],[1,1]], [[0,0],[0,1],[1,0]],
-  [[0,0],[1,0],[2,0],[2,1]], [[0,1],[1,1],[2,1],[2,0]], [[0,0],[0,1],[0,2],[1,0]], [[0,0],[0,1],[0,2],[1,2]],
-  [[0,0],[0,1],[0,2],[1,1]], [[0,1],[1,0],[1,1],[1,2]], [[0,1],[1,0],[1,1],[2,1]], [[0,0],[1,0],[1,1],[2,0]]
-];
+
+const SHAPES = {
+  STANDARD: [
+    [[0,0],[0,1]], [[0,0],[1,0]], // 1x2
+    [[0,0],[0,1],[1,0]], [[0,0],[0,1],[1,1]], // Small L
+    [[0,0],[0,1],[1,0],[1,1]], // 2x2
+    [[0,0],[0,1],[0,2]], [[0,0],[1,0],[2,0]], // 1x3
+    [[0,0],[0,1],[0,2],[0,3]], [[0,0],[1,0],[2,0],[3,0]], // 1x4
+    [[0,0],[1,0],[2,0],[2,1]], [[0,1],[1,1],[2,1],[2,0]], // L large
+    [[0,0],[0,1],[0,2],[1,1]], [[0,1],[1,0],[1,1],[1,2]], // T
+    [[0,0],[1,0],[1,1],[2,1]], [[0,1],[1,1],[1,0],[2,0]], // Z/S
+    [[0,0],[1,1]], [[0,1],[1,0]] // Diagonals
+  ],
+  HARD: [
+    [[0,0],[0,1],[0,2],[0,3],[0,4]], [[0,0],[1,0],[2,0],[3,0],[4,0]], // 1x5
+    [[0,0],[0,1],[0,2],[1,0],[1,1],[1,2],[2,0],[2,1],[2,2]] // 3x3
+  ]
+};
 
 let board = Array.from({length: CONFIG.ROWS}, () => Array(CONFIG.COLS).fill(null));
 let piecesInHand = [null, null, null];
 let score = 0, bestScore = 0, comboCount = 0, isGameOver = false, isSoundEnabled = true;
 let controlMode = 'drag'; 
 let selectedPieceSlot = -1;
+let movesSinceLastClear = 0;
+let turnCount = 0; 
 
 const el = {
   board: document.getElementById('board'),
@@ -528,7 +587,8 @@ const el = {
   rankingList: document.getElementById('rankingList'),
   newRecordModal: document.getElementById('newRecordModal'),
   newRecordName: document.getElementById('newRecordName'),
-  submitScoreBtn: document.getElementById('submitScoreBtn')
+  submitScoreBtn: document.getElementById('submitScoreBtn'),
+  landscapeWarning: document.getElementById('landscapeWarning')
 };
 
 // ===================================================================================
@@ -541,20 +601,23 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('loadComplete').classList.add('fade-in');
   }, 10000); 
 
-  const showControlOrMenu = () => {
+  const proceedSequence = () => {
     document.getElementById('loader').classList.add('fade-out');
     setTimeout(() => {
       document.getElementById('loader').remove();
-      checkControlMode();
+      checkOrientationAndWarn();
     }, 800);
   };
   
-  document.getElementById('skipBtn').addEventListener('click', showControlOrMenu);
-  setTimeout(showControlOrMenu, 14000);
+  document.getElementById('skipBtn').addEventListener('click', proceedSequence);
+  setTimeout(proceedSequence, 14000);
 
   setupEvents();
   loadBest();
-  window.addEventListener('resize', () => { requestAnimationFrame(calcTileSize); });
+  window.addEventListener('resize', () => { 
+    requestAnimationFrame(calcTileSize);
+    checkAutoSwitchControl(); 
+  });
   
   el.slots.forEach((slot, idx) => {
     slot.addEventListener('mousedown', (e) => onSlotDragStart(e, idx));
@@ -564,6 +627,41 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+
+function checkOrientationAndWarn() {
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  if (w > h) {
+    el.landscapeWarning.classList.remove('hidden');
+    let warningTimeout = setTimeout(finishWarning, 3000);
+    el.landscapeWarning.addEventListener('click', () => {
+      clearTimeout(warningTimeout);
+      finishWarning();
+    }, {once:true});
+  } else {
+    controlMode = 'drag';
+    showMainMenu();
+  }
+}
+
+function finishWarning() {
+  el.landscapeWarning.classList.add('hidden');
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  if (w > h) {
+    el.controlModal.classList.remove('hidden');
+  } else {
+    controlMode = 'drag';
+    showMainMenu();
+  }
+}
+
+function checkAutoSwitchControl() {
+  if (window.innerHeight > window.innerWidth && controlMode === 'click') {
+    controlMode = 'drag';
+    el.app.removeAttribute('data-mode');
+  }
+}
 
 function calcTileSize() {
   const w = window.innerWidth;
@@ -586,20 +684,6 @@ function calcTileSize() {
   document.documentElement.style.setProperty('--tile-size', `${size}px`);
 }
 
-function checkControlMode() {
-  calcTileSize();
-  const w = window.innerWidth;
-  const h = window.innerHeight;
-  const isLandscape = (w / h) > 1.1 && h > 500;
-
-  if (isLandscape) {
-    el.controlModal.classList.remove('hidden');
-  } else {
-    controlMode = 'drag';
-    showMainMenu();
-  }
-}
-
 document.getElementById('modeDragBtn').addEventListener('click', () => {
   controlMode = 'drag';
   el.controlModal.classList.add('hidden');
@@ -613,30 +697,25 @@ document.getElementById('modeClickBtn').addEventListener('click', () => {
 });
 
 function showMainMenu() {
+  calcTileSize();
   el.mainMenu.classList.remove('hidden');
 }
 
 // ===================================================================================
-// GAS API Functions
+// GAS API
 // ===================================================================================
 async function fetchRanking() {
   el.rankingList.innerHTML = '読み込み中...';
   try {
     const res = await fetch(GAS_API_URL);
     const data = await res.json();
-    
-    if (data.length === 0) {
-      el.rankingList.innerHTML = 'データがありません';
-      return;
-    }
-    
+    if (data.length === 0) { el.rankingList.innerHTML = 'データがありません'; return; }
     let html = '<table style="width:100%; border-collapse:collapse;">';
     data.forEach((row, index) => {
       let rankColor = '#fff';
       if(index===0) rankColor='#FFD54F';
       if(index===1) rankColor='#C0C0C0';
       if(index===2) rankColor='#CD7F32';
-      
       html += `<tr style="border-bottom:1px solid #444;">
         <td style="padding:8px; color:${rankColor}; font-weight:bold;">${index+1}</td>
         <td style="padding:8px;">${row.name}</td>
@@ -653,16 +732,13 @@ async function fetchRanking() {
 async function sendScore(name, score) {
   try {
     await fetch(GAS_API_URL, {
-      method: 'POST',
-      mode: 'no-cors', // GAS simple post usually needs no-cors for simple trigger
+      method: 'POST', mode: 'no-cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: name, score: score })
     });
     alert('ランキングに登録しました！');
     el.newRecordModal.classList.add('hidden');
-  } catch (err) {
-    alert('送信エラー: ' + err.message);
-  }
+  } catch (err) { alert('送信エラー: ' + err.message); }
 }
 
 // ===================================================================================
@@ -670,7 +746,8 @@ async function sendScore(name, score) {
 // ===================================================================================
 function initGame() {
   board = Array.from({length: CONFIG.ROWS}, () => Array(CONFIG.COLS).fill(null));
-  score = 0; comboCount = 0; isGameOver = false;
+  score = 0; comboCount = 0; movesSinceLastClear = 0; turnCount = 0;
+  isGameOver = false;
   piecesInHand = [null, null, null];
   selectedPieceSlot = -1;
   el.gameOverScreen.classList.add('hidden');
@@ -688,7 +765,6 @@ function createBoardDOM() {
     el.board.appendChild(cell);
   }
   renderBoard();
-  
   el.board.addEventListener('mousemove', onBoardMove);
   el.board.addEventListener('click', onBoardClick);
   el.board.addEventListener('mouseleave', clearGhost);
@@ -701,10 +777,8 @@ function renderBoard() {
       const idx = r*CONFIG.COLS + c;
       const cell = cells[idx];
       const val = board[r][c];
-      
       const existingTile = cell.querySelector('.tile');
       if(existingTile) existingTile.remove();
-      
       if(val) {
         const tile = document.createElement('div');
         tile.className = 'tile';
@@ -718,16 +792,76 @@ function renderBoard() {
 
 function replenishPieces() {
   if(piecesInHand.every(p => p === null)) {
-    piecesInHand = [createRandomPiece(), createRandomPiece(), createRandomPiece()];
+    turnCount++;
+    let newPieces = [];
+    while(newPieces.length < 3) {
+      let candidate = getSmartPiece();
+      let isDuplicate = false;
+      const candStr = JSON.stringify(candidate.shape);
+      for(let p of newPieces) {
+        if(JSON.stringify(p.shape) === candStr) { isDuplicate = true; break; }
+      }
+      if(!isDuplicate) newPieces.push(candidate);
+    }
+
+    let playable = false;
+    for(let p of newPieces) if(canPlaceAnywhere(p.shape)) { playable = true; break; }
+    
+    if (!playable) {
+      for(let shape of SHAPES.STANDARD) {
+        if(canPlaceAnywhere(shape)) {
+          newPieces[Math.floor(Math.random()*3)] = createPieceFromShape(shape);
+          playable = true; break;
+        }
+      }
+    }
+    piecesInHand = newPieces;
   }
   renderPiecesInHand();
   checkGameOver();
 }
 
-function createRandomPiece() {
-  const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+function getSmartPiece() {
+  const filledCount = board.flat().filter(c => c !== null).length;
+  const fillRatio = filledCount / (CONFIG.ROWS * CONFIG.COLS);
+  
+  let pool = [];
+  
+  // 1. Early Game Assist (First 30 turns)
+  if (turnCount < 30) {
+    pool = SHAPES.STANDARD; 
+  } 
+  // 2. Pinch Assist (Board > 60% full)
+  else if (fillRatio > 0.6) {
+    let fittingShapes = [];
+    [...SHAPES.STANDARD].forEach(shape => {
+      if(canPlaceAnywhere(shape)) fittingShapes.push(shape);
+    });
+    if (fittingShapes.length > 0) pool = fittingShapes;
+    else pool = SHAPES.STANDARD;
+  } 
+  // 3. Normal Progression
+  else {
+    if (score < 2000) pool = [...SHAPES.STANDARD];
+    else pool = [...SHAPES.STANDARD, ...SHAPES.HARD];
+  }
+  
+  const shape = pool[Math.floor(Math.random() * pool.length)];
+  return createPieceFromShape(shape);
+}
+
+function createPieceFromShape(shape) {
   const color = COLORS[Math.floor(Math.random() * COLORS.length)];
   return { shape: shape, color: color, id: Math.random() };
+}
+
+function canPlaceAnywhere(shape) {
+  for(let r=0; r<CONFIG.ROWS; r++) {
+    for(let c=0; c<CONFIG.COLS; c++) {
+      if(canPlace({shape: shape}, r, c)) return true;
+    }
+  }
+  return false;
 }
 
 function renderPiecesInHand() {
@@ -741,13 +875,10 @@ function renderPiecesInHand() {
       
       const rows = piece.shape.map(p=>p[0]), cols = piece.shape.map(p=>p[1]);
       const w = Math.max(...cols)+1, h = Math.max(...rows)+1;
-      
       pDiv.style.gridTemplateColumns = `repeat(${w}, 20px)`;
       pDiv.style.gridTemplateRows = `repeat(${h}, 20px)`;
-      
       const mat = Array.from({length:h},()=>Array(w).fill(0));
       piece.shape.forEach(([r,c]) => mat[r][c] = 1);
-      
       for(let r=0; r<h; r++) {
         for(let c=0; c<w; c++) {
           const block = document.createElement('div');
@@ -761,43 +892,70 @@ function renderPiecesInHand() {
           pDiv.appendChild(block);
         }
       }
-      
       slot.appendChild(pDiv);
     }
   });
 }
 
-// --- Click Mode Logic ---
-function onPieceClick(e, idx) {
-  if (isGameOver) return;
-  if(!piecesInHand[idx]) return;
+let draggingPiece = null, dragClone = null, currentSlotIdx = -1;
 
+function onSlotDragStart(e, idx) {
+  if(isGameOver || controlMode !== 'drag') return;
+  const pieceData = piecesInHand[idx];
+  if(!pieceData) return;
+  e.preventDefault();
+  const slotEl = el.slots[idx];
+  const pDiv = slotEl.querySelector('.draggable-piece');
+  if(!pDiv) return;
+  currentSlotIdx = idx; draggingPiece = pieceData;
+  dragClone = pDiv.cloneNode(true);
+  dragClone.className = 'dragging-clone';
+  dragClone.style.animation = 'none'; 
+  const rows = pieceData.shape.map(p=>p[0]), cols = pieceData.shape.map(p=>p[1]);
+  const w = Math.max(...cols)+1, h = Math.max(...rows)+1;
+  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
+  dragClone.style.gridTemplateColumns = `repeat(${w}, ${tileSize}px)`;
+  dragClone.style.gridTemplateRows = `repeat(${h}, ${tileSize}px)`;
+  dragClone.style.transform = 'translate(-50%, -50%) scale(1.1)'; 
+  dragClone.querySelectorAll('.mini-tile').forEach(m => {
+    m.style.width = `${tileSize}px`; m.style.height = `${tileSize}px`;
+    m.style.borderRadius = '4px';
+    m.style.boxShadow = "inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2)";
+  });
+  if(e.type === 'touchstart') dragClone.classList.add('mobile-offset');
+  document.body.appendChild(dragClone);
+  pDiv.style.opacity = '0';
+  if(e.type === 'mousedown') {
+    document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
+  } else {
+    document.addEventListener('touchmove', onDragMove, {passive: false}); document.addEventListener('touchend', onDragEnd);
+  }
+  moveClone(e);
+}
+
+function onPieceClick(e, idx) {
+  if(isGameOver || !piecesInHand[idx]) return;
   if (selectedPieceSlot === idx) {
-    selectedPieceSlot = -1;
-    renderPiecesInHand(); 
-    clearGhost();
+    selectedPieceSlot = -1; renderPiecesInHand(); clearGhost();
   } else {
     selectedPieceSlot = idx;
     el.slots.forEach((s, i) => {
-      if (i === idx) s.classList.add('selected');
-      else s.classList.remove('selected');
+      if (i === idx) s.classList.add('selected'); else s.classList.remove('selected');
     });
   }
 }
 
 function onBoardMove(e) {
-  if (controlMode !== 'click' || selectedPieceSlot === -1 || isGameOver) return;
-  const target = e.target.closest('.cell');
-  if (!target) return;
-  
-  const idx = parseInt(target.dataset.index);
-  const r = Math.floor(idx / CONFIG.COLS);
-  const c = idx % CONFIG.COLS;
-  
-  const piece = piecesInHand[selectedPieceSlot];
-  clearGhost();
-  if (canPlace(piece, r, c)) {
-    showGhost(piece, r, c);
+  if (controlMode==='drag') { /* handled by dragmove */ } 
+  else {
+    if(selectedPieceSlot === -1 || isGameOver) return;
+    const target = e.target.closest('.cell');
+    if(!target) return;
+    const idx = parseInt(target.dataset.index);
+    const r = Math.floor(idx / CONFIG.COLS), c = idx % CONFIG.COLS;
+    const piece = piecesInHand[selectedPieceSlot];
+    clearGhost();
+    if (canPlace(piece, r, c)) showGhost(piece, r, c);
   }
 }
 
@@ -805,180 +963,83 @@ function onBoardClick(e) {
   if (controlMode !== 'click' || selectedPieceSlot === -1 || isGameOver) return;
   const target = e.target.closest('.cell');
   if (!target) return;
-  
   const idx = parseInt(target.dataset.index);
-  const r = Math.floor(idx / CONFIG.COLS);
-  const c = idx % CONFIG.COLS;
-  
+  const r = Math.floor(idx / CONFIG.COLS), c = idx % CONFIG.COLS;
   const piece = piecesInHand[selectedPieceSlot];
   if (canPlace(piece, r, c)) {
     placePiece(piece, r, c);
     piecesInHand[selectedPieceSlot] = null;
-    selectedPieceSlot = -1;
-    clearGhost();
-    playSound('push'); 
-    checkLines();
+    selectedPieceSlot = -1; clearGhost(); playSound('push'); checkLines();
     if(piecesInHand.every(p => p === null)) setTimeout(replenishPieces, 250);
     else { renderPiecesInHand(); checkGameOver(); }
-  } else {
-    playSound('del');
-  }
-}
-
-
-// --- Drag Mode Logic ---
-let draggingPiece = null, dragClone = null, currentSlotIdx = -1;
-
-function onSlotDragStart(e, idx) {
-  if(isGameOver || controlMode !== 'drag') return;
-  const pieceData = piecesInHand[idx];
-  if(!pieceData) return;
-
-  e.preventDefault();
-  
-  const slotEl = el.slots[idx];
-  const pDiv = slotEl.querySelector('.draggable-piece');
-  if(!pDiv) return;
-
-  currentSlotIdx = idx;
-  draggingPiece = pieceData;
-  
-  dragClone = pDiv.cloneNode(true);
-  dragClone.className = 'dragging-clone';
-  dragClone.style.animation = 'none'; 
-  
-  const rows = pieceData.shape.map(p=>p[0]), cols = pieceData.shape.map(p=>p[1]);
-  const w = Math.max(...cols)+1, h = Math.max(...rows)+1;
-  const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
-  
-  dragClone.style.gridTemplateColumns = `repeat(${w}, ${tileSize}px)`;
-  dragClone.style.gridTemplateRows = `repeat(${h}, ${tileSize}px)`;
-  dragClone.style.transform = 'translate(-50%, -50%) scale(1.1)'; 
-  
-  dragClone.querySelectorAll('.mini-tile').forEach(m => {
-    m.style.width = `${tileSize}px`; m.style.height = `${tileSize}px`;
-    m.style.borderRadius = '4px';
-    m.style.boxShadow = "inset 2px 2px 0 rgba(255,255,255,0.4), inset -2px -2px 0 rgba(0,0,0,0.2)";
-  });
-  
-  if(e.type === 'touchstart') dragClone.classList.add('mobile-offset');
-  document.body.appendChild(dragClone);
-  
-  pDiv.style.opacity = '0';
-  
-  if(e.type === 'mousedown') {
-    document.addEventListener('mousemove', onDragMove);
-    document.addEventListener('mouseup', onDragEnd);
-  } else {
-    document.addEventListener('touchmove', onDragMove, {passive: false});
-    document.addEventListener('touchend', onDragEnd);
-  }
-  moveClone(e);
+  } else { playSound('del'); }
 }
 
 function onDragMove(e) {
-  e.preventDefault();
-  moveClone(e);
+  e.preventDefault(); moveClone(e);
   const {r, c} = getBoardPos(e);
   clearGhost();
-  if(r !== null && c !== null && canPlace(draggingPiece, r, c)) {
-    showGhost(draggingPiece, r, c);
-  }
+  if(r !== null && c !== null && canPlace(draggingPiece, r, c)) showGhost(draggingPiece, r, c);
 }
 
 function moveClone(e) {
   if(!dragClone) return;
   const cx = e.clientX || e.touches[0].clientX;
   const cy = e.clientY || e.touches[0].clientY;
-  dragClone.style.left = cx + 'px';
-  dragClone.style.top = cy + 'px';
+  dragClone.style.left = cx + 'px'; dragClone.style.top = cy + 'px';
 }
 
 function onDragEnd(e) {
-  document.removeEventListener('mousemove', onDragMove);
-  document.removeEventListener('mouseup', onDragEnd);
-  document.removeEventListener('touchmove', onDragMove);
-  document.removeEventListener('touchend', onDragEnd);
-  
+  document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd);
+  document.removeEventListener('touchmove', onDragMove); document.removeEventListener('touchend', onDragEnd);
   const {r, c} = getBoardPos(e);
   clearGhost();
-  
   let placed = false;
   if(r !== null && c !== null && canPlace(draggingPiece, r, c)) {
     placePiece(draggingPiece, r, c);
-    piecesInHand[currentSlotIdx] = null;
-    placed = true;
+    piecesInHand[currentSlotIdx] = null; placed = true;
   }
-  
-  if(dragClone) dragClone.remove();
-  dragClone = null; draggingPiece = null;
-  
+  if(dragClone) dragClone.remove(); dragClone = null; draggingPiece = null;
   if(placed) {
     playSound('push'); checkLines();
     if(piecesInHand.every(p => p === null)) setTimeout(replenishPieces, 250);
     else { renderPiecesInHand(); checkGameOver(); }
-  } else {
-    playSound('del'); renderPiecesInHand(); 
-  }
+  } else { playSound('del'); renderPiecesInHand(); }
 }
 
 function getBoardPos(e) {
   const cx = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
   let cy = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
   if(e.type === 'touchend' || e.type === 'touchmove') cy -= 100;
-  
   const rect = el.board.getBoundingClientRect();
   const tileSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
-  
   if(!draggingPiece) return {r:null, c:null};
   
-  // Calculate relative position based on piece CENTER
   const cols = draggingPiece.shape.map(p=>p[1]);
   const rows = draggingPiece.shape.map(p=>p[0]);
-  const w = Math.max(...cols)+1; 
-  const h = Math.max(...rows)+1;
-  
+  const w = Math.max(...cols)+1, h = Math.max(...rows)+1;
   const pxW = w * (tileSize+2);
   const pxH = h * (tileSize+2);
-  
-  // Center of cursor = Center of Piece
   const tlx = cx - (pxW / 2);
   const tly = cy - (pxH / 2);
-  
   const relX = tlx - rect.left;
   const relY = tly - rect.top;
-  
-  // Simple Rounding
   const cBase = Math.round(relX / (tileSize+2));
   const rBase = Math.round(relY / (tileSize+2));
   
-  // 1. Exact match
   if(canPlace(draggingPiece, rBase, cBase)) return {r:rBase, c:cBase};
 
-  // 2. Immediate Neighbors (Radius 1) - Smart Detection
-  const neighbors = [
-    {dr:0, dc:1}, {dr:0, dc:-1}, {dr:1, dc:0}, {dr:-1, dc:0},
-    {dr:1, dc:1}, {dr:1, dc:-1}, {dr:-1, dc:1}, {dr:-1, dc:-1}
-  ];
-  let bestCandidate = null;
-  let minDist = Infinity;
-  const floatR = relY / (tileSize+2);
-  const floatC = relX / (tileSize+2);
-
+  const neighbors = [{dr:0, dc:1}, {dr:0, dc:-1}, {dr:1, dc:0}, {dr:-1, dc:0}, {dr:1, dc:1}, {dr:1, dc:-1}, {dr:-1, dc:1}, {dr:-1, dc:-1}];
+  let bestCandidate = null, minDist = Infinity;
+  const floatR = relY / (tileSize+2), floatC = relX / (tileSize+2);
   for(let n of neighbors) {
-    const nr = rBase + n.dr;
-    const nc = cBase + n.dc;
+    const nr = rBase + n.dr, nc = cBase + n.dc;
     if(canPlace(draggingPiece, nr, nc)) {
       const dist = Math.sqrt(Math.pow(nr - floatR, 2) + Math.pow(nc - floatC, 2));
-      if (dist < minDist) {
-        minDist = dist;
-        bestCandidate = {r:nr, c:nc};
-      }
+      if (dist < minDist) { minDist = dist; bestCandidate = {r:nr, c:nc}; }
     }
   }
-  
   if (bestCandidate) return bestCandidate;
-  
   return {r:null, c:null};
 }
 
@@ -992,8 +1053,32 @@ function canPlace(piece, r, c) {
 }
 
 function placePiece(piece, r, c) {
-  piece.shape.forEach(([dr, dc]) => board[r+dr][c+dc] = piece.color);
+  let surrounding = 0, perimeter = 0;
+  piece.shape.forEach(([dr, dc]) => {
+    board[r+dr][c+dc] = piece.color;
+    [[0,1],[0,-1],[1,0],[-1,0]].forEach(([nr, nc]) => {
+      const checkR = r + dr + nr, checkC = c + dc + nc;
+      if (checkR < 0 || checkR >= CONFIG.ROWS || checkC < 0 || checkC >= CONFIG.COLS || board[checkR][checkC] !== null) surrounding++;
+      perimeter++;
+    });
+  });
+  if (surrounding / perimeter > 0.7) createThumbsUpEffect(r, c);
   renderBoard();
+}
+
+function createThumbsUpEffect(r, c) {
+  const cellIndex = r * CONFIG.COLS + c;
+  const cell = el.board.children[cellIndex];
+  if(cell) {
+    const rect = cell.getBoundingClientRect();
+    const thumbs = document.createElement('div');
+    thumbs.className = 'thumbs-up-effect';
+    thumbs.textContent = '👍';
+    thumbs.style.left = (rect.left + rect.width/2 - 20) + 'px';
+    thumbs.style.top = (rect.top + rect.height/2 - 20) + 'px';
+    document.body.appendChild(thumbs);
+    setTimeout(() => thumbs.remove(), 1200);
+  }
 }
 
 function showGhost(piece, r, c) {
@@ -1005,12 +1090,48 @@ function showGhost(piece, r, c) {
       el.board.children[nr*CONFIG.COLS+nc].appendChild(g);
     }
   });
+  const rowsToClear = new Set(), colsToClear = new Set();
+  for(let rr=0; rr<CONFIG.ROWS; rr++) {
+    let filledCount = 0;
+    for(let cc=0; cc<CONFIG.COLS; cc++) {
+      let filledByPiece = false;
+      for(let [pr, pc] of piece.shape) if(rr === r+pr && cc === c+pc) filledByPiece = true;
+      if(board[rr][cc] || filledByPiece) filledCount++;
+    }
+    if(filledCount === CONFIG.COLS) rowsToClear.add(rr);
+  }
+  for(let cc=0; cc<CONFIG.COLS; cc++) {
+    let filledCount = 0;
+    for(let rr=0; rr<CONFIG.ROWS; rr++) {
+      let filledByPiece = false;
+      for(let [pr, pc] of piece.shape) if(rr === r+pr && cc === c+pc) filledByPiece = true;
+      if(board[rr][cc] || filledByPiece) filledCount++;
+    }
+    if(filledCount === CONFIG.ROWS) colsToClear.add(cc);
+  }
+  if(rowsToClear.size > 0 || colsToClear.size > 0) {
+    const cellsToHighlight = new Set();
+    rowsToClear.forEach(rr => { for(let cc=0; cc<CONFIG.COLS; cc++) cellsToHighlight.add(rr*CONFIG.COLS + cc); });
+    colsToClear.forEach(cc => { for(let rr=0; rr<CONFIG.ROWS; rr++) cellsToHighlight.add(rr*CONFIG.COLS + cc); });
+    cellsToHighlight.forEach(idx => {
+      const cell = el.board.children[idx];
+      const tile = cell.querySelector('.tile');
+      if(tile) {
+        tile.classList.add('will-clear');
+        tile.style.backgroundColor = piece.color; 
+      }
+    });
+  }
 }
-function clearGhost() { document.querySelectorAll('.ghost-tile').forEach(e => e.remove()); }
 
-// ===================================================================================
-// Score & Animation
-// ===================================================================================
+function clearGhost() { 
+  document.querySelectorAll('.ghost-tile').forEach(e => e.remove());
+  document.querySelectorAll('.tile.will-clear').forEach(t => {
+    t.classList.remove('will-clear');
+    t.style.backgroundColor = t.getAttribute('data-color'); 
+  });
+}
+
 function checkLines() {
   const rowsToClear = [], colsToClear = [];
   for(let r=0; r<CONFIG.ROWS; r++) if(board[r].every(c => c !== null)) rowsToClear.push(r);
@@ -1020,7 +1141,9 @@ function checkLines() {
   }
   
   const lines = rowsToClear.length + colsToClear.length;
+  
   if(lines > 0) {
+    movesSinceLastClear = 0;
     comboCount++;
     const base = lines * 100;
     const comboBonus = (comboCount-1) * 30;
@@ -1028,9 +1151,7 @@ function checkLines() {
     const totalAdd = base + comboBonus + multiBonus;
     score += totalAdd;
     
-    let mainText = "";
-    let subText = `+${totalAdd}`;
-    
+    let mainText = "", subText = `+${totalAdd}`;
     if(comboCount >= 2) {
       mainText = `<span class="feedback-combo">Combo ${comboCount}</span>`;
       if(lines >= 4) subText = "Perfect!";
@@ -1042,11 +1163,9 @@ function checkLines() {
       else if(lines >= 2) mainText = "Good!";
       else mainText = "Nice";
     }
-    
     showFeedback(mainText, subText); 
     playSound('del');
     
-    // Identify cells & Effect
     const cellsToClear = new Set();
     rowsToClear.forEach(r => {
       const le = document.createElement('div'); le.className = 'line-effect';
@@ -1068,19 +1187,25 @@ function checkLines() {
       const cell = el.board.children[r*CONFIG.COLS + c];
       const tile = cell.querySelector('.tile');
       if(tile) {
-        // Particles
         const rect = tile.getBoundingClientRect();
         createExplosion(rect, tile.style.backgroundColor);
-        tile.classList.add('clearing');
       }
       board[r][c] = null;
     });
     
     el.currentScore.classList.add('bump');
     setTimeout(()=>el.currentScore.classList.remove('bump'), 150);
-    setTimeout(renderBoard, 250);
+    renderBoard();
+    
   } else {
-    comboCount = 0;
+    movesSinceLastClear++;
+    if (movesSinceLastClear <= 3) {
+      // Kept
+    } else if (movesSinceLastClear === 4 && Math.random() < 0.07) {
+      // Lucky kept
+    } else {
+      comboCount = 0;
+    }
   }
   updateScoreUI();
 }
@@ -1092,20 +1217,14 @@ function createExplosion(rect, color) {
     p.style.backgroundColor = color;
     p.style.left = rect.left + 'px';
     p.style.top = rect.top + 'px';
-    
     const angle = (Math.random() * 360) * (Math.PI / 180);
     const velocity = 30 + Math.random() * 50;
     const tx = Math.cos(angle) * velocity;
     const ty = Math.sin(angle) * velocity;
     const rot = (Math.random() - 0.5) * 720;
-    
-    p.style.setProperty('--tx', `${tx}px`);
-    p.style.setProperty('--ty', `${ty}px`);
-    p.style.setProperty('--rot', `${rot}deg`);
-    
+    p.style.setProperty('--tx', `${tx}px`); p.style.setProperty('--ty', `${ty}px`); p.style.setProperty('--rot', `${rot}deg`);
     const size = 15 + Math.random() * 10;
     p.style.width = `${size}px`; p.style.height = `${size}px`;
-    
     document.body.appendChild(p);
     setTimeout(() => p.remove(), 600);
   }
@@ -1128,23 +1247,27 @@ function checkGameOver() {
 }
 
 function showGameOver() {
+  const previousBest = bestScore;
   if(score > bestScore) {
     bestScore = score; localStorage.setItem('blockblast_best_v4', bestScore);
   }
-  // Check for New Record (Simple Logic: if score > 0, prompt. In real app, check against global ranking logic)
-  if(score > 0) {
-    el.newRecordModal.classList.remove('hidden');
+  const savedName = localStorage.getItem('blockblast_nickname');
+  if (score > previousBest && score > 0) {
+    if (savedName) {
+      sendScore(savedName, score);
+      el.goScore.textContent = score; el.goBest.textContent = `Best Score: ${bestScore}`;
+      el.gameOverScreen.classList.remove('hidden');
+      showFeedback("Record Updated!", "Auto-sent");
+    } else {
+      el.newRecordModal.classList.remove('hidden');
+    }
   } else {
-    el.goScore.textContent = score;
-    el.goBest.textContent = `Best Score: ${bestScore}`;
+    el.goScore.textContent = score; el.goBest.textContent = `Best Score: ${bestScore}`;
     el.gameOverScreen.classList.remove('hidden');
   }
-  
-  // If user skips modal, show game over screen
   el.newRecordModal.querySelector('button[onclick]').onclick = () => {
     el.newRecordModal.classList.add('hidden');
-    el.goScore.textContent = score;
-    el.goBest.textContent = `Best Score: ${bestScore}`;
+    el.goScore.textContent = score; el.goBest.textContent = `Best Score: ${bestScore}`;
     el.gameOverScreen.classList.remove('hidden');
   };
 }
@@ -1155,7 +1278,6 @@ function loadBest() { bestScore = parseInt(localStorage.getItem('blockblast_best
 function showFeedback(m, s) {
   const existing = document.querySelector('.feedback-popup');
   if(existing) existing.remove();
-  
   const d = document.createElement('div'); d.className = 'feedback-popup';
   d.innerHTML = `<span class="feedback-text">${m}</span>${s ? `<span class="feedback-sub">${s}</span>` : ''}`;
   el.app.appendChild(d); 
@@ -1173,7 +1295,6 @@ function setupEvents() {
   document.getElementById('menuBtn').addEventListener('click', toggle);
   el.menuOverlay.addEventListener('click', toggle);
   
-  // Menu Buttons
   document.getElementById('playGameBtn').addEventListener('click', () => {
     el.mainMenu.classList.add('hidden');
     el.app.classList.remove('hidden');
@@ -1185,7 +1306,6 @@ function setupEvents() {
     fetchRanking();
   });
   
-  // Sidebar Buttons
   document.getElementById('menu-ranking').addEventListener('click', () => { document.getElementById('rankingModal').classList.remove('hidden'); fetchRanking(); toggle(); });
   document.getElementById('menu-cheat').addEventListener('click', () => { document.getElementById('cheatModal').classList.remove('hidden'); toggle(); });
   document.getElementById('menu-restart').addEventListener('click', () => { if(confirm('リスタート？')) initGame(); toggle(); });
@@ -1201,10 +1321,9 @@ function setupEvents() {
   document.getElementById('submitScoreBtn').addEventListener('click', () => {
     const name = el.newRecordName.value.trim();
     if(!name) { alert('名前を入力してください'); return; }
+    localStorage.setItem('blockblast_nickname', name);
     sendScore(name, score);
-    // After send
-    el.goScore.textContent = score;
-    el.goBest.textContent = `Best Score: ${bestScore}`;
+    el.goScore.textContent = score; el.goBest.textContent = `Best Score: ${bestScore}`;
     el.gameOverScreen.classList.remove('hidden');
   });
 
