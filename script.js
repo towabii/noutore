@@ -17,34 +17,31 @@ let updateInfoData = { history: [], future: [] };
 let scheduleData = [];
 let surveyData = { id: "default_survey", question: "", options: [] };
 
-// 【修正】配列順序を変更し、レイアウト用に span プロパティを調整して分割を実現
+// 【修正】カウントダウン設定（お正月仕様）
 const countdownConfig = [
-{ label: "人生終了まで", type: "life", span: "half-left" }, // spanをhalf-leftに変更
-{ label: "クリスマスまで", date: "2025/12/25", span: "half-right" }, // dateを設定し、spanをhalf-rightに変更
+{ label: "人生終了まで", type: "life", span: "half-left" },
+{ label: "今年が終わるまで", date: "2026/12/31", span: "half-right" }, // 2026年元旦
 { label: "期末テストまで", date: "2026/02/16" },
-{ label: "修学旅行まで", date: "2026/01/20" },
+{ label: "修学旅行まで", date: "2026/01/16" },
 { label: "修了式まで", date: "2026/03/19" },
-{ label: "とわの誕生日まで", date: "2026/04/06" },
+{ label: "とわの誕生日まで", date: "04/06" },// アクセス人数を参拝者に
 ];
 
 const items = [
 { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "一番頑張った", category: "fun" },
 { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "一番人気！", category: "fun" },
-{ title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "試験運用中", category: "fun" },
-{ title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/選択.html", recommend: "作るの頑張った", category: "fun" },
-{ title: "StudyConnect", description: "初のSNSアプリ", thumbnail: "./apps/スタディーコネクト/thumbnail.png", url: "./apps/スタディーコネクト/紹介.html", recommend: null, category: "fun" },
-{ title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },   
+{ title: "7番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "試験運用中", category: "fun" },
+{ title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/index.html", recommend: "作るの頑張った", category: "fun" },
+{ title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },
 { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "GOOD", category: "study" },
 { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
 { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
 { title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "./apps/app4/index.html", recommend: null, category: "fun" },
-{ title: "ボールコロコロ", description: "楽しい", thumbnail: "./apps/appボール/thumbnail.jpeg", url: "./apps/appボール/index.html", recommend: "null", category: "fun" },
 { title: "3Dトレーニング", description: "三次元空間で頭を鍛える新しい体験。", thumbnail: "./apps/app7/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
 { title: "砂ブロック落とし", description: "最近流行ってるあれ", thumbnail: "./apps/app12/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
 { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
 { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
 { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: "作成中", category: "fun" },
-{ title: "街づくり", description: "大きな町を作ろう", thumbnail: "./apps/appcity/thumbnail.png", url: "./apps/appctyi/index.html", recommend: null, category: "fun" },
 { title: "My Wallet", description: "初の本格ウェブアプリ。", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA対応！", category: "other" },
 { title: "管理パネル", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/kanri/", recommend: "管理者のみ", category: "other" },
 { title: "トワの部屋BOX検索", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/SmartBOX/", recommend: "管理者のみ", category: "other" },
@@ -59,7 +56,6 @@ const staffRollContainer = document.getElementById('staffRollContainer');
 const creditsPre = document.getElementById('credits-text');
 const welcomeContainer = document.getElementById('welcome-animation-container');
 
-// ローディングUI要素
 const loadingStatusContainer = document.getElementById('loading-status-container');
 const loadingText = document.getElementById('loading-text');
 const progressBarFill = document.getElementById('progress-bar-fill');
@@ -70,22 +66,23 @@ const INACTIVITY_TIMEOUT = 3600 * 1000;
 let inactivityTimer;
 let isOnline = false;
 
-// 【追加】雪を降らせる処理（見た目のみ、機能変更なし）
-function createSnowflakes() {
-    const snowContainer = document.getElementById('snow-container');
-    if(!snowContainer) return;
-    const snowflakeCount = 50;
-    for(let i=0; i<snowflakeCount; i++){
-        const snowflake = document.createElement('div');
-        snowflake.classList.add('snowflake');
-        snowflake.style.left = Math.random() * 100 + 'vw';
-        snowflake.style.width = snowflake.style.height = (Math.random() * 5 + 2) + 'px';
-        snowflake.style.animationDuration = (Math.random() * 5 + 5) + 's';
-        snowflake.style.animationDelay = Math.random() * 5 + 's';
-        snowContainer.appendChild(snowflake);
+// 【追加】金粉を降らせる処理
+function createGoldFlakes() {
+    const flakeContainer = document.getElementById('gold-flake-container');
+    if(!flakeContainer) return;
+    const flakeCount = 40;
+    for(let i=0; i<flakeCount; i++){
+        const flake = document.createElement('div');
+        flake.classList.add('gold-flake');
+        flake.style.left = Math.random() * 100 + 'vw';
+        const size = Math.random() * 8 + 4;
+        flake.style.width = flake.style.height = size + 'px';
+        flake.style.animationDuration = (Math.random() * 4 + 4) + 's';
+        flake.style.animationDelay = Math.random() * 5 + 's';
+        flakeContainer.appendChild(flake);
     }
 }
-createSnowflakes();
+createGoldFlakes();
 
 function getUserId() {
     let userId = localStorage.getItem('sokohara-site-user-id');
@@ -196,7 +193,7 @@ function populateDynamicContent() {
         scheduleList.innerHTML = '';
         scheduleData.forEach(item => {
             const li = document.createElement('li');
-            li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px solid var(--border-color);";
+            li.style.cssText = "display: flex; justify-content: space-between; padding: 0.8rem 0; border-bottom: 1px dashed var(--border-color);";
             li.innerHTML = `<span>${item.name}</span> <span style="color: var(--text-secondary);">${item.date}</span>`;
             scheduleList.appendChild(li);
         });
@@ -231,12 +228,12 @@ async function afterStaffRoll() {
     loadingStatusContainer.style.display = 'flex';
 
     try {
-        updateLoadingStatus("ソリを準備中...", 10);
-        updateLoadingStatus("プレゼントをロード中...", 40);
+        updateLoadingStatus("お年玉を準備中...", 10);
+        updateLoadingStatus("おせち料理を準備中...", 40);
         await fetchAndApplySiteData();
-        updateLoadingStatus("ブラックリストを確認中...", 70);
+        updateLoadingStatus("参拝客名簿を確認中...", 70);
         const accessData = await callGas('accessStart', { userId, clientId });
-        updateLoadingStatus("メリークリスマス！", 100);
+        updateLoadingStatus("謹賀新年！", 100);
 
         setTimeout(() => {
             loader.classList.add('fade-out');
@@ -264,7 +261,7 @@ async function afterStaffRoll() {
             const tutorialCompleted = localStorage.getItem('tutorialCompleted');
             const afterTutorial = () => checkTermsAndStart(() => {
                 if (accessData.message) {
-                    showNotification("サンタからのお知らせ", accessData.message);
+                    showNotification("管理者からのお知らせ", accessData.message);
                 } else if (notificationData.active) {
                     showNotification(notificationData.title, notificationData.text);
                 }
@@ -308,7 +305,7 @@ function checkAndShowSurvey() {
         btn.onclick = () => {
             modal.classList.remove('visible');
             document.body.classList.remove("no-scroll");
-            showToast('送信しました。');
+            showToast('奉納（送信）しました。');
             localStorage.setItem(key, 'true');
             callGas('submitSurvey', { userId, surveyId: surveyData.id, question: surveyData.question, answer: opt });
         };
@@ -349,7 +346,7 @@ document.getElementById('fb-submit-btn').addEventListener('click', async () => {
     }
     const submitBtn = document.getElementById('fb-submit-btn');
     submitBtn.disabled = true;
-    submitBtn.textContent = '送信中...';
+    submitBtn.textContent = '奉納中...';
 
     const payload = {
         userId: document.getElementById('fb-userid').value,
@@ -363,7 +360,7 @@ document.getElementById('fb-submit-btn').addEventListener('click', async () => {
 
     try {
         await callGas('submitFeedback', payload);
-        showToast('フィードバックを送信しました！');
+        showToast('ご意見を奉納しました！');
         feedbackModal.classList.remove('visible');
         feedbackForm.reset();
         stars.forEach(s => s.classList.add('active'));
@@ -372,11 +369,10 @@ document.getElementById('fb-submit-btn').addEventListener('click', async () => {
         alert('送信に失敗しました: ' + err.message);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = '送信';
+        submitBtn.textContent = '奉納（送信）';
     }
 });
 
-// 【修正】生成ロジックを変更して分割レイアウトに対応
 function generateCountdownCards() {
     const container = document.getElementById('countdown-container');
     if (!container) return;
@@ -385,12 +381,8 @@ function generateCountdownCards() {
         const card = document.createElement('div');
         card.className = 'countdown-card';
         
-        // 分割レイアウトの適用 (span指定がある場合)
         if (config.span === 'half-left') card.classList.add('half-left');
         if (config.span === 'half-right') card.classList.add('half-right');
-        
-        // 既存ロジック：fullの場合の処理
-        if (config.span === 'full') card.classList.add('main');
         
         let valueHtml = '';
         if (config.type === 'life') {
@@ -484,17 +476,21 @@ function startCountdown(age) {
         if(!el) return; 
         let targetDate; const now = new Date();
         const [month, day] = config.date.split('/').slice(-2).map(Number);
-        if (config.date.includes('/')) {
+        // 年指定を含む場合（2026/01/01など）
+        if(config.date.split('/').length === 3) {
+             const [y, m, d] = config.date.split('/').map(Number);
+             targetDate = new Date(y, m-1, d);
+        } else {
              targetDate = new Date(now.getFullYear(), month - 1, day); 
              if (now > targetDate) targetDate.setFullYear(now.getFullYear() + 1);
         }
+
         updateFunctions.push(() => {
             const now = new Date(); 
             const days = Math.ceil((targetDate - now) / 86400000); 
             el.textContent = `${days} 日`;
-            // クリスマスなどは特別な色にする
-            if(config.label.includes("クリスマス")) {
-                 el.style.color = "var(--christmas-red)";
+            if(config.label.includes("お正月")) {
+                 el.style.color = "var(--japan-red)";
             }
             el.classList.toggle('warning', days > 0 && days <= 30);
         });
@@ -537,12 +533,13 @@ function onStaffRollEnd() {
          setTimeout(() => {
             staffRollContainer.style.display = 'none';
             welcomeContainer.style.display = 'flex'; welcomeContainer.innerHTML = ''; 
-            "MERRY CHRISTMAS".split('').forEach((char, i) => {
+            // HAPPY NEW YEAR -> 謹賀新年
+            "謹賀新年".split('').forEach((char, i) => {
                 const span = document.createElement('span'); span.textContent = char; span.className = 'welcome-char';
-                span.style.animationDelay = `${i * 100}ms`; welcomeContainer.appendChild(span);
+                span.style.animationDelay = `${i * 200}ms`; welcomeContainer.appendChild(span);
                 setTimeout(() => span.classList.add('animate'), 50);
             });
-            setTimeout(() => { afterStaffRoll(); }, 2000);
+            setTimeout(() => { afterStaffRoll(); }, 3000);
         }, 500);
     } else { 
         setTimeout(() => { afterStaffRoll(); }, 500);
@@ -581,7 +578,7 @@ function generateItemCards() {
         const itemElement = document.createElement('div');
         itemElement.className = 'item-card'; itemElement.dataset.itemId = index; itemElement.dataset.category = item.category;
         const recommendBadge = item.recommend ? `<div class="recommend-badge">${item.recommend}</div>` : '';
-        const ribbon = `<div class="ribbon ${item.category}">${item.category==='fun'?'楽しいやつ':item.category==='study'?'学習':'その他'}</div>`;
+        const ribbon = `<div class="ribbon ${item.category}">${item.category==='fun'?'遊び':item.category==='study'?'学び':'その他'}</div>`;
         itemElement.innerHTML = `${recommendBadge}<div class="thumbnail-container"><img src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML = '<div style=\'display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);\'>No Image</div>';"></div>${ribbon}<div class="item-card-content"><h3 class="item-card-title">${item.title}</h3><p class="item-card-desc">${item.description}</p></div>`;
         itemListContainer.appendChild(itemElement);
     });
@@ -644,7 +641,7 @@ function openShareModal(title, url, imagePath = null) {
         img.alt = 'QR Code';
         qrContainer.appendChild(img);
     } else {
-        if (typeof QRCode !== 'undefined') QRCode.toCanvas(url, { width: 220, color: { dark: '#d42426', light: '#ffffff' } }, (e, c) => { if(!e) qrContainer.appendChild(c); });
+        if (typeof QRCode !== 'undefined') QRCode.toCanvas(url, { width: 220, color: { dark: '#ea5532', light: '#ffffff' } }, (e, c) => { if(!e) qrContainer.appendChild(c); });
     }
     
     allModals.share.classList.add("visible");
