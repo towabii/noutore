@@ -228,10 +228,10 @@ async function afterStaffRoll() {
     loadingStatusContainer.style.display = 'flex';
 
     try {
-        updateLoadingStatus("お年玉を準備中...", 10);
-        updateLoadingStatus("おせち料理を準備中...", 40);
+        updateLoadingStatus("メモリ照合中...", 10);
+        updateLoadingStatus("サーバーと通信中...", 40);
         await fetchAndApplySiteData();
-        updateLoadingStatus("参拝客名簿を確認中...", 70);
+        updateLoadingStatus("ブラックリスト確認中...", 70);
         const accessData = await callGas('accessStart', { userId, clientId });
         updateLoadingStatus("謹賀新年！", 100);
 
@@ -346,7 +346,7 @@ document.getElementById('fb-submit-btn').addEventListener('click', async () => {
     }
     const submitBtn = document.getElementById('fb-submit-btn');
     submitBtn.disabled = true;
-    submitBtn.textContent = '奉納中...';
+    submitBtn.textContent = '送信中...';
 
     const payload = {
         userId: document.getElementById('fb-userid').value,
@@ -369,7 +369,7 @@ document.getElementById('fb-submit-btn').addEventListener('click', async () => {
         alert('送信に失敗しました: ' + err.message);
     } finally {
         submitBtn.disabled = false;
-        submitBtn.textContent = '奉納（送信）';
+        submitBtn.textContent = '送信';
     }
 });
 
