@@ -48,7 +48,7 @@
         <div id="loader">
             <div id="loading-status-container" style="display: none;">
                 <div class="loading-spinner"></div>
-                <p id="loading-text">初日の出を待機中...</p>
+                <p id="loading-text">待機中...</p>
                 <div class="progress-bar-container">
                     <div id="progress-bar-fill" class="progress-bar-fill"></div>
                 </div>
@@ -104,23 +104,23 @@ PR .............................. とわ
         </div>
         <div id="ban-screen" class="hidden-screen">
             <div class="ban-content">
-                <h1>🚫 門前払い（アクセス制限）</h1>
+                <h1>🚫 アクセス制限</h1>
                 <p>あなたはこのサイトへの立ち入りが制限されています。</p>
                 <p class="ban-user-id">
                     User ID: <span id="ban-user-id-display"></span>
                 </p>
                 <div class="ban-actions">
-                    <button id="ban-feedback-btn" class="btn warning">神主に相談する（異議申し立て）</button>
+                    <button id="ban-feedback-btn" class="btn warning">異議申し立て</button>
                 </div>
                 <div id="ban-admin-message-container" class="admin-message-box">
-                    <h3>管理者からの文</h3>
+                    <h3>管理者からのメッセージ</h3>
                     <p id="ban-admin-message">メッセージはありません。</p>
                 </div>
             </div>
         </div>
         <div class="site-wrapper" id="site-wrapper">
             <header class="site-header">
-                <h1 class="site-title">🎍 とわのお正月サイト 🌅</h1>
+                <h1 class="site-title">🎍 とわのたのしいやつ 🌅</h1>
                 <nav>
                     <ul>
                         <li>
@@ -138,7 +138,7 @@ PR .............................. とわ
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
                                 </svg>
-                                <span>絵馬(質問)</span>
+                                <span>よくある質問</span>
                             </a>
                         </li>
                         <li>
@@ -156,7 +156,7 @@ PR .............................. とわ
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                                 </svg>
-                                <span>お年玉(共有)</span>
+                                <span>共有</span>
                             </a>
                         </li>
                         <li>
@@ -173,7 +173,7 @@ PR .............................. とわ
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0m0 0-3.182-3.182m0-11.667a8.25 8.25 0 0 0-11.667 0M6.168 12h.008v.008H6.168V12Z"/>
                                 </svg>
-                                <span>巻物(スタッフ)</span>
+                                <span>スタッフロール</span>
                             </a>
                         </li>
                     </ul>
@@ -209,10 +209,10 @@ PR .............................. とわ
                 </div>
                 <div id="content-faq" class="content-section">
                     <div class="info-container">
-                        <h2>よくある質問（絵馬）</h2>
+                        <h2>よくある質問</h2>
                         <dl>
                             <dt>Q. ゲームは無料で遊べますか？</dt>
-                            <dd>A. 本サイト内のゲームは、特に記載がない限り無料（お賽銭不要）で遊べます。</dd>
+                            <dd>A. 本サイト内のゲームは、特に記載がない限り無料で遊べます。</dd>
                             <dt>Q. アップデートの頻度はどれくらいですか？</dt>
                             <dd>A. 基本的に毎日です。毎日のアップデートで細かな不具合を修正しています。特に土日には新しいアプリが追加されるので、ぜひフィードバックから「追加してほしいもの」を教えてください。</dd>
                             <dt>Q. 本当にとわが作ったんですか？</dt>
@@ -259,7 +259,7 @@ PR .............................. とわ
         </div>
         <div id="feedback-modal" class="modal-overlay">
             <div class="modal-content large feedback-modal-content">
-                <h2>目安箱（フィードバック）</h2>
+                <h2>フィードバック</h2>
                 <form id="feedback-form">
                     <div class="form-group">
                         <label for="fb-userid">ユーザーID</label>
@@ -297,7 +297,7 @@ PR .............................. とわ
                     </div>
                     <div class="form-group checkbox-group">
                         <input type="checkbox" id="fb-ban-appeal">
-                        <label for="fb-ban-appeal">門前払いへの異議申し立て</label>
+                        <label for="fb-ban-appeal">BANへの異議申し立て</label>
                     </div>
                     <div class="form-group">
                         <label for="fb-content">内容</label>
