@@ -23,28 +23,24 @@
         <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+        <!-- 和風の雰囲気を出すためにNoto Serif JP（明朝体）を追加 -->
+        <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700;900&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="style.css">
     </head>
     <body data-theme="dark">
-        <!-- 雪のエフェクト用コンテナ -->
-        <div id="snow-container"></div>
+        <!-- 金粉エフェクト用コンテナ -->
+        <div id="gold-flake-container"></div>
         
-        <!-- 動く雪だるま -->
-        <div id="dancing-snowman">
-            <div class="snowman-body">
-                <div class="head">
-                    <div class="hat"></div>
-                    <div class="eye left"></div>
-                    <div class="eye right"></div>
-                    <div class="nose"></div>
+        <!-- 動くダルマ（右側の余白） -->
+        <div id="wobbling-daruma">
+            <div class="daruma-body">
+                <div class="daruma-face-area">
+                    <div class="daruma-eye left"></div>
+                    <div class="daruma-eye right"></div>
+                    <div class="daruma-beard left"></div>
+                    <div class="daruma-beard right"></div>
                 </div>
-                <div class="body-bottom">
-                    <div class="button top"></div>
-                    <div class="button bottom"></div>
-                </div>
-                <div class="arm left"></div>
-                <div class="arm right"></div>
+                <div class="daruma-pattern">福</div>
             </div>
         </div>
 
@@ -52,7 +48,7 @@
         <div id="loader">
             <div id="loading-status-container" style="display: none;">
                 <div class="loading-spinner"></div>
-                <p id="loading-text">待機中...</p>
+                <p id="loading-text">初日の出を待機中...</p>
                 <div class="progress-bar-container">
                     <div id="progress-bar-fill" class="progress-bar-fill"></div>
                 </div>
@@ -108,68 +104,68 @@ PR .............................. とわ
         </div>
         <div id="ban-screen" class="hidden-screen">
             <div class="ban-content">
-                <h1>🚫 ブラックリスト</h1>
-                <p>あなたはこのサイトへのアクセスが制限されています。</p>
+                <h1>🚫 門前払い（アクセス制限）</h1>
+                <p>あなたはこのサイトへの立ち入りが制限されています。</p>
                 <p class="ban-user-id">
                     User ID: <span id="ban-user-id-display"></span>
                 </p>
                 <div class="ban-actions">
-                    <button id="ban-feedback-btn" class="btn warning">サンタさんにお願いする（異議申し立て）</button>
+                    <button id="ban-feedback-btn" class="btn warning">神主に相談する（異議申し立て）</button>
                 </div>
                 <div id="ban-admin-message-container" class="admin-message-box">
-                    <h3>管理者からのメッセージ</h3>
+                    <h3>管理者からの文</h3>
                     <p id="ban-admin-message">メッセージはありません。</p>
                 </div>
             </div>
         </div>
         <div class="site-wrapper" id="site-wrapper">
             <header class="site-header">
-                <h1 class="site-title">🎄 とわのたのしいやつ 🎅</h1>
+                <h1 class="site-title">🎍 とわのお正月サイト 🌅</h1>
                 <nav>
                     <ul>
                         <li>
                             <a data-target="home">
-                                <!-- 家（お菓子の家風） -->
+                                <!-- 鳥居のようなアイコン -->
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M5.25 21v-8.25M18.75 21v-8.25M3 9.75l1.515-1.515A2.25 2.25 0 0 1 6.106 7.5h11.788a2.25 2.25 0 0 1 1.591.682L21 9.75M3 9.75h18M3 5.25h18"/>
                                 </svg>
-                                <span>ホーム</span>
+                                <span>本殿(ホーム)</span>
                             </a>
                         </li>
                         <li>
                             <a data-target="faq">
-                                <!-- 靴下（質問） -->
+                                <!-- 巻物 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-                                  <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z"/>
                                 </svg>
-                                <span>よくある質問</span>
+                                <span>絵馬(質問)</span>
                             </a>
                         </li>
                         <li>
                             <a data-target="author">
-                                <!-- サンタ（作成者） -->
+                                <!-- 人 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"/>
                                 </svg>
-                                <span>作成者</span>
+                                <span>作者</span>
                             </a>
                         </li>
                         <li>
                             <a id="share-site-btn">
-                                <!-- プレゼント（共有） -->
+                                <!-- お年玉袋/共有 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>
                                 </svg>
-                                <span>プレゼント(共有)</span>
+                                <span>お年玉(共有)</span>
                             </a>
                         </li>
                         <li>
                             <a id="open-feedback-btn">
-                                <!-- ベル（フィードバック） -->
+                                <!-- 鈴 -->
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0M3.124 7.5A8.969 8.969 0 0 1 5.292 3m13.416 0a8.969 8.969 0 0 1 2.168 4.5"/>
                                 </svg>
-                                <span>お願い(FB)</span>
+                                <span>目安箱(FB)</span>
                             </a>
                         </li>
                         <li>
@@ -177,7 +173,7 @@ PR .............................. とわ
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 11.667 0m0 0-3.182-3.182m0-11.667a8.25 8.25 0 0 0-11.667 0M6.168 12h.008v.008H6.168V12Z"/>
                                 </svg>
-                                <span>スタッフロール</span>
+                                <span>巻物(スタッフ)</span>
                             </a>
                         </li>
                     </ul>
@@ -200,23 +196,23 @@ PR .............................. とわ
                     <div id="countdown-container"></div>
                     <div class="main-actions-container">
                         <div class="category-filter">
-                            <button class="category-btn active" data-category="fun">🎄 楽しいやつ</button>
-                            <button class="category-btn" data-category="study">📚 学習</button>
-                            <button class="category-btn" data-category="other">🎁 その他</button>
+                            <button class="category-btn active" data-category="fun">🪀 遊び</button>
+                            <button class="category-btn" data-category="study">📖 学び</button>
+                            <button class="category-btn" data-category="other">🪁 その他</button>
                         </div>
                         <div>
-                            <button id="show-update-info-btn" class="btn">アップデート情報</button>
-                            <button id="show-schedule-btn" class="btn">追加予定日</button>
+                            <button id="show-update-info-btn" class="btn">更新の記録</button>
+                            <button id="show-schedule-btn" class="btn">奉納予定日</button>
                         </div>
                     </div>
                     <div id="item-list" class="item-grid"></div>
                 </div>
                 <div id="content-faq" class="content-section">
                     <div class="info-container">
-                        <h2>よくある質問</h2>
+                        <h2>よくある質問（絵馬）</h2>
                         <dl>
                             <dt>Q. ゲームは無料で遊べますか？</dt>
-                            <dd>A. 本サイト内のゲームは、特に記載がない限り無料で遊べます。</dd>
+                            <dd>A. 本サイト内のゲームは、特に記載がない限り無料（お賽銭不要）で遊べます。</dd>
                             <dt>Q. アップデートの頻度はどれくらいですか？</dt>
                             <dd>A. 基本的に毎日です。毎日のアップデートで細かな不具合を修正しています。特に土日には新しいアプリが追加されるので、ぜひフィードバックから「追加してほしいもの」を教えてください。</dd>
                             <dt>Q. 本当にとわが作ったんですか？</dt>
@@ -253,10 +249,8 @@ PR .............................. とわ
                             <img src="kao.png" alt="とわ（そこはらとわ）" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iI2E3YjNkOSI+PHBhdGggZD0iTTEyIDJhMTAgMTAgMCAwIDAgMCAyMCAxMCAxMCAwIDAgMCAwLTIwem0wIDE4YTEuNSAxLjUgMCAxIDEgMS41LTEuNUExLjUgMS41IDAgMCAxIDEyIDIwWm0yLjA3LTExLjI1bC0uOS45MkM١٢LjUgOS45OCAxMiA١٠LjUgMTIgMTJINDBhMyAzIDAgMCAxIDMtM2MuMDItMS40Ny0xLjI5LTIuNjYtMi44My0yLjQ5LS4yNS4wMy0uNS4xLS43Mi4yWiIvPjwvc3ZnPg=='; this.style.border='none';">
                             <div class="author-details">
                                 <p class="name">とわ ( トワ)</p>
-                                <p>2年1組。このゲームを遊んでるほとんどの人と同じ学校(学校名は非公開)</p>
+                                <p>楽しい中学2年生</p>
                                 <p>誕生日: 4月6日</p>
-                                <p>あだ名：さくら草、とわびー、下手くそ、人じゃない、お前：</p>
-                                <p>指揮者賞(さくら草)</p>
                             </div>
                         </div>
                     </div>
@@ -265,7 +259,7 @@ PR .............................. とわ
         </div>
         <div id="feedback-modal" class="modal-overlay">
             <div class="modal-content large feedback-modal-content">
-                <h2>お願い / 異議申し立て</h2>
+                <h2>目安箱（フィードバック）</h2>
                 <form id="feedback-form">
                     <div class="form-group">
                         <label for="fb-userid">ユーザーID</label>
@@ -303,7 +297,7 @@ PR .............................. とわ
                     </div>
                     <div class="form-group checkbox-group">
                         <input type="checkbox" id="fb-ban-appeal">
-                        <label for="fb-ban-appeal">BANへの異議申し立て</label>
+                        <label for="fb-ban-appeal">門前払いへの異議申し立て</label>
                     </div>
                     <div class="form-group">
                         <label for="fb-content">内容</label>
@@ -312,14 +306,14 @@ PR .............................. とわ
                 </form>
                 <div class="modal-footer">
                     <button type="button" class="btn ghost" data-close-modal>キャンセル</button>
-                    <button type="button" id="fb-submit-btn" class="btn">送信</button>
+                    <button type="button" id="fb-submit-btn" class="btn">奉納（送信）</button>
                 </div>
             </div>
         </div>
         <div id="tutorial-modal" class="modal-overlay">
             <div class="modal-content">
                 <div id="tutorial-step-1" class="tutorial-step active">
-                    <h2>🎄 メリークリスマス！</h2>
+                    <h2>🎍 謹賀新年！</h2>
                     <p>
                         このサイトの便利な機能を紹介します！<br>いくつかのステップで簡単に説明します。
                     </p>
@@ -333,9 +327,9 @@ PR .............................. とわ
                     <p>一瞬で翻訳サイトの画面に切り替わります。もう一度押すと元の画面に戻ります。</p>
                 </div>
                 <div id="tutorial-step-3" class="tutorial-step">
-                    <h2>人生の残り時間 & クリスマス</h2>
+                    <h2>人生の残り時間 & お正月</h2>
                     <p>
-                        画面上部には、あなたが90歳になるまでの残り時間と、<strong>クリスマスまでのカウントダウン</strong>が表示されています。<br>右側の雪だるまも見守っていますよ！
+                        画面上部には、あなたが90歳になるまでの残り時間と、<strong>2026年のお正月までのカウントダウン</strong>が表示されています。<br>右側ではダルマさんが見守っています！
                     </p>
                 </div>
                 <div id="tutorial-step-4" class="tutorial-step">
@@ -399,7 +393,7 @@ PR .............................. とわ
                 <p id="details-modal-desc"></p>
                 <div class="modal-footer">
                     <a id="details-modal-launch-btn" href="#" target="_blank" class="btn">起動する</a>
-                    <button id="details-modal-share-btn" class="btn ghost">プレゼント(共有)</button>
+                    <button id="details-modal-share-btn" class="btn ghost">お年玉(共有)</button>
                     <button data-close-modal class="btn ghost">閉じる</button>
                 </div>
             </div>
@@ -438,7 +432,7 @@ PR .............................. とわ
         </div>
         <div id="update-info-modal" class="modal-overlay">
             <div class="modal-content large">
-                <h2>アップデート情報</h2>
+                <h2>更新の記録</h2>
                 <div id="update-info-content"></div>
                 <h3 class="future-updates-title">今後のアップデート予定</h3>
                 <ul id="update-info-future-list"></ul>
