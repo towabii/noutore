@@ -20,7 +20,7 @@ let surveyData = { id: "default_survey", question: "", options: [] };
 // 【修正】カウントダウン設定（お正月仕様）
 const countdownConfig = [
 { label: "人生終了まで", type: "life", span: "half-left" },
-{ label: "今年が終わるまで", date: "2026/12/31", span: "half-right" }, // 2026年元旦
+{ label: "大型アプデまで", date: "2026/02/20", span: "half-right" }, // 2026年元旦
 { label: "期末テストまで", date: "2026/02/16" },
 { label: "大型アプデまで", date: "2026/02/20" },
 { label: "修了式まで", date: "2026/03/19" },
