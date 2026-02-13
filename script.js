@@ -131,17 +131,19 @@ document.addEventListener('DOMContentLoaded', async function() {
                 const adCard = document.createElement('div');
                 adCard.className = 'ad-card-slot';
                 adCard.dataset.category = 'all'; // 広告はすべてのカテゴリで表示可能とする
+                // 指定されたレクタングル広告コード
                 adCard.innerHTML = `
                     <div class="ad-text">広告枠 [レクタングル]</div>
                     <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-format="fluid"
-                         data-ad-layout-key="-fb+5w+4e-db+86"
+                         style="display:inline-block;width:320px;height:256px"
                          data-ad-client="ca-pub-4223622024416304"
-                         data-ad-slot="GRID_SLOT_ID"></ins>
-                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                         data-ad-slot="5596776029"></ins>
                 `;
                 container.appendChild(adCard);
+                // 動的に追加した広告を表示させるためのpush
+                try {
+                    (window.adsbygoogle = window.adsbygoogle || []).push({});
+                } catch(e) { console.error(e); }
             }
 
             const card = document.createElement('div');
