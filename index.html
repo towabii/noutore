@@ -10,7 +10,7 @@
     <!-- サイトアイコン (Favicon) -->
     <link rel="icon" href="icon.jpeg">
 
-    <!-- Google AdSense -->
+    <!-- Google AdSense (共通読み込み) -->
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4223622024416304"
      crossorigin="anonymous"></script>
 
@@ -108,18 +108,21 @@
         </header>
 
         <main>
-            <!-- トップ広告 -->
+            <!-- トップ広告 (ビッグバナー) -->
             <div class="ad-section top">
                 <div class="ad-label">Advertisement</div>
                 <div class="ad-box-large">
-                     <div class="ad-placeholder-text">広告枠 [ビッグバナー]</div>
+                     <!-- 指定されたビッグバナーコード -->
+                     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4223622024416304"
+                          crossorigin="anonymous"></script>
+                     <!-- ビッグバーナー -->
                      <ins class="adsbygoogle"
-                         style="display:block"
-                         data-ad-client="ca-pub-4223622024416304"
-                         data-ad-slot="TOP_SLOT_ID"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                          style="display:inline-block;width:1200px;height:150px"
+                          data-ad-client="ca-pub-4223622024416304"
+                          data-ad-slot="8379784240"></ins>
+                     <script>
+                          (adsbygoogle = window.adsbygoogle || []).push({});
+                     </script>
                 </div>
             </div>
 
@@ -199,18 +202,21 @@
         </main>
 
         <footer class="site-footer">
-            <!-- フッター広告 -->
+            <!-- フッター広告 (バーナー) -->
             <div class="ad-section footer-ad">
                 <div class="ad-label">Sponsored</div>
                 <div class="ad-box-banner">
-                    <div class="ad-placeholder-text">広告枠 [バナー]</div>
+                    <!-- 指定されたバーナーコード -->
+                    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4223622024416304"
+                         crossorigin="anonymous"></script>
+                    <!-- バーナー -->
                     <ins class="adsbygoogle"
-                         style="display:block"
+                         style="display:inline-block;width:1200px;height:100px"
                          data-ad-client="ca-pub-4223622024416304"
-                         data-ad-slot="FOOTER_SLOT_ID"
-                         data-ad-format="auto"
-                         data-full-width-responsive="true"></ins>
-                    <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                         data-ad-slot="7066702573"></ins>
+                    <script>
+                         (adsbygoogle = window.adsbygoogle || []).push({});
+                    </script>
                 </div>
             </div>
             <div class="footer-links">
@@ -228,9 +234,7 @@
                 <button class="close-modal-btn" data-close-modal>&times;</button>
             </div>
             <form id="feedback-form">
-                <!-- UserIDはJSで設定 -->
                 <input type="hidden" id="fb-userid">
-                
                 <div class="form-group">
                     <label>お名前 (本名)</label>
                     <input type="text" id="fb-name" class="form-input" required placeholder="TOWA">
@@ -265,7 +269,6 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn ghost" data-close-modal>キャンセル</button>
-                    <!-- type="submit" でフォーム送信を発火 -->
                     <button type="submit" id="fb-submit-btn" class="btn primary">送信</button>
                 </div>
             </form>
@@ -283,9 +286,9 @@
                     <img id="details-modal-img" src="" alt="Thumbnail">
                 </div>
                 <p id="details-modal-desc"></p>
-                <!-- モーダル内広告 -->
+                <!-- モーダル内広告 (スペースのみ確保) -->
                 <div class="ad-box-small">
-                    <div class="ad-placeholder-text">広告枠 [インフィード]</div>
+                    <div class="ad-placeholder-text">広告枠</div>
                 </div>
             </div>
             <div class="modal-actions">
