@@ -84,6 +84,18 @@
         <!-- コンテンツエリア: ホーム -->
         <section id="content-home" class="view-section active">
             
+            <!-- トップ広告 (ビッグバナー 1200x150) -->
+            <div class="ad-leaderboard-container">
+                <div class="ad-label">広告</div>
+                <div class="ad-content-wrapper" style="min-height: 150px;">
+                     <ins class="adsbygoogle"
+                          style="display:inline-block;width:1200px;height:150px;max-width:100%;"
+                          data-ad-client="ca-pub-4223622024416304"
+                          data-ad-slot="8379784240"></ins>
+                     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                </div>
+            </div>
+
             <div class="sub-header">
                 <div class="pill-filters">
                     <button class="pill-btn active" data-category="fun">
@@ -127,12 +139,28 @@
                         <p>A. はい、Toway内のすべてのゲームとツールは完全無料です。</p>
                     </details>
                     <details>
+                        <summary>Q. 推奨ブラウザは何ですか？</summary>
+                        <p>A. Google Chrome、Microsoft Edge、Safariの最新版を推奨しています。</p>
+                    </details>
+                    <details>
                         <summary>Q. 広告が表示されるのはなぜですか？</summary>
                         <p>A. サーバー代と開発費を賄うために表示させていただいております。</p>
                     </details>
                     <details>
                         <summary>Q. アプリの更新はいつですか？</summary>
                         <p>A. 基本的に毎日微調整を行っていますが、新作は週末に追加されることが多いです。</p>
+                    </details>
+                    <details>
+                        <summary>Q. 動作が重い場合はどうすればいいですか？</summary>
+                        <p>A. ブラウザのキャッシュをクリアするか、ページをリロードしてみてください。PCでのプレイを推奨します。</p>
+                    </details>
+                    <details>
+                        <summary>Q. セーブデータは保存されますか？</summary>
+                        <p>A. ゲームによって異なりますが、多くのゲームはブラウザのローカルストレージに自動保存されます。</p>
+                    </details>
+                    <details>
+                        <summary>Q. ゲームのリクエストはできますか？</summary>
+                        <p>A. はい！フッターの「ヘルプ・プライバシーセンター」から機能リクエストとしてお送りください。</p>
                     </details>
                     <details>
                         <summary>Q. バグを見つけました。</summary>
@@ -160,9 +188,10 @@
 
     <!-- フッター -->
     <footer class="main-footer">
+        <!-- フッター広告 (バーナー 1200x100) -->
         <div class="ad-banner-container">
             <div class="ad-label">SPONSORED</div>
-            <div class="ad-content-wrapper">
+            <div class="ad-content-wrapper" style="min-height: 100px;">
                 <ins class="adsbygoogle"
                      style="display:inline-block;width:1200px;height:100px;max-width:100%;"
                      data-ad-client="ca-pub-4223622024416304"
@@ -203,7 +232,9 @@
                 <div class="modal-info">
                     <h2 id="details-modal-title">タイトル</h2>
                     <p id="details-modal-desc">説明文</p>
-                    <div class="modal-buttons">
+                    
+                    <!-- ボタンエリア (高さ固定・統一) -->
+                    <div class="modal-buttons unified-buttons">
                         <a id="details-modal-launch-btn" href="#" target="_blank" class="play-btn">
                             <svg class="icon-svg" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
                             プレイ
@@ -212,6 +243,7 @@
                             <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         </button>
                     </div>
+                    
                     <div class="mini-ad-placeholder">広告</div>
                 </div>
             </div>
@@ -228,10 +260,11 @@
                 </button>
             </div>
             <div class="modal-body-content">
-                <h4>サポート</h4>
-                <p>当サイトに関するご質問やご報告は、以下のフォームよりお願いいたします。</p>
+                <h4>プライバシーポリシー概要</h4>
+                <p>当サイトではアクセス解析のためにCookieを使用しています。個人情報は適切に管理されます。</p>
                 <hr>
                 <h4>お問い合わせ・フィードバック</h4>
+                <p>バグ報告やご意見はこちらからお送りください。</p>
                 <form id="feedback-form">
                     <label>お名前</label>
                     <input type="text" id="fb-name" required placeholder="TOWA">
