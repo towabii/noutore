@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play - Toway</title>
+    <!-- サイトアイコン -->
+    <link rel="icon" href="icon.jpeg">
+    <!-- Google AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4223622024416304" crossorigin="anonymous"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="play.css">
+</head>
+<body data-theme="dark">
+
+    <!-- 背景エフェクト -->
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-grid"></div>
+
+    <!-- プレイヤーコンテナ -->
+    <div class="player-layout">
+        
+        <!-- サイドバー (他ゲームへの導線) -->
+        <aside class="sidebar left-sidebar">
+            <div class="sidebar-header">
+                <a href="index.html" class="home-btn" title="ホームに戻る">
+                    <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                </a>
+                <!-- Towayアイコン追加 -->
+                <img src="icon1.jpeg" alt="Toway" class="sidebar-icon">
+            </div>
+            <div class="sidebar-scroll" id="related-games-container">
+                <!-- JSで関連ゲームアイコンを生成 -->
+            </div>
+        </aside>
+
+        <!-- メインエリア -->
+        <main class="game-wrapper" id="main-game-wrapper">
+            <!-- ゲームヘッダー -->
+            <div class="game-header">
+                <h1 id="game-title">Loading...</h1>
+                <div class="game-controls">
+                    <!-- サイト内全画面ボタン -->
+                    <button id="fullscreen-btn" class="control-btn" title="シアターモード（全画面）">
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- ゲームフレーム (レスポンシブ) -->
+            <div class="game-frame-container" id="game-container">
+                <iframe id="game-iframe" src="" frameborder="0" allowfullscreen allow="autoplay; gamepad"></iframe>
+                
+                <!-- 広告オーバーレイ (ゲームオーバー/一時停止時) -->
+                <div id="ad-overlay" class="ad-overlay hidden">
+                    <div class="ad-content glass-panel">
+                        <div class="ad-header">Advertisement</div>
+                        <div class="ad-body">
+                            <!-- レクタングル広告 -->
+                            <ins class="adsbygoogle"
+                                 style="display:inline-block;width:300px;height:250px"
+                                 data-ad-client="ca-pub-4223622024416304"
+                                 data-ad-slot="5596776029"></ins>
+                            <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+                        </div>
+                        <div class="ad-footer">
+                            <button id="close-ad-btn" class="btn primary">ゲームに戻る (スキップ)</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 全画面解除用のホバーエリア (全画面時のみ有効) -->
+            <div id="fullscreen-hover-area" class="fullscreen-hover-area">
+                <div class="hover-content">
+                    <button id="exit-fullscreen-btn" class="btn primary small">全画面を終了</button>
+                    <span class="exit-hint-text">Esc 2回で戻る</span>
+                </div>
+            </div>
+
+            <!-- ゲーム下部情報 -->
+            <div class="game-footer">
+                <div class="game-meta">
+                    <p>Escキー2回押しで全画面解除</p>
+                </div>
+                <div class="footer-links">
+                    <button class="footer-link" onclick="openModal('terms-modal')">利用規約</button>
+                    <button class="footer-link" onclick="openModal('privacy-modal')">プライバシーポリシー</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- サイドバー (広告スペース) -->
+        <aside class="sidebar right-sidebar">
+            <div class="sidebar-ad-container">
+                <div class="ad-label">SPONSORED</div>
+                <ins class="adsbygoogle"
+                     style="display:inline-block;width:160px;height:600px"
+                     data-ad-client="ca-pub-4223622024416304"
+                     data-ad-slot="5596776029"></ins>
+                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+            </div>
+        </aside>
+    </div>
+
+    <!-- 利用規約モーダル (全文) -->
+    <div id="terms-modal" class="modal-overlay">
+        <div class="modal-card large">
+            <div class="modal-header"><h3>利用規約</h3><button class="close-btn" onclick="closeModal('terms-modal')">×</button></div>
+            <div class="modal-body scrollable text-content">
+                <h4>第1条（適用）</h4>
+                <p>この利用規約（以下，「本規約」といいます。）は，TOWA（以下，「運営者」といいます。）がこのウェブサイト上で提供するサービス（以下，「本サービス」といいます。）の利用条件を定めるものです。登録ユーザーの皆さま（以下，「ユーザー」といいます。）には，本規約に従って，本サービスをご利用いただきます。</p>
+                
+                <h4>第2条（利用登録）</h4>
+                <p>本サービスにおいては，登録希望者が本規約に同意の上，当社の定める方法によって利用登録を申請し，当社がこれを承認することによって，利用登録が完了するものとします。</p>
+
+                <h4>第3条（禁止事項）</h4>
+                <p>ユーザーは，本サービスの利用にあたり，以下の行為をしてはなりません。</p>
+                <ul>
+                    <li>法令または公序良俗に違反する行為</li>
+                    <li>犯罪行為に関連する行為</li>
+                    <li>本サービスの内容等，本サービスに含まれる著作権，商標権ほか知的財産権を侵害する行為</li>
+                    <li>当社，ほかのユーザー，またはその他第三者のサーバーまたはネットワークの機能を破壊したり，妨害したりする行為</li>
+                    <li>本サービスによって得られた情報を商業的に利用する行為</li>
+                    <li>当社のサービスの運営を妨害するおそれのある行為</li>
+                    <li>不正アクセスをし，またはこれを試みる行為</li>
+                    <li>他のユーザーに関する個人情報等を収集または蓄積する行為</li>
+                    <li>不正な目的を持って本サービスを利用する行為</li>
+                    <li>本サービスの他のユーザーまたはその他の第三者に不利益，損害，不快感を与える行為</li>
+                    <li>他のユーザーに成りすます行為</li>
+                    <li>その他，運営者が不適切と判断する行為</li>
+                </ul>
+
+                <h4>第4条（本サービスの提供の停止等）</h4>
+                <p>運営者は，以下のいずれかの事由があると判断した場合，ユーザーに事前に通知することなく本サービスの全部または一部の提供を停止または中断することができるものとします。</p>
+                <ul>
+                    <li>本サービスにかかるコンピュータシステムの保守点検または更新を行う場合</li>
+                    <li>地震，落雷，火災，停電または天災などの不可抗力により，本サービスの提供が困難となった場合</li>
+                    <li>コンピュータまたは通信回線等が事故により停止した場合</li>
+                    <li>その他，運営者が本サービスの提供が困難と判断した場合</li>
+                </ul>
+
+                <h4>第5条（保証の否認および免責事項）</h4>
+                <p>運営者は，本サービスに事実上または法律上の瑕疵（安全性，信頼性，正確性，完全性，有効性，特定の目的への適合性，セキュリティなどに関する欠陥，エラーやバグ，権利侵害などを含みます。）がないことを明示的にも黙示的にも保証しておりません。</p>
+                <p>運営者は，本サービスに起因してユーザーに生じたあらゆる損害について、一切の責任を負いません。</p>
+
+                <h4>第6条（サービス内容の変更等）</h4>
+                <p>運営者は，ユーザーに通知することなく，本サービスの内容を変更し，または本サービスの提供を中止することができるものとし，これによってユーザーに生じた損害について一切の責任を負いません。</p>
+
+                <h4>第7条（利用規約の変更）</h4>
+                <p>運営者は，必要と判断した場合には，ユーザーに通知することなくいつでも本規約を変更することができるものとします。なお，本規約の変更後，本サービスの利用を開始した場合には，当該ユーザーは変更後の規約に同意したものとみなします。</p>
+
+                <h4>第8条（準拠法・裁判管轄）</h4>
+                <p>本規約の解釈にあたっては，日本法を準拠法とします。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- プライバシーポリシーモーダル (全文) -->
+    <div id="privacy-modal" class="modal-overlay">
+        <div class="modal-card large">
+            <div class="modal-header"><h3>プライバシーポリシー</h3><button class="close-btn" onclick="closeModal('privacy-modal')">×</button></div>
+            <div class="modal-body scrollable text-content">
+                <h4>1. 個人情報の収集について</h4>
+                <p>Toway（以下、「当サイト」）では、お問い合わせフォーム等を通じて、お名前、メールアドレス等の個人情報をご登録いただく場合がございます。これらの個人情報は、ご質問に対する回答や必要な情報を電子メール等でご連絡する場合に利用させていただくものであり、個人情報をご提供いただく際の目的以外では利用いたしません。</p>
+
+                <h4>2. 個人情報の第三者への開示</h4>
+                <p>当サイトでは、個人情報は適切に管理し、以下に該当する場合を除いて第三者に開示することはありません。</p>
+                <ul>
+                    <li>本人のご了解がある場合</li>
+                    <li>法令等への協力のため、開示が必要となる場合</li>
+                </ul>
+
+                <h4>3. Cookie（クッキー）の使用について</h4>
+                <p>当サイトでは、一部のコンテンツについてCookie（クッキー）を利用しています。Cookieとは、サイトにアクセスした際にブラウザに保存される情報ですが、お名前やメールアドレス等の個人情報は含まれません。当サイトにアクセスいただいた方々に効果的な広告を配信するためやアクセス解析にCookieの情報を利用させていただく場合があります。</p>
+
+                <h4>4. 第三者配信の広告サービスとCookie</h4>
+                <p>当サイトでは、第三者配信の広告サービス（Google AdSense、A8.net）を利用しています。このような広告配信事業者は、ユーザーの興味に応じた商品やサービスの広告を表示するため、当サイトや他サイトへのアクセスに関する情報（Cookie）を使用することがあります。</p>
+
+                <h4>5. アクセス解析ツールについて</h4>
+                <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を利用しています。このGoogleアナリティクスはトラフィックデータの収集のためにCookieを使用しています。このトラフィックデータは匿名で収集されており、個人を特定するものではありません。この機能はCookieを無効にすることで収集を拒否することが出来ますので、お使いのブラウザの設定をご確認ください。</p>
+
+                <h4>6. 免責事項</h4>
+                <p>当サイトからリンクやバナーなどによって他のサイトに移動された場合、移動先サイトで提供される情報、サービス等について一切の責任を負いません。当サイトのコンテンツ・情報につきまして、可能な限り正確な情報を掲載するよう努めておりますが、誤情報が入り込んだり、情報が古くなっていることもございます。当サイトに掲載された内容によって生じた損害等の一切の責任を負いかねますのでご了承ください。</p>
+
+                <h4>7. プライバシーポリシーの変更について</h4>
+                <p>当サイトは、個人情報に関して適用される日本の法令を遵守するとともに、本ポリシーの内容を適宜見直しその改善に努めます。修正された最新のプライバシーポリシーは常に本ページにて開示されます。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- デバッグ用: ゲームオーバーシミュレーションボタン -->
+    <div style="position:fixed; bottom:10px; right:10px; z-index:9999; opacity:0;">
+        <button onclick="triggerGameOverAd()" style="width:20px;height:20px;"></button>
+    </div>
+
+    <script src="play.js"></script>
+</body>
+</html>
