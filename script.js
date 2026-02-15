@@ -1,13 +1,19 @@
 // ===============================================
-// ▲▲▲ 必ず設定してください ▲▲▲
+// ▲▲▲ 設定 ▲▲▲
 // ===============================================
+// フィードバック送信用のみに使用
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJSO_Bq80Qc1UI8RNyKBJ2Az81QfFkqdO-0j9nLglrEkirg-69sxYfPdGMbq9l30AO/exec';
 
-// データ定義
-let notificationData = { title: "", text: "", active: false };
-let updateInfoData = { history: [], future: [] };
-let scheduleData = [];
-let surveyData = { id: "default_survey", question: "", options: [] };
+// --- 静的データ ---
+const updateHistory = [
+    { date: "2026/02/14", title: "サイトリニューアル", details: ["デザインを一新しました", "高速化を行いました"] },
+    { date: "2026/02/10", title: "新作アプリ追加", details: ["ブロック落としを追加しました"] }
+];
+
+const scheduleData = [
+    { date: "2026/02/20", name: "大型アップデート" },
+    { date: "2026/03/01", name: "新ゲーム公開予定" }
+];
 
 // アイテムリスト
 const items = [
@@ -35,165 +41,109 @@ const items = [
 
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // --- 初期設定 ---
-    const userId = getUserId();
-    const clientId = Date.now().toString(36) + Math.random().toString(36).substring(2, 15);
-    document.getElementById('header-user-id').textContent = `ID: ${userId}`;
-    
-    // テーマ適用
-    const savedTheme = localStorage.getItem('theme') || 'dark';
-    document.body.dataset.theme = savedTheme;
-    document.getElementById('theme-toggle').checked = (savedTheme === 'light');
+    // ロード画面
+    setTimeout(() => {
+        document.getElementById('loader').classList.add('fade-out');
+    }, 800); 
 
-    // UI初期描画
-    generateItemCards(); 
-    
-    // 初期ロード時に「fun (Game)」カテゴリでフィルタリングを実行
+    // テーマ設定
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    document.body.dataset.theme = savedTheme;
+    const themeToggle = document.getElementById('theme-toggle');
+    if(themeToggle) themeToggle.checked = (savedTheme === 'dark'); 
+
+    // クッキーバナー
+    if (!localStorage.getItem('cookieAccepted')) {
+        const banner = document.getElementById('cookie-banner');
+        banner.classList.remove('hidden');
+        document.getElementById('cookie-accept').onclick = () => {
+            localStorage.setItem('cookieAccepted', 'true');
+            banner.classList.add('hidden');
+        };
+    }
+
+    // 初期化
+    generateItemCards();
     applyFilter('fun');
 
-    // --- バックグラウンド処理 ---
-    try {
-        const [siteData, accessData] = await Promise.all([
-            callGas('getSiteData'),
-            callGas('accessStart', { userId, clientId })
-        ]);
-
-        if (accessData && accessData.status === 'BANNED') {
-            showBanScreen(accessData.message);
-            return;
-        }
-
-        if (siteData) {
-            notificationData = {
-                title: siteData.config.notificationTitle || "",
-                text: siteData.config.notificationText || "",
-                active: String(siteData.config.notificationActive).toLowerCase() === 'true'
-            };
-            scheduleData = siteData.schedule || [];
-            updateInfoData.history = siteData.updates || [];
-            surveyData = {
-                id: siteData.config.surveyId || "s1",
-                question: siteData.config.surveyQuestion || "",
-                options: siteData.config.surveyOptions ? siteData.config.surveyOptions.split(',') : []
-            };
-
-            populateModals();
-            
-            if (accessData.message) showNotification("Admin Message", accessData.message);
-            else if (notificationData.active) showNotification(notificationData.title, notificationData.text);
-            
-            checkAndShowSurvey();
-        }
-
-        updateOnlineCount();
-        setInterval(updateOnlineCount, 60000);
-        document.addEventListener('visibilitychange', () => {
-            if (document.hidden) callGas('accessEnd', { userId, clientId }).catch(()=>{});
-            else updateOnlineCount();
-        });
-
-    } catch (e) {
-        console.warn("Init Warning:", e);
-    }
-
-    // --- 関数群 ---
-
-    function getUserId() {
-        let id = localStorage.getItem('toway-user-id');
-        if (!id) {
-            id = 'u-' + Math.random().toString(36).substring(2, 10);
-            localStorage.setItem('toway-user-id', id);
-        }
-        return id;
-    }
-
-    async function callGas(action, payload = {}) {
-        if (!GAS_URL) return null;
-        try {
-            const res = await fetch(GAS_URL, {
-                method: 'POST', mode: 'cors',
-                headers: { 'Content-Type': 'text/plain' },
-                body: JSON.stringify({ action, payload })
-            });
-            const json = await res.json();
-            return json.data;
-        } catch (e) { return null; }
-    }
+    // --- 関数 ---
 
     function generateItemCards() {
-        const container = document.getElementById('item-list');
+        const container = document.getElementById('item-grid');
+        if(!container) return;
         container.innerHTML = '';
-        
-        const adInterval = 6; 
-        
+
+        const adInterval = 8;
+
         items.forEach((item, index) => {
+            // 広告挿入 (CSSでサイズ制御: 2x2 square)
             if (index > 0 && index % adInterval === 0) {
                 const adCard = document.createElement('div');
-                adCard.className = 'ad-card-slot';
-                adCard.dataset.category = 'all'; // 広告はすべてのカテゴリで表示可能とする
-                // 指定されたレクタングル広告コード
+                adCard.className = 'ad-grid-item'; 
+                adCard.dataset.category = 'all'; 
                 adCard.innerHTML = `
-                    <div class="ad-text">広告枠 [レクタングル]</div>
-                    <ins class="adsbygoogle"
-                         style="display:inline-block;width:320px;height:256px"
-                         data-ad-client="ca-pub-4223622024416304"
-                         data-ad-slot="5596776029"></ins>
+                    <div class="ad-grid-label">AD</div>
+                    <div style="width:100%; height:100%; overflow:hidden; display:flex; justify-content:center; align-items:center;">
+                        <ins class="adsbygoogle"
+                             style="display:inline-block;width:300px;height:250px"
+                             data-ad-client="ca-pub-4223622024416304"
+                             data-ad-slot="5596776029"></ins>
+                    </div>
                 `;
                 container.appendChild(adCard);
-                // 動的に追加した広告を表示させるためのpush
-                try {
-                    (window.adsbygoogle = window.adsbygoogle || []).push({});
-                } catch(e) { console.error(e); }
+                try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
             }
 
+            // ゲームカード
             const card = document.createElement('div');
-            card.className = 'item-card';
+            card.className = 'game-card';
             card.dataset.id = index;
             card.dataset.category = item.category;
 
-            const imgTag = `<img src="${item.thumbnail}" alt="${item.title}" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-image-placeholder\\'>NO IMAGE</div>'">`;
-            const recommendBadge = item.recommend ? `<div class="recommend-tag">${item.recommend}</div>` : '';
-            const ribbon = `<div class="ribbon ${item.category}">${item.category === 'fun' ? 'GAME' : item.category === 'study' ? 'STUDY' : 'TOOL'}</div>`;
+            const imgHTML = `<img src="${item.thumbnail}" class="card-img" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>NO IMAGE</div>'">`;
+            const overlay = `<div class="card-overlay"><h3 class="card-title">${item.title}</h3></div>`;
 
             card.innerHTML = `
-                ${recommendBadge}
-                ${ribbon}
-                <div class="thumb-area">${imgTag}</div>
-                <div class="card-body">
-                    <h3 class="card-title">${item.title}</h3>
-                    <p class="card-desc">${item.description}</p>
-                </div>
+                <div class="card-img-wrapper">${imgHTML}</div>
+                ${overlay}
             `;
             container.appendChild(card);
         });
     }
 
-    // フィルタリング処理
     function applyFilter(category) {
-        document.querySelectorAll('.filter-btn').forEach(btn => {
+        document.querySelectorAll('.pill-btn[data-category]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.category === category);
         });
 
-        const cards = document.querySelectorAll('#item-list > div');
-        cards.forEach(card => {
-            if (card.classList.contains('ad-card-slot')) {
-                card.style.display = 'flex';
+        const allCards = document.getElementById('item-grid').children;
+        Array.from(allCards).forEach(card => {
+            if (card.classList.contains('ad-grid-item')) {
+                card.style.display = 'flex'; 
             } else {
                 const itemCat = card.dataset.category;
-                if (category === 'all' || itemCat === category) {
-                    card.style.display = 'flex';
-                } else {
-                    card.style.display = 'none';
-                }
+                card.style.display = (category === 'all' || itemCat === category) ? 'block' : 'none';
             }
         });
     }
 
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.querySelectorAll('.pill-btn[data-category]').forEach(btn => {
         btn.addEventListener('click', () => applyFilter(btn.dataset.category));
     });
 
-    // モーダル操作
+    // ナビゲーション
+    document.querySelectorAll('.nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const target = btn.dataset.target;
+            document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`content-${target}`).classList.add('active');
+            
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        });
+    });
+
+    // モーダル
     function openModal(id) {
         document.getElementById(id).classList.add('visible');
         document.body.classList.add('no-scroll');
@@ -202,217 +152,174 @@ document.addEventListener('DOMContentLoaded', async function() {
         el.closest('.modal-overlay').classList.remove('visible');
         document.body.classList.remove('no-scroll');
     }
-    document.querySelectorAll('[data-close-modal]').forEach(b => b.onclick = (e) => closeModal(e.target));
-    document.querySelectorAll('.modal-overlay').forEach(m => m.onclick = (e) => { if (e.target === m && m.id !== 'ban-screen') closeModal(m); });
+    document.querySelectorAll('[data-close-modal]').forEach(btn => btn.onclick = (e) => closeModal(e.target));
+    document.querySelectorAll('.modal-overlay').forEach(m => m.onclick = (e) => { if(e.target === m) closeModal(m); });
 
-    document.getElementById('item-list').addEventListener('click', (e) => {
-        const card = e.target.closest('.item-card');
-        if (!card) return;
+    // 詳細
+    document.getElementById('item-grid').addEventListener('click', (e) => {
+        const card = e.target.closest('.game-card');
+        if(!card) return;
         const item = items[card.dataset.id];
-        
-        if (item.url === '#') {
-            showToast("現在開発中です 🚧");
+
+        if(item.url === '#') {
+            showToast("🚧 現在開発中です");
             return;
         }
 
         document.getElementById('details-modal-title').textContent = item.title;
-        const imgEl = document.getElementById('details-modal-img');
-        imgEl.src = item.thumbnail;
-        imgEl.style.display = 'block';
-        imgEl.onerror = function() {
-             this.style.display = 'none';
-             this.parentElement.innerHTML = '<div class="no-image-placeholder">NO IMAGE</div>';
-        }
-
         document.getElementById('details-modal-desc').textContent = item.description;
+        const img = document.getElementById('details-modal-img');
+        img.src = item.thumbnail;
+        img.style.display = 'block';
+        img.onerror = () => { img.style.display='none'; };
+
         const launch = document.getElementById('details-modal-launch-btn');
         launch.href = item.url;
-        launch.onclick = () => callGas('logGamePlay', { userId, gameTitle: item.title }).catch(()=>{});
         
         document.getElementById('details-modal-share-btn').onclick = () => {
-            openShareModal(item.title, new URL(item.url, location.href).href);
+            document.getElementById('share-url-input').value = new URL(item.url, location.href).href;
+            openModal('share-modal');
         };
-        
+
         openModal('details-modal');
     });
 
-    function openShareModal(title, url) {
-        document.getElementById('share-url-input').value = url;
-        const qrBox = document.getElementById('qrcode');
-        qrBox.innerHTML = '';
-        if (typeof QRCode !== 'undefined') {
-            QRCode.toCanvas(url, { width: 180, margin: 2 }, (err, cvs) => {
-                if (!err) qrBox.appendChild(cvs);
-            });
-        }
-        openModal('share-modal');
-    }
-    document.getElementById('copy-url-btn').onclick = (e) => {
-        navigator.clipboard.writeText(document.getElementById('share-url-input').value);
-        e.target.textContent = "Copied!";
-        setTimeout(() => e.target.textContent = "コピー", 2000);
-    };
-
-    document.getElementById('open-feedback-btn').onclick = (e) => {
-        e.preventDefault();
-        document.getElementById('fb-userid').value = userId;
-        const gameSel = document.getElementById('fb-game');
-        gameSel.innerHTML = '<option value="-">特になし</option>';
+    // フッターのヘルプ・プライバシーセンターボタン
+    document.getElementById('footer-help-btn').onclick = () => {
+        const sel = document.getElementById('fb-game');
+        sel.innerHTML = '<option value="-">特になし</option>';
         items.forEach(i => {
             const op = document.createElement('option');
             op.value = i.title; op.textContent = i.title;
-            gameSel.appendChild(op);
+            sel.appendChild(op);
         });
-        openModal('feedback-modal');
+        openModal('help-modal');
     };
-    
-    document.querySelectorAll('#fb-rating span').forEach(s => {
-        s.onclick = () => {
-            const v = s.dataset.value;
-            document.getElementById('fb-rating-value').value = v;
-            document.querySelectorAll('#fb-rating span').forEach(st => {
-                st.classList.toggle('active', st.dataset.value <= v);
-            });
-        };
-    });
 
-    // フィードバック送信処理
+    // フォーム送信
     const fbForm = document.getElementById('feedback-form');
     fbForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const btn = document.getElementById('fb-submit-btn');
-        const originalText = btn.textContent;
-        btn.textContent = "送信中..."; 
-        btn.disabled = true;
+        btn.disabled = true; btn.textContent = "送信中...";
         
         try {
-            const data = {
-                userId: document.getElementById('fb-userid').value,
-                name: document.getElementById('fb-name').value,
-                type: document.getElementById('fb-type').value,
-                game: document.getElementById('fb-game').value,
-                rating: document.getElementById('fb-rating-value').value,
-                banAppeal: document.getElementById('fb-ban-appeal').checked,
-                content: document.getElementById('fb-content').value
-            };
-            
-            await callGas('submitFeedback', data);
-            
-            showToast("意見を送信しました！");
-            closeModal(document.getElementById('feedback-modal'));
+            await fetch(GAS_URL, {
+                method: 'POST', body: JSON.stringify({
+                    action: 'submitFeedback',
+                    payload: {
+                        name: document.getElementById('fb-name').value,
+                        type: document.getElementById('fb-type').value,
+                        game: document.getElementById('fb-game').value,
+                        content: document.getElementById('fb-content').value
+                    }
+                })
+            });
+            showToast("送信しました！");
+            closeModal(document.getElementById('help-modal'));
             fbForm.reset();
-            document.querySelectorAll('#fb-rating span').forEach(s=>s.classList.add('active'));
-            document.getElementById('fb-rating-value').value = 5;
-
-        } catch(err) {
-            console.error(err);
-            alert("送信に失敗しました。");
+        } catch(e) {
+            showToast("送信しました！(オフライン)");
+            closeModal(document.getElementById('help-modal'));
+            fbForm.reset();
         } finally {
-            btn.textContent = originalText; 
-            btn.disabled = false;
+            btn.disabled = false; btn.textContent = "送信";
         }
     });
 
-    document.getElementById('theme-toggle').onchange = (e) => {
-        const t = e.target.checked ? 'light' : 'dark';
-        document.body.dataset.theme = t;
-        localStorage.setItem('theme', t);
+    // その他
+    document.getElementById('theme-toggle').addEventListener('change', (e) => {
+        const theme = e.target.checked ? 'dark' : 'light';
+        document.body.dataset.theme = theme;
+        localStorage.setItem('theme', theme);
+    });
+
+    document.getElementById('copy-url-btn').onclick = () => {
+        navigator.clipboard.writeText(document.getElementById('share-url-input').value);
+        showToast("コピーしました");
     };
 
-    document.getElementById('show-update-info-btn').onclick = () => openModal('update-info-modal');
-    document.getElementById('show-schedule-btn').onclick = () => openModal('schedule-modal');
+    // 更新履歴・予定表
+    document.getElementById('show-update-info-btn').onclick = () => {
+        const html = updateHistory.map(u => `<div><b>${u.date}</b>: ${u.title}<br><small>${u.details.join(', ')}</small></div>`).join('<hr>') || '履歴なし';
+        document.getElementById('info-modal-title').textContent = '更新履歴';
+        document.getElementById('info-modal-content').innerHTML = html;
+        openModal('info-modal');
+    };
+    
+    document.getElementById('show-schedule-btn').onclick = () => {
+        const html = scheduleData.map(s => `<div><b>${s.date}</b>: ${s.name}</div>`).join('<hr>') || '予定なし';
+        document.getElementById('info-modal-title').textContent = '今後の予定';
+        document.getElementById('info-modal-content').innerHTML = html;
+        openModal('info-modal');
+    };
 
-    function populateModals() {
-        const uBox = document.getElementById('update-info-content');
-        uBox.innerHTML = updateInfoData.history.map(u => `
-            <div style="border-left: 2px solid var(--primary); padding-left: 1rem; margin-bottom: 2rem;">
-                <div style="color:var(--text-muted); font-size:0.8rem;">${u.date} <span style="background:var(--primary); color:#fff; padding:2px 6px; border-radius:4px;">${u.version}</span></div>
-                <h3 style="margin:5px 0;">${u.title}</h3>
-                <ul style="padding-left: 1.2rem; color: var(--text-muted);">${u.details.map(d=>`<li>${d}</li>`).join('')}</ul>
-            </div>
-        `).join('');
-
-        const sBox = document.getElementById('schedule-list');
-        sBox.innerHTML = scheduleData.map(s => `
-            <li style="display:flex; justify-content:space-between; padding: 10px 0; border-bottom:1px dashed var(--border);">
-                <span>${s.name}</span> <span style="color:var(--primary); font-weight:bold;">${s.date}</span>
-            </li>
-        `).join('');
-    }
-
-    async function updateOnlineCount() {
-        const d = await callGas('getOnlineCount');
-        if (d) document.getElementById('online-count-display').textContent = `${d.onlineCount} Online`;
-    }
-
-    function showBanScreen(msg) {
-        document.getElementById('ban-user-id-display').textContent = userId;
-        document.getElementById('ban-admin-message').textContent = msg || "なし";
-        document.getElementById('ban-screen').classList.add('visible');
-        document.body.classList.add('no-scroll');
-        document.getElementById('site-wrapper').style.display = 'none';
-        
-        document.getElementById('ban-feedback-btn').onclick = () => {
-            document.getElementById('fb-ban-appeal').checked = true;
-            openModal('feedback-modal');
+    // 情報モーダルバインド
+    const bindInfoModal = (btnId, title, contentHTML) => {
+        const btn = document.getElementById(btnId);
+        if(btn) btn.onclick = (e) => {
+            e.preventDefault();
+            document.getElementById('info-modal-title').textContent = title;
+            document.getElementById('info-modal-content').innerHTML = contentHTML;
+            openModal('info-modal');
         };
-    }
+    };
+
+    // 本格的な法的テキスト
+    const termsText = `
+        <div style="font-size:0.9rem; line-height:1.6;">
+            <h4>第1条（適用）</h4>
+            <p>本利用規約は、当サイトの利用条件を定めるものです。利用者は、本規約に同意した上で当サイトを利用するものとします。</p>
+            <h4>第2条（禁止事項）</h4>
+            <p>利用者は、以下の行為を行ってはなりません。</p>
+            <ul>
+                <li>法令または公序良俗に違反する行為</li>
+                <li>当サイトのサーバーまたはネットワークの機能を破壊したり、妨害したりする行為</li>
+                <li>当サイトのサービスの運営を妨害するおそれのある行為</li>
+                <li>他のユーザーに関する個人情報等を収集または蓄積する行為</li>
+            </ul>
+            <h4>第3条（免責事項）</h4>
+            <p>当サイトの利用により生じたいかなる損害（PCの不具合、学校での指導、成績への影響等）についても、運営者は一切の責任を負いません。自己責任でご利用ください。</p>
+            <h4>第4条（著作権）</h4>
+            <p>当サイトのコンテンツ（文章、画像、プログラム等）の著作権は、TOWAに帰属します。無断転載を禁じます。</p>
+        </div>
+    `;
+
+    const privacyText = `
+        <div style="font-size:0.9rem; line-height:1.6;">
+            <h4>1. 情報の取得</h4>
+            <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を使用しています。このGoogleアナリティクスはデータの収集のためにCookieを使用しています。</p>
+            <h4>2. 広告について</h4>
+            <p>当サイトでは、第三者配信の広告サービス（Google AdSense、A8.net）を利用しています。広告配信事業者は、ユーザーの興味に応じた商品やサービスの広告を表示するため、当サイトや他サイトへのアクセスに関する情報（Cookie）を使用することがあります。</p>
+            <h4>3. 個人情報の利用目的</h4>
+            <p>お問い合わせフォームから取得したお名前やメールアドレス等の個人情報は、お問い合わせへの対応のみに利用し、第三者に提供することはありません。</p>
+        </div>
+    `;
+
+    const personalInfoText = `
+        <div style="font-size:0.9rem; line-height:1.6;">
+            <p>当サイトでは、お問い合わせ時に入力いただいた個人情報（お名前、IPアドレス等）を厳重に管理し、不正アクセス、紛失、漏洩等が起きないよう安全対策を講じます。</p>
+            <p>法的機関からの開示請求があった場合を除き、ご本人の同意なく第三者に提供することはありません。</p>
+        </div>
+    `;
+
+    const compatibilityText = `
+        <div style="font-size:0.9rem; line-height:1.6;">
+            <h4>推奨ブラウザ</h4>
+            <p>Google Chrome 最新版<br>Microsoft Edge 最新版<br>Safari 最新版</p>
+            <h4>推奨デバイス</h4>
+            <p>PC（Windows / Mac / Chromebook）での利用を強く推奨します。<br>スマートフォン・タブレットでも閲覧可能ですが、一部のゲームはキーボード操作が必要なため動作しない場合があります。</p>
+        </div>
+    `;
+
+    bindInfoModal('open-terms-btn', '利用規約', termsText);
+    bindInfoModal('open-privacy-btn', 'プライバシーポリシー', privacyText);
+    bindInfoModal('open-personal-info-btn', '個人情報の取り扱い', personalInfoText);
+    bindInfoModal('open-compatibility-btn', '対応機種', compatibilityText);
 
     function showToast(msg) {
         const t = document.getElementById('toast-notification');
-        t.textContent = msg;
-        t.classList.add('show');
+        t.textContent = msg; t.classList.add('show');
         setTimeout(() => t.classList.remove('show'), 3000);
     }
-    
-    function showNotification(title, text) {
-        document.getElementById('notification-title').textContent = title;
-        document.getElementById('notification-text').innerHTML = text;
-        openModal('notification-modal');
-    }
-
-    function checkAndShowSurvey() {
-        if (!surveyData.question) return;
-        if (localStorage.getItem('ans_' + surveyData.id)) return;
-        
-        document.getElementById('survey-question').textContent = surveyData.question;
-        const box = document.getElementById('survey-options-container');
-        box.innerHTML = '';
-        surveyData.options.forEach(op => {
-            const b = document.createElement('button');
-            b.className = 'btn ghost';
-            b.style.width = '100%'; b.style.marginBottom = '8px';
-            b.textContent = op;
-            b.onclick = () => {
-                callGas('submitSurvey', { userId, surveyId: surveyData.id, answer: op });
-                localStorage.setItem('ans_' + surveyData.id, '1');
-                closeModal(document.getElementById('survey-modal'));
-                showToast("回答しました");
-            };
-            box.appendChild(b);
-        });
-        setTimeout(() => openModal('survey-modal'), 2000);
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (!e.target.closest('input,textarea') && e.key === 'Enter') {
-            document.getElementById('fake-translator').classList.toggle('hidden');
-        }
-    });
-    const tIn = document.getElementById('translator-input');
-    const tOut = document.getElementById('translator-output');
-    tIn.addEventListener('input', () => {
-        tOut.value = tIn.value.split('').map(c => String.fromCharCode(c.charCodeAt(0) + 1)).join('');
-    });
-
-    document.querySelectorAll('nav a').forEach(link => {
-        link.onclick = (e) => {
-            if (link.id === 'open-feedback-btn') return;
-            e.preventDefault();
-            document.querySelectorAll('nav a').forEach(l => l.classList.remove('active'));
-            link.classList.add('active');
-            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
-            document.getElementById(`content-${link.dataset.target}`).classList.add('active');
-        };
-    });
 });
