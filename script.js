@@ -17,23 +17,30 @@ const scheduleData = [
 
 // アイテムリスト
 const items = [
-    { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "./apps/app10/index.html", recommend: "BEST", category: "fun" },
-    { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "./apps/app2/index.html", recommend: "人気", category: "fun" },
-    { title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "./apps/app8/index.html", recommend: "Beta", category: "fun" },
-    { title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "./apps/app5/選択.html", recommend: null, category: "fun" },
-    { title: "StudyConnect", description: "初のSNSアプリ", thumbnail: "./apps/スタディーコネクト/thumbnail.png", url: "./apps/スタディーコネクト/紹介.html", recommend: null, category: "fun" },
-    { title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "./apps/app3/index.html", recommend: null, category: "fun" },   
-    { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "./apps/TODO/index.html", recommend: "便利", category: "study" },
-    { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
-    { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "./apps/app6/index.html", recommend: null, category: "fun" },
-    { title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "./apps/app4/index.html", recommend: null, category: "fun" },
-    { title: "ボールコロコロ", description: "楽しい", thumbnail: "./apps/appボール/thumbnail.jpeg", url: "./apps/appボール/index.html", recommend: null, category: "fun" },
+    // --- Fun (Games) ---
+    { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "play.html?game=./apps/app10/index.html", recommend: "BEST", category: "fun" },
+    { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "play.html?game=./apps/app2/index.html", recommend: "人気", category: "fun" },
+    { title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "play.html?game=./apps/app8/index.html", recommend: "Beta", category: "fun" },
+    { title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "play.html?game=./apps/app5/選択.html", recommend: null, category: "fun" },
+    { title: "StudyConnect", description: "初のSNSアプリ", thumbnail: "./apps/スタディーコネクト/thumbnail.png", url: "play.html?game=./apps/スタディーコネクト/紹介.html", recommend: null, category: "fun" },
+    { title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "play.html?game=./apps/app3/index.html", recommend: null, category: "fun" },
+    { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "play.html?game=./apps/app6/index.html", recommend: null, category: "fun" },
+    { title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "play.html?game=./apps/app4/index.html", recommend: null, category: "fun" },
+    { title: "ボールコロコロ", description: "楽しい", thumbnail: "./apps/appボール/thumbnail.jpeg", url: "play.html?game=./apps/appボール/index.html", recommend: null, category: "fun" },
+    { title: "街づくり", description: "大きな町を作ろう", thumbnail: "./apps/appcity/thumbnail.png", url: "play.html?game=./apps/appctyi/index.html", recommend: null, category: "fun" },
+    
+    // WIP (Work In Progress) - fun
     { title: "3Dトレーニング", description: "三次元空間で頭を鍛える新しい体験。", thumbnail: "./apps/app7/thumbnail.jpeg", url: "#", recommend: "WIP", category: "fun" },
     { title: "砂ブロック落とし", description: "最近流行ってるあれ", thumbnail: "./apps/app12/thumbnail.jpeg", url: "#", recommend: "New", category: "fun" },
     { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "WIP", category: "fun" },
     { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: null, category: "fun" },
     { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: null, category: "fun" },
-    { title: "街づくり", description: "大きな町を作ろう", thumbnail: "./apps/appcity/thumbnail.png", url: "./apps/appctyi/index.html", recommend: null, category: "fun" },
+
+    // --- Study ---
+    { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "play.html?game=./apps/TODO/index.html", recommend: "便利", category: "study" },
+
+    // --- Other (Tools & Admin) ---
+    { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
     { title: "My Wallet", description: "初の本格ウェブアプリ。", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA", category: "other" },
     { title: "管理パネル", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/kanri/", recommend: "ADMIN", category: "other" },
     { title: "BOX検索", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/SmartBOX/", recommend: "ADMIN", category: "other" },
@@ -76,7 +83,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const adInterval = 8;
 
         items.forEach((item, index) => {
-            // 広告挿入 (300x250 レクタングル)
+            // 広告挿入 (CSSでサイズ制御: 2x2 square)
             if (index > 0 && index % adInterval === 0) {
                 const adCard = document.createElement('div');
                 adCard.className = 'ad-grid-item'; 
@@ -166,6 +173,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
+        // play.html へのリンクなら直接移動、それ以外（外部サイトなど）ならモーダル表示
+        // (ご要望により全て統一感を持たせるため、今回はすべてモーダル経由で起動させます)
+        
         document.getElementById('details-modal-title').textContent = item.title;
         document.getElementById('details-modal-desc').textContent = item.description;
         const img = document.getElementById('details-modal-img');
@@ -203,11 +213,19 @@ document.addEventListener('DOMContentLoaded', async function() {
         const btn = document.getElementById('fb-submit-btn');
         btn.disabled = true; btn.textContent = "送信中...";
         
+        // ユーザーID取得
+        let userId = localStorage.getItem('toway-user-id');
+        if (!userId) {
+            userId = 'u-' + Math.random().toString(36).substring(2, 10);
+            localStorage.setItem('toway-user-id', userId);
+        }
+
         try {
             await fetch(GAS_URL, {
                 method: 'POST', body: JSON.stringify({
                     action: 'submitFeedback',
                     payload: {
+                        userId: userId,
                         name: document.getElementById('fb-name').value,
                         type: document.getElementById('fb-type').value,
                         game: document.getElementById('fb-game').value,
