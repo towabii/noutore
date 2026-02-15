@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const adInterval = 8;
 
         items.forEach((item, index) => {
-            // 広告挿入 (CSSでサイズ制御: 2x2 square)
+            // 広告挿入 (300x250 レクタングル)
             if (index > 0 && index % adInterval === 0) {
                 const adCard = document.createElement('div');
                 adCard.className = 'ad-grid-item'; 
