@@ -80,28 +80,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         if(!container) return;
         container.innerHTML = '';
 
-        const adInterval = 8;
-
         items.forEach((item, index) => {
-            // 広告挿入 (CSSでサイズ制御: 2x2 square)
-            if (index > 0 && index % adInterval === 0) {
-                const adCard = document.createElement('div');
-                adCard.className = 'ad-grid-item'; 
-                adCard.dataset.category = 'all'; 
-                adCard.innerHTML = `
-                    <div class="ad-grid-label">AD</div>
-                    <div style="width:100%; height:100%; overflow:hidden; display:flex; justify-content:center; align-items:center;">
-                        <ins class="adsbygoogle"
-                             style="display:inline-block;width:300px;height:250px"
-                             data-ad-client="ca-pub-4223622024416304"
-                             data-ad-slot="5596776029"></ins>
-                    </div>
-                `;
-                container.appendChild(adCard);
-                try { (window.adsbygoogle = window.adsbygoogle || []).push({}); } catch(e) {}
-            }
-
-            // ゲームカード
+            // ゲームカードのみ生成
             const card = document.createElement('div');
             card.className = 'game-card';
             card.dataset.id = index;
@@ -125,12 +105,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const allCards = document.getElementById('item-grid').children;
         Array.from(allCards).forEach(card => {
-            if (card.classList.contains('ad-grid-item')) {
-                card.style.display = 'flex'; 
-            } else {
-                const itemCat = card.dataset.category;
-                card.style.display = (category === 'all' || itemCat === category) ? 'block' : 'none';
-            }
+            const itemCat = card.dataset.category;
+            card.style.display = (category === 'all' || itemCat === category) ? 'block' : 'none';
         });
     }
 
@@ -173,9 +149,6 @@ document.addEventListener('DOMContentLoaded', async function() {
             return;
         }
 
-        // play.html へのリンクなら直接移動、それ以外（外部サイトなど）ならモーダル表示
-        // (ご要望により全て統一感を持たせるため、今回はすべてモーダル経由で起動させます)
-        
         document.getElementById('details-modal-title').textContent = item.title;
         document.getElementById('details-modal-desc').textContent = item.description;
         const img = document.getElementById('details-modal-img');
@@ -306,10 +279,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const privacyText = `
         <div style="font-size:0.9rem; line-height:1.6;">
             <h4>1. 情報の取得</h4>
-            <p>当サイトでは、Googleによるアクセス解析ツール「Googleアナリティクス」を使用しています。このGoogleアナリティクスはデータの収集のためにCookieを使用しています。</p>
-            <h4>2. 広告について</h4>
-            <p>当サイトでは、第三者配信の広告サービス（Google AdSense、A8.net）を利用しています。広告配信事業者は、ユーザーの興味に応じた商品やサービスの広告を表示するため、当サイトや他サイトへのアクセスに関する情報（Cookie）を使用することがあります。</p>
-            <h4>3. 個人情報の利用目的</h4>
+            <p>当サイトでは、アクセス解析ツールを使用しています。これらはデータの収集のためにCookieを使用することがあります。</p>
+            <h4>2. 個人情報の利用目的</h4>
             <p>お問い合わせフォームから取得したお名前やメールアドレス等の個人情報は、お問い合わせへの対応のみに利用し、第三者に提供することはありません。</p>
         </div>
     `;

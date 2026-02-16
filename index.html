@@ -7,12 +7,7 @@
     <meta name="description" content="TOWAが制作した楽しいやつやツールを公開するプラットフォーム「Toway」。">
     <meta name="keywords" content="とわ, TOWA, Toway, トゥウェイ, 楽しいやつ, ツール, 無料, 中学生クリエイター">
     
-    <!-- サイトアイコン -->
     <link rel="icon" href="icon.png">
-
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4223622024416304"
-     crossorigin="anonymous"></script>
 
     <script type="application/ld+json">
         {
@@ -36,13 +31,11 @@
 </head>
 <body data-theme="light">
 
-    <!-- ロード画面 -->
     <div id="loader">
         <div class="spinner"></div>
         <p>Loading Toway...</p>
     </div>
 
-    <!-- ナビゲーションバー -->
     <nav class="navbar">
         <div class="nav-container">
             <div class="nav-left">
@@ -81,21 +74,8 @@
 
     <main class="main-container">
         
-        <!-- コンテンツエリア: ホーム -->
         <section id="content-home" class="view-section active">
             
-            <!-- トップ広告 (ビッグバナー 1200x150) -->
-            <div class="ad-leaderboard-container">
-                <div class="ad-label">広告</div>
-                <div class="ad-content-wrapper" style="min-height: 150px;">
-                     <ins class="adsbygoogle"
-                          style="display:inline-block;width:1200px;height:150px;max-width:100%;"
-                          data-ad-client="ca-pub-4223622024416304"
-                          data-ad-slot="8379784240"></ins>
-                     <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-                </div>
-            </div>
-
             <div class="sub-header">
                 <div class="pill-filters">
                     <button class="pill-btn active" data-category="fun">
@@ -120,12 +100,10 @@
                 </div>
             </div>
 
-            <!-- 楽しいやつグリッド -->
             <div id="item-grid" class="poki-grid"></div>
 
         </section>
 
-        <!-- コンテンツエリア: FAQ -->
         <section id="content-faq" class="view-section">
             <div class="text-container">
                 <h2>よくある質問</h2>
@@ -170,7 +148,6 @@
             </div>
         </section>
 
-        <!-- コンテンツエリア: 作者 -->
         <section id="content-author" class="view-section">
             <div class="author-profile-box">
                 <img src="kao.png" alt="TOWA" class="author-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNjNDA0MyI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjREREIi8+PC9zdmc+';">
@@ -186,19 +163,7 @@
 
     </main>
 
-    <!-- フッター -->
     <footer class="main-footer">
-        <!-- フッター広告 (バーナー 1200x100) -->
-        <div class="ad-banner-container">
-            <div class="ad-label">SPONSORED</div>
-            <div class="ad-content-wrapper" style="min-height: 100px;">
-                <ins class="adsbygoogle"
-                     style="display:inline-block;width:1200px;height:100px;max-width:100%;"
-                     data-ad-client="ca-pub-4223622024416304"
-                     data-ad-slot="7066702573"></ins>
-                <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
-            </div>
-        </div>
         <div class="footer-links">
             <a href="#" id="open-terms-btn">利用規約</a>
             <a href="#" id="open-privacy-btn">プライバシーポリシー</a>
@@ -209,7 +174,6 @@
         <p class="copyright">&copy; 2026 Toway - by TOWA</p>
     </footer>
 
-    <!-- クッキーバナー -->
     <div id="cookie-banner" class="cookie-banner hidden">
         <p>当サイトではユーザー体験向上のためにクッキーを使用します。</p>
         <div class="cookie-actions">
@@ -217,9 +181,6 @@
         </div>
     </div>
 
-    <!-- モーダル群 -->
-    
-    <!-- 詳細モーダル -->
     <div id="details-modal" class="modal-overlay">
         <div class="modal-card">
             <button class="modal-close-btn" data-close-modal>
@@ -233,7 +194,6 @@
                     <h2 id="details-modal-title">タイトル</h2>
                     <p id="details-modal-desc">説明文</p>
                     
-                    <!-- ボタンエリア (高さ固定・統一) -->
                     <div class="modal-buttons unified-buttons">
                         <a id="details-modal-launch-btn" href="#" target="_blank" class="play-btn">
                             <svg class="icon-svg" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
@@ -243,14 +203,11 @@
                             <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                         </button>
                     </div>
-                    
-                    <div class="mini-ad-placeholder">広告</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ヘルプ・プライバシーセンター (フィードバック含む) -->
     <div id="help-modal" class="modal-overlay">
         <div class="modal-card medium scrollable">
             <div class="modal-header">
@@ -289,7 +246,6 @@
         </div>
     </div>
 
-    <!-- 共有モーダル -->
     <div id="share-modal" class="modal-overlay">
         <div class="modal-card small center-text">
             <button class="modal-close-btn" data-close-modal>
@@ -302,7 +258,6 @@
         </div>
     </div>
 
-    <!-- 情報モーダル (更新履歴・予定表・規約など用) -->
     <div id="info-modal" class="modal-overlay">
         <div class="modal-card medium scrollable">
             <div class="modal-header">
@@ -315,13 +270,8 @@
         </div>
     </div>
 
-    <!-- 通知 -->
     <div id="toast-notification"></div>
 
-    <!-- A8.net -->
-    <script src="//statics.a8.net/a8link/a8linkmgr.js"></script>
-    <script>a8linkmgr({"config_id": "jmJEqv5sEGr7R3zG6TNj"});</script>
-    
     <script src="script.js"></script>
 </body>
 </html>

@@ -111,19 +111,6 @@ body.no-scroll { overflow: hidden; }
 .view-section.active { display: block; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Ads - 厳密なサイズ固定 */
-.ad-leaderboard-container, .ad-banner-container {
-    width: 100%; text-align: center; margin-bottom: 30px;
-    padding: 10px; background: rgba(0,0,0,0.05); border-radius: var(--radius);
-}
-.ad-label { font-size: 0.7rem; color: var(--text-sub); margin-bottom: 5px; font-weight: bold; letter-spacing: 1px; }
-.ad-content-wrapper { 
-    display: flex; justify-content: center; 
-    overflow: hidden; 
-    /* はみ出し防止 */
-    max-width: 100%; 
-}
-
 /* Filters & Status */
 .sub-header {
     display: flex; justify-content: space-between; align-items: center;
@@ -182,22 +169,10 @@ body.no-scroll { overflow: hidden; }
     grid-row: span 2; 
 }
 
-/* Ad Card inside Grid */
-.ad-grid-item {
-    grid-column: span 2; grid-row: span 2;
-    background: #e2e8f0; border-radius: var(--radius);
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    overflow: hidden; position: relative;
-    aspect-ratio: 1 / 1; 
-}
-[data-theme="dark"] .ad-grid-item { background: #4a5568; }
-.ad-grid-label { position: absolute; top: 5px; right: 5px; font-size: 0.6rem; background: rgba(255,255,255,0.8); padding: 2px 4px; border-radius: 4px; }
-
 /* Mobile Grid Adjustment */
 @media (max-width: 600px) {
     .poki-grid { grid-template-columns: repeat(2, 1fr); }
     .game-card:nth-child(n) { grid-column: span 1; grid-row: span 1; }
-    .ad-grid-item { grid-column: span 2; grid-row: span 2; }
 }
 
 /* FAQ & Author */
