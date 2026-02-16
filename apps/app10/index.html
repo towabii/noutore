@@ -5,7 +5,12 @@
         <meta name="viewport" content="width=device-width,initial-scale=1"/>
         <title>翻訳</title>
         <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧱</text></svg>">
+        <!-- QR Code Lib -->
         <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+        <!-- Firebase SDK -->
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+        <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+        
         <style>
             @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Noto+Sans+JP:wght@400;500;700&display=swap'); :root {
                 --bg-start: #0a0a2a;
@@ -117,9 +122,10 @@
 
             .game-header {
                 width: 100%;
-                display: flex;
-                justify-content: space-between;
+                display: grid;
+                grid-template-columns: 1fr auto 1fr;
                 align-items: center;
+                margin-bottom: 8px;
             }
 
             .title {
@@ -130,6 +136,8 @@
                 text-transform: uppercase;
                 text-shadow: 0 0 8px var(--accent-color);
                 white-space: nowrap;
+                text-align: center;
+                grid-column: 2;
             }
 
             .meta-box {
@@ -140,7 +148,11 @@
                 font-size: 14px;
                 font-weight: 700;
                 box-shadow: 0 0 10px rgba(138, 43, 226, 0.15);
+                justify-self: end;
+                grid-column: 3;
             }
+            
+            .game-header::before { content: ''; grid-column: 1; }
 
             .board-wrap {
                 position: relative;
@@ -179,7 +191,7 @@
                 box-sizing: border-box;
             }
 
-            #start-screen, #gameover-screen, #pause-screen, #animation-mode-screen {
+            #start-screen, #gameover-screen, #pause-screen, #animation-mode-screen, #online-setup-screen {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -188,7 +200,7 @@
                 width: 100%;
             }
             
-            #start-screen.hidden, #gameover-screen.hidden, #pause-screen.hidden, #animation-mode-screen.hidden {
+            #start-screen.hidden, #gameover-screen.hidden, #pause-screen.hidden, #animation-mode-screen.hidden, #online-setup-screen.hidden {
                 display: none;
             }
 
@@ -214,7 +226,10 @@
             @keyframes gameover-text-zoom { to { transform: scale(1); opacity: 1; } }
 
             .overlay-content p { font-size: 20px; margin-top: 8px; margin-bottom: 24px; }
-            #start-screen .overlay-footer, #animation-mode-screen .overlay-footer { flex-direction: column; }
+            #start-screen .overlay-footer, #animation-mode-screen .overlay-footer, #online-setup-screen .overlay-footer { 
+                flex-direction: column; 
+                align-items: center;
+            }
             .overlay-footer {
                 width: 100%;
                 display: flex;
@@ -224,7 +239,7 @@
                 margin-top: auto;
             }
 
-            #start-screen .overlay-footer .btn, #animation-mode-screen .overlay-footer .btn {
+            #start-screen .overlay-footer .btn, #animation-mode-screen .overlay-footer .btn, #online-setup-screen .overlay-footer .btn {
                 width: 90%;
                 max-width: 280px;
             }
@@ -341,11 +356,9 @@
 
             /* Loader and initial screens... */
             #loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-            #skipBtn { position: absolute; bottom: 20px; right: 20px; padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; border-radius: 6px; cursor: pointer; z-index: 10000; font-weight: bold; }
-            #staffRollContainer { width: 100%; height: 100%; overflow: hidden; position: relative; }
-            .credits-list { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); width: 90%; max-width: 700px; color: #e0e0e0; text-align: center; font-size: 16px; animation: scroll-up 14s linear forwards; }
-            .credits-list pre { font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, Courier, monospace; font-size: 1em; line-height: 1.8; text-align: left; white-space: pre-wrap; margin: 0; }
-            @keyframes scroll-up { 0% { top: 100%; } 100% { top: -100%; } }
+            #initial-form { display: flex; flex-direction: column; gap: 16px; align-items: center; width: 100%; max-width: 300px; }
+            #nicknameInput { width: 100%; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.1); border: 1px solid var(--panel-border); color: #fff; font-size: 16px; text-align: center; }
+            
             .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
             .modal-content { background: var(--panel-bg); border: 1px solid var(--panel-border); border-radius: 12px; padding: 24px; width: 100%; max-width: 500px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
             .modal-content h2 { margin-top: 0; font-size: 20px; border-bottom: 1px solid var(--accent-color); padding-bottom: 8px; margin-bottom: 16px; }
@@ -393,21 +406,7 @@
             .translator-textarea { flex-grow: 1; resize: none; border: none; padding: 0; font-size: 24px; font-family: 'Roboto', 'Noto Sans JP', sans-serif; box-sizing: border-box; background: none; color: #202124; }
             .translator-textarea:focus { outline: none; }
             .translator-divider { width: 1px; background: #dadce0; }
-            #dev-hud { position: fixed; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: limegreen; font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace; font-size: 12px; padding: 10px; border-radius: 8px; z-index: 9999; pointer-events: none; white-space: pre; line-height: 1.4; display: flex; gap: 20px; }
-            .fps-good { color: #86efac; } .fps-warn { color: #fde047; } .fps-bad { color: #f87171; }
-            .dev-controls-panel { display: flex; flex-direction: column; gap: 4px; pointer-events: auto; }
-            .dev-controls-panel button { background: rgba(120, 255, 120, 0.2); border: 1px solid limegreen; color: limegreen; font-family: monospace; cursor: pointer; padding: 2px 6px; border-radius: 4px; }
-            .dev-controls-panel button:hover { background: rgba(120, 255, 120, 0.4); }
-            #dev-console { position: fixed; bottom: 10px; right: 10px; left: auto; width: calc(100% - 20px); max-width: 600px; height: 100px; background: rgba(10,10,20,0.8); border: 1px solid var(--panel-border); border-radius: 8px; z-index: 9998; overflow-y: auto; padding: 8px; font-family: monospace; font-size: 11px; color: #ccc; pointer-events: none; }
-            #dev-console .log-error { color: #ff8080; } #dev-console .log-warn { color: #fde047; }
-            #sokohara-record { position: fixed; top: 20px; left: 50%; background: linear-gradient(45deg, #ffd700, #ff8c00); color: #000; padding: 12px 24px; border-radius: 10px; font-size: 18px; font-weight: bold; z-index: 1005; box-shadow: 0 5px 20px rgba(0,0,0,0.4); text-shadow: 1px 1px 2px rgba(255,255,255,0.3); }
-            @keyframes fade-in-then-out { 0% { opacity: 0; transform: translate(-50%, -80px); } 15% { opacity: 1; transform: translate(-50%, 0); } 85% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -80px); } }
             
-            @media (max-width: 1200px) {
-                .app.vs-cpu-mode { grid-template-columns: 1fr; grid-template-rows: auto auto auto; }
-                .app.vs-cpu-mode #cpu-container, .app.vs-cpu-mode .side-panel.player-next-panel, .app.vs-cpu-mode .side-panel.cpu-info-panel { display: none; }
-                .app.vs-cpu-mode .side-panel { flex-direction: row; justify-content: space-around; }
-            }
             @media (max-width: 980px) {
                 .app, .app.vs-cpu-mode, .app.single-player-mode { grid-template-columns: 1fr; grid-template-rows: auto auto auto; gap: 16px; }
                 .side-panel.left { order: 2; }
@@ -417,67 +416,18 @@
                 .side-panel { flex-direction: row; justify-content: space-around; }
                 .panel-card { flex: 1; }
                 .title { font-size: 20px; }
-                #dev-hud { font-size: 10px; flex-direction: column; }
-                #dev-console { max-width: 100%; height: 80px; }
+                .game-header { grid-template-columns: 1fr; gap: 8px; }
+                .title { grid-column: 1; }
+                .meta-box { grid-column: 1; justify-self: center; }
             }
         </style>
     </head>
     <body>
-        <div id="dev-hud" class="hidden"></div>
-        <div id="dev-console" class="hidden"></div>
-        <div id="sokohara-record" class="hidden">とわの最高記録: レベル32 372700点</div>
         <div class="container">
             <div id="loader">
-                <button id="skipBtn">スキップ</button>
-                <div id="staffRollContainer">
-                    <div class="credits-list">
-                        <pre>プロデューサー .................. とわ
-ディレクター .................... とわ
-エグゼクティブプロデューサー .... とわ
-アシスタントプロデューサー ...... とわ
-デザイン ........................ とわ
-シナリオ ........................ とわ
-レベルデザイン .................. とわ
-バランス調整 .................... とわ
-UI/UXデザイン ................... とわ
-プログラムリード ................ とわ
-エンジンプログラマー ............ とわ
-ネットワークプログラマー ........ とわ
-AIプログラマー .................. とわ
-ツールプログラマー .............. とわ
-サウンドプログラマー ............ とわ
-グラフィックプログラマー ........ とわ
-アートディレクター .............. とわ
-キャラクターデザイナー .......... とわ
-モンスターデザイナー ............ とわ
-背景デザイナー .................. とわ
-UIデザイナー .................... とわ
-2Dアーティスト .................. とわ
-3Dモデラー ...................... とわ
-リガー .......................... とわ
-アニメーター .................... とわ
-モーションキャプチャー .......... とわ
-VFXアーティスト ................ とわ
-ライティングアーティスト ........ とわ
-テクスチャーアーティスト ........ とわ
-サウンドディレクター ............ とわ
-作曲 ............................ とわ
-効果音制作 ...................... とわ
-ボイス収録 ...................... とわ
-ミキシング ...................... とわ
-QAマネージャー .................. とわ
-QAリーダー ...................... とわ
-QAテスター ...................... とわ
-ローカライズディレクター ........ とわ
-翻訳 ............................ とわ
-ローカライズテスター ............ とわ
-マーケティングマネージャー ...... とわ
-PR .............................. とわ
-コミュニティマネージャー ........ とわ
-公式サイト運営 .................. とわ
-スペシャルサンクス .............. とわ
-</pre>
-                    </div>
+                <div id="initial-form">
+                    <input type="text" id="nicknameInput" placeholder="ニックネームを入力" maxlength="10">
+                    <button id="skipBtn" class="btn">スタート</button>
                 </div>
                 <div id="loadComplete" class="hidden">
                     <h1>楽しいね</h1>
@@ -502,7 +452,10 @@ PR .............................. とわ
             </div>
             <div id="menu-panel">
                 <div class="menu-item" id="menu-restart-btn">
-                    <span>やり直す</span>
+                    <span>モード選択</span>
+                </div>
+                <div class="menu-item" id="menu-nickname-btn">
+                    <span>ニックネーム変更</span>
                 </div>
                 <div class="menu-item">
                     <span>サウンド</span>
@@ -516,12 +469,6 @@ PR .............................. とわ
                 </div>
                 <div class="menu-item" id="menu-share-btn">
                     <span>共有する</span>
-                </div>
-                <div class="menu-item" id="menu-cheat-btn">
-                    <span>コード入力</span>
-                </div>
-                <div class="menu-item" id="menu-dev-mode-btn">
-                    <span>開発者モード</span>
                 </div>
             </div>
             <div class="app hidden single-player-mode" id="appContainer">
@@ -552,7 +499,7 @@ PR .............................. とわ
                         </div>
                         <div class="controls-panel">
                             <button class="btn" id="pauseButton">停止</button>
-                            <button class="btn ghost" id="forceRestartBtn">やり直す</button>
+                            <button class="btn ghost" id="forceRestartBtn">モード選択</button>
                         </div>
                     </div>
                     <div class="panel-card hidden" id="modeInfoPanel">
@@ -571,49 +518,38 @@ PR .............................. とわ
                             <div id="start-screen">
                                 <div class="overlay-content">
                                     <h2>ブロック落とし</h2>
-                                    <p>モードを選択してください</p>
+                                    <p id="welcome-msg">モードを選択してください</p>
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" data-mode="TRAINING">トレーニング</button>
                                     <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
                                     <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
-                                    <div class="cpu-select-container">
-                                        <button class="btn" id="vs-cpu-btn">VS CPU ▼</button>
-                                        <div class="cpu-level-dropdown" id="vs-cpu-select">
-                                            <button class="btn" data-mode="VS_CPU_1">LV.1</button>
-                                            <button class="btn" data-mode="VS_CPU_2">LV.2</button>
-                                            <button class="btn" data-mode="VS_CPU_3">LV.3</button>
-                                            <button class="btn" data-mode="VS_CPU_4">LV.4</button>
-                                            <button class="btn" data-mode="VS_CPU_5">LV.5</button>
-                                            <button class="btn" data-mode="VS_CPU_6">LV.6</button>
-                                            <button class="btn" data-mode="VS_CPU_7">LV.7</button>
-                                            <button class="btn" data-mode="VS_CPU_8">LV.8</button>
-                                            <button class="btn" data-mode="VS_CPU_9">LV.9</button>
-                                        </div>
-                                    </div>
-                                    <div class="cpu-select-container">
-                                        <button class="btn" id="ultra-vs-cpu-btn">ウルトラ VS CPU ▼</button>
-                                        <div class="cpu-level-dropdown" id="ultra-vs-cpu-select">
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_1">LV.1</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_2">LV.2</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_3">LV.3</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_4">LV.4</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_5">LV.5</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_6">LV.6</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_7">LV.7</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_8">LV.8</button>
-                                            <button class="btn" data-mode="ULTRA_VS_CPU_9">LV.9</button>
-                                        </div>
-                                    </div>
+                                    <button class="btn" data-mode="ONLINE_VS">オンライン通常対戦</button>
+                                    <button class="btn" data-mode="ONLINE_ULTRA">オンライン3分ウルトラ</button>
+                                </div>
+                            </div>
+                            <div id="online-setup-screen" class="hidden">
+                                <div class="overlay-content">
+                                    <h2 id="online-mode-title">ONLINE</h2>
+                                    <p>ルームIDを入力してください</p>
+                                    <input type="text" id="roomIdInput" class="password-input" placeholder="Room ID" style="text-align: center; font-size: 24px; letter-spacing: 2px; text-transform: uppercase;">
+                                    <p id="online-status-msg" style="font-size: 14px; color: #a7b3d9; min-height: 20px;"></p>
+                                </div>
+                                <div class="overlay-footer">
+                                    <button class="btn" id="createRoomBtn">部屋を作成 (Host)</button>
+                                    <button class="btn" id="joinRoomBtn">部屋に参加 (Guest)</button>
+                                    <button class="btn ghost" id="cancelOnlineBtn">戻る</button>
                                 </div>
                             </div>
                             <div id="gameover-screen" class="hidden">
                                 <div class="overlay-content">
                                     <h2 id="gameover-title"></h2>
+                                    <p id="gameover-score" style="font-size: 32px; font-weight: bold; margin: 10px 0; color: var(--accent-color);"></p>
                                     <p id="gameover-result"></p>
                                 </div>
-                                <div class="overlay-footer">
+                                <div class="overlay-footer" id="gameover-buttons">
                                     <button class="btn" id="restartButton">もう一度プレイ</button>
+                                    <button class="btn ghost" id="homeButton">ホームに戻る</button>
                                 </div>
                             </div>
                             <div id="pause-screen" class="hidden">
@@ -623,7 +559,7 @@ PR .............................. とわ
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" id="resumeButton">ゲームに戻る</button>
-                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
+                                    <button class="btn ghost" id="pauseRestartButton">モード選択</button>
                                 </div>
                             </div>
                         </div>
@@ -641,8 +577,8 @@ PR .............................. とわ
                 
                 <main id="cpu-container" class="game-container hidden" style="transform: scale(0.85); transform-origin: top center;">
                     <div class="game-header">
-                        <div class="title">CPU</div>
-                        <div class="meta-box" id="cpu-level-box">AI</div>
+                        <div class="title" id="opponent-name">OPPONENT</div>
+                        <div class="meta-box" id="cpu-level-box">VS</div>
                     </div>
                     <div class="board-wrap">
                         <div class="board" id="cpu-board"></div>
@@ -691,9 +627,8 @@ PR .............................. とわ
                     <h2>アップデート情報</h2>
                     <div class="sub-header">今回の修正・追加</div>
                     <ul>
-                        <li>ハイスコアがモード別に保存されるようになりました。</li>
-                        <li>低アニメーションモードを追加しました。</li>
-                        <li>開発者モードを追加しました。（メニューから）</li>
+                        <li>オンライン対戦機能を追加しました。</li>
+                        <li>ニックネーム機能を追加しました。</li>
                     </ul>
                     <div class="modal-footer">
                         <button class="btn" id="closeNoticeBtn">閉じる</button>
@@ -707,28 +642,6 @@ PR .............................. とわ
                     <div class="modal-footer">
                         <button class="btn ghost" id="resetKeysBtn">初期設定に戻す</button>
                         <button class="btn" id="saveKeysBtn">保存して閉じる</button>
-                    </div>
-                </div>
-            </div>
-            <div id="cheatCodeModal" class="modal-overlay hidden">
-                <div class="modal-content">
-                    <h2>コード入力</h2>
-                    <p class="note">コードを入力してください。</p>
-                    <input type="password" id="cheatInput" class="cheat-input">
-                    <div class="modal-footer">
-                        <button class="btn" id="submitCheatBtn">実行</button>
-                        <button class="btn ghost" id="closeCheatBtn">キャンセル</button>
-                    </div>
-                </div>
-            </div>
-            <div id="devPasswordModal" class="modal-overlay hidden">
-                <div class="modal-content">
-                    <h2>開発者モード</h2>
-                    <p class="note">パスワードを入力してください。</p>
-                    <input type="password" id="devPasswordInput" class="password-input">
-                    <div class="modal-footer">
-                        <button class="btn" id="submitDevPasswordBtn">認証</button>
-                        <button class="btn ghost" id="closeDevPasswordBtn">キャンセル</button>
                     </div>
                 </div>
             </div>
@@ -776,15 +689,50 @@ PR .............................. とわ
         <audio id="pushAudio" src="push.mp3"></audio>
         <audio id="delAudio" src="del.mp3"></audio>
         <script>
+            // Firebase Config
+            const firebaseConfig = {
+                apiKey: "AIzaSyDeVPFYsQIwBjHw3zfQnGJvpRFZXj1V8Yk",
+                authDomain: "toway-ee817.firebaseapp.com",
+                databaseURL: "https://toway-ee817-default-rtdb.firebaseio.com",
+                projectId: "toway-ee817",
+                storageBucket: "toway-ee817.firebasestorage.app",
+                messagingSenderId: "1031134467398",
+                appId: "1:1031134467398:web:32adc0826e1f3e06520147",
+                measurementId: "G-9CPCZEKZ8E"
+            };
+            firebase.initializeApp(firebaseConfig);
+            const db = firebase.database();
+
             let lowAnimationMode = false;
+            let playerNickname = "Player";
             
+            // RNG for online sync
+            let onlineSeed = 1;
+            function seededRandom() {
+                const x = Math.sin(onlineSeed++) * 10000;
+                return x - Math.floor(x);
+            }
+
             window.addEventListener('DOMContentLoaded', () => {
                 const loader = document.getElementById('loader');
                 const skipBtn = document.getElementById('skipBtn');
                 const animationScreen = document.getElementById('animation-mode-screen');
                 const initialSetupContainer = document.getElementById('initial-setup-container');
+                const nicknameInput = document.getElementById('nicknameInput');
+
+                const savedName = localStorage.getItem('blockfall_nickname');
+                if (savedName) {
+                    playerNickname = savedName;
+                    nicknameInput.value = savedName;
+                }
 
                 const showAnimationChoice = () => {
+                    const name = nicknameInput.value.trim();
+                    if(name) {
+                        playerNickname = name;
+                        localStorage.setItem('blockfall_nickname', playerNickname);
+                    }
+                    
                     if (loader.parentNode) {
                         loader.classList.add('fade-out');
                         loader.addEventListener('animationend', () => {
@@ -805,13 +753,8 @@ PR .............................. とわ
                     }
                 };
 
-                const skipLoading = () => {
-                    clearTimeout(startTimer);
-                    showAnimationChoice();
-                };
-
-                let startTimer = setTimeout(showAnimationChoice, 14000);
-                skipBtn.addEventListener('click', skipLoading);
+                skipBtn.addEventListener('click', showAnimationChoice);
+                nicknameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') showAnimationChoice(); });
             });
 
             function showUpdateInfo() {
@@ -820,17 +763,6 @@ PR .............................. とわ
                 
                 document.getElementById('closeNoticeBtn').addEventListener('click', () => {
                     noticeModal.classList.add('hidden');
-                    showSokoharaRecord();
-                }, { once: true });
-            }
-
-            function showSokoharaRecord() {
-                const recordEl = document.getElementById('sokohara-record');
-                recordEl.classList.remove('hidden');
-                recordEl.style.animation = 'fade-in-then-out 5s ease-out forwards';
-                recordEl.addEventListener('animationend', () => {
-                    recordEl.classList.add('hidden');
-                    recordEl.style.animation = '';
                     startMainApp();
                 }, { once: true });
             }
@@ -841,46 +773,9 @@ PR .............................. とわ
                 appContainer.classList.remove('hidden');
                 appContainer.classList.add('fade-in');
                 hamburgerIcon.classList.remove('hidden');
+                document.getElementById('welcome-msg').textContent = `ようこそ、${playerNickname}さん`;
                 initGame();
             }
-
-            const devHUD = {
-                enabled: false,
-                elements: { hud: document.getElementById('dev-hud'), console: document.getElementById('dev-console'), },
-                perf: { lastTime: performance.now(), frames: 0, fps: 0, frameTime: 0, cpuUsage: 0, memory: 'N/A', drawCalls: 0 },
-                progress: { round: 'N/A', level: 1, lines: 0, score: 0, playTime: 0, startTime: performance.now(), isOver: false, mode: 'N/A' },
-                graphics: { spriteCount: 0, canvasSize: '0x0', devicePixelRatio: window.devicePixelRatio || 1 },
-                input: { lastKey: 'N/A', history: [], mouse: { x: 0, y: 0 }, clicks: 0 },
-                data: { objectCount: 0, currentPiece: 'None', nextPiece: 'None', heldPiece: 'None' },
-                system: { userAgent: navigator.userAgent.substring(0, 40) + '...', windowSize: `${window.innerWidth}x${window.innerHeight}`, refreshRate: 'N/A' },
-                debug: { flags: { devMode: false, lowAnim: false } }
-            };
-
-            function updateDevHUD() {
-                if (!devHUD.enabled) { requestAnimationFrame(updateDevHUD); return; }
-                const now = performance.now();
-                const delta = now - devHUD.perf.lastTime;
-                devHUD.perf.frameTime = delta;
-                devHUD.perf.lastTime = now;
-                devHUD.perf.frames++;
-                if (now > (devHUD.perf.lastCalcTime || 0) + 1000) {
-                    devHUD.perf.fps = devHUD.perf.frames;
-                    devHUD.perf.frames = 0;
-                    devHUD.perf.lastCalcTime = now;
-                    devHUD.system.refreshRate = `${devHUD.perf.fps} Hz (est.)`;
-                }
-                const targetFrameTime = 1000 / 60;
-                devHUD.perf.cpuUsage = Math.min(100, (devHUD.perf.frameTime / targetFrameTime) * 100);
-                devHUD.perf.memory = performance.memory ? `${(performance.memory.usedJSHeapSize / 1048576).toFixed(2)} MB` : 'N/A';
-                devHUD.progress.playTime = (now - devHUD.progress.startTime) / 1000;
-                const fpsClass = devHUD.perf.fps >= 55 ? 'fps-good' : devHUD.perf.fps >= 30 ? 'fps-warn' : 'fps-bad';
-                devHUD.elements.hud.innerHTML = `<div>--[ 📊 PERFORMANCE ]---------<br>FPS : <span class="${fpsClass}">${devHUD.perf.fps}</span><br>Frame Time : ${devHUD.perf.frameTime.toFixed(2)} ms<br>CPU Usage : ${devHUD.perf.cpuUsage.toFixed(1)} %<br>Memory : ${devHUD.perf.memory}<br>Draw Calls : ${devHUD.perf.drawCalls}<br><br>--[ 🚀 PROGRESS ]------------<br>Mode : ${devHUD.progress.mode}<br>Score : ${devHUD.progress.score}<br>Level : ${devHUD.progress.level}<br>Lines : ${devHUD.progress.lines}<br>Time : ${devHUD.progress.playTime.toFixed(1)} s<br>Finished : ${devHUD.progress.isOver}<br><br>--[ 🧩 PIECE DATA ]----------<br>Current : ${devHUD.data.currentPiece}<br>Next : ${devHUD.data.nextPiece}<br>Hold : ${devHUD.data.heldPiece}</div><div>--[ 🖥 GRAPHICS ]------------<br>Sprites : ${devHUD.graphics.spriteCount}<br>Canvas : ${devHUD.graphics.canvasSize}<br>DPR : ${devHUD.graphics.devicePixelRatio.toFixed(2)}<br><br>--[ 🔍 INPUT ]----------------<br>Last Key : ${devHUD.input.lastKey}<br>History : [${devHUD.input.history.join(', ')}]<br>Mouse/Touch: ${devHUD.input.mouse.x}, ${devHUD.input.mouse.y}<br>Clicks : ${devHUD.input.clicks}<br><br>--[ ⚙️ SYSTEM ]--------------<br>User Agent : ${devHUD.system.userAgent}<br>Window Size: ${devHUD.system.windowSize}<br><br>--[ 🐞 DEBUG ]----------------<br>Low Anim : ${devHUD.debug.flags.lowAnim ? 'ON' : 'OFF'}<br><div class="dev-controls-panel"><button data-action="set-score">Set Score</button></div></div>`;
-                devHUD.perf.drawCalls = 0;
-                requestAnimationFrame(updateDevHUD);
-            }
-            function logToDevConsole(message, type = 'log') { if (!devHUD.enabled) return; const p = document.createElement('p'); p.className = `log-${type}`; p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`; devHUD.elements.console.appendChild(p); devHUD.elements.console.scrollTop = devHUD.elements.console.scrollHeight; }
-            window.addEventListener('keydown', e => { devHUD.input.lastKey = e.key; devHUD.input.history.unshift(e.key); if (devHUD.input.history.length > 5) devHUD.input.history.pop(); });
-            requestAnimationFrame(updateDevHUD);
 
             function initGame() {
                 const COLS = 10, ROWS = 20;
@@ -918,24 +813,33 @@ PR .............................. とわ
 
                 const ATTACK_LINES = { 1: 1, 2: 2, 3: 3, 4: 5 };
                 const COMBO_ATTACK = [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4, 5, 5, 5, 5, 6];
-                const CPU_LEVELS = { 1: { thinkTime: 700, actionInterval: 150, mistakeChance: 0.5, weights: { AGG_H: -0.4, COMP_L: 0.6, HOLES: -0.3, BUMP: -0.1, WELLS: -0.2 } }, 2: { thinkTime: 600, actionInterval: 130, mistakeChance: 0.4, weights: { AGG_H: -0.45, COMP_L: 0.7, HOLES: -0.4, BUMP: -0.15, WELLS: -0.25 } }, 3: { thinkTime: 500, actionInterval: 110, mistakeChance: 0.3, weights: { AGG_H: -0.5, COMP_L: 0.8, HOLES: -0.5, BUMP: -0.2, WELLS: -0.3 } }, 4: { thinkTime: 400, actionInterval: 100, mistakeChance: 0.2, weights: { AGG_H: -0.5, COMP_L: 0.9, HOLES: -0.6, BUMP: -0.2, WELLS: -0.3 } }, 5: { thinkTime: 300, actionInterval: 90, mistakeChance: 0.1, weights: { AGG_H: -0.55, COMP_L: 1.0, HOLES: -0.7, BUMP: -0.25, WELLS: -0.35 } }, 6: { thinkTime: 200, actionInterval: 80, mistakeChance: 0.05, weights: { AGG_H: -0.55, COMP_L: 1.1, HOLES: -0.8, BUMP: -0.25, WELLS: -0.35 } }, 7: { thinkTime: 150, actionInterval: 70, mistakeChance: 0.02, weights: { AGG_H: -0.6, COMP_L: 1.2, HOLES: -0.9, BUMP: -0.3, WELLS: -0.4 } }, 8: { thinkTime: 100, actionInterval: 60, mistakeChance: 0.01, weights: { AGG_H: -0.6, COMP_L: 1.2, HOLES: -0.9, BUMP: -0.3, WELLS: -0.4 } }, 9: { thinkTime: 50, actionInterval: 50, mistakeChance: 0, weights: { AGG_H: -0.6, COMP_L: 1.2, HOLES: -0.9, BUMP: -0.3, WELLS: -0.4 } } };
                 
-                const appContainer = document.getElementById('appContainer'), playerGameContainer = document.getElementById('player-game-container'), boardEl = document.getElementById('board'), scoreBox = document.getElementById('scoreBox'), highScoreEl = document.getElementById('highScore'), currentScoreEl = document.getElementById('currentScore'), forceRestartBtn = document.getElementById('forceRestartBtn'), linesEl = document.getElementById('lines'), levelEl = document.getElementById('level'), holdContainer = document.getElementById('holdContainer'), gameOverlay = document.getElementById('game-overlay'), startScreen = document.getElementById('start-screen'), gameoverScreen = document.getElementById('gameover-screen'), gameoverTitle = document.getElementById('gameover-title'), gameoverResult = document.getElementById('gameover-result'), restartButton = document.getElementById('restartButton'), pauseScreen = document.getElementById('pause-screen'), resumeButton = document.getElementById('resumeButton'), pauseButton = document.getElementById('pauseButton'), modeInfoPanel = document.getElementById('modeInfoPanel'), modeInfoTitle = document.getElementById('modeInfoTitle'), modeInfoContent = document.getElementById('modeInfoContent'), countdownEl = document.getElementById('countdown');
-                const cpuContainer = document.getElementById('cpu-container'), cpuBoardEl = document.getElementById('cpu-board'), cpuLevelBox = document.getElementById('cpu-level-box');
-                const vsCpuBtn = document.getElementById('vs-cpu-btn'), vsCpuSelect = document.getElementById('vs-cpu-select');
-                const ultraVsCpuBtn = document.getElementById('ultra-vs-cpu-btn'), ultraVsCpuSelect = document.getElementById('ultra-vs-cpu-select');
-                const hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle'), menuCheatBtn = document.getElementById('menu-cheat-btn');
+                const appContainer = document.getElementById('appContainer'), playerGameContainer = document.getElementById('player-game-container'), boardEl = document.getElementById('board'), scoreBox = document.getElementById('scoreBox'), highScoreEl = document.getElementById('highScore'), currentScoreEl = document.getElementById('currentScore'), forceRestartBtn = document.getElementById('forceRestartBtn'), linesEl = document.getElementById('lines'), levelEl = document.getElementById('level'), holdContainer = document.getElementById('holdContainer'), gameOverlay = document.getElementById('game-overlay'), startScreen = document.getElementById('start-screen'), gameoverScreen = document.getElementById('gameover-screen'), gameoverTitle = document.getElementById('gameover-title'), gameoverResult = document.getElementById('gameover-result'), gameoverScore = document.getElementById('gameover-score'), restartButton = document.getElementById('restartButton'), homeButton = document.getElementById('homeButton'), pauseScreen = document.getElementById('pause-screen'), resumeButton = document.getElementById('resumeButton'), pauseButton = document.getElementById('pauseButton'), modeInfoPanel = document.getElementById('modeInfoPanel'), modeInfoTitle = document.getElementById('modeInfoTitle'), modeInfoContent = document.getElementById('modeInfoContent'), countdownEl = document.getElementById('countdown');
+                const cpuContainer = document.getElementById('cpu-container'), cpuBoardEl = document.getElementById('cpu-board'), cpuLevelBox = document.getElementById('cpu-level-box'), opponentNameEl = document.getElementById('opponent-name');
+                const hamburgerIcon = document.getElementById('hamburger-icon'), menuPanel = document.getElementById('menu-panel'), menuRestartBtn = document.getElementById('menu-restart-btn'), soundToggle = document.getElementById('sound-toggle');
                 const spNextPanel = document.getElementById('sp-next-panel'), nextContainer = document.getElementById('nextContainer');
                 const playerNextPanelVS = document.querySelector('.side-panel.player-next-panel'), playerNextContainerVS = document.getElementById('playerNextContainerVS');
                 const cpuInfoPanel = document.querySelector('.side-panel.cpu-info-panel'), cpuNextContainer = document.getElementById('cpuNextContainer'), cpuHoldContainer = document.getElementById('cpuHoldContainer');
                 const pauseRestartButton = document.getElementById('pauseRestartButton');
 
+                // Online Elements
+                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg');
+
                 let player = {};
                 let cpu = null;
                 
                 let isPaused, isOver, gameMode, cpuLevel, bestScores = {}, keys = {};
-                let lastTime = 0, animationFrameId, countdownInterval, cpuActionInterval, gameTimer, gameInterval;
+                let lastTime = 0, animationFrameId, countdownInterval, cpuActionInterval, gameTimer, gameInterval, updateInterval;
                 let dasTimer, arrTimer, softDropTimer, keyMap, actionToChange = null;
+
+                // Online Vars
+                let isOnline = false;
+                let onlineRoomId = null;
+                let myRole = null; // 'host' or 'guest'
+                let roomRef = null;
+                let opponentData = { board: [], score: 0, nextPiece: null, heldPiece: null, currentPiece: null, isOver: false, name: "Opponent" };
+                let isCountdownActive = false;
+                let hasOnlineGameStarted = false; // Flag to prevent double start/countdown
 
                 const defaultKeyMap = { moveLeft: 'ArrowLeft', moveRight: 'ArrowRight', softDrop: 'ArrowDown', hardDrop: 'ArrowUp', rotateLeft: 'z', rotateRight: 'x', hold: 'c' };
                 const actionLabels = { moveLeft: '左移動', moveRight: '右移動', softDrop: 'ソフトドロップ', hardDrop: 'ハードドロップ', rotateLeft: '左回転', rotateRight: '右回転', hold: 'ホールド' };
@@ -975,38 +879,43 @@ PR .............................. とわ
                     if(cpuBoardEl) createEmptyBoard(cpuBoardEl);
 
                     document.querySelectorAll('#start-screen .btn[data-mode]').forEach(btn => btn.addEventListener('click', (e) => startGame(e.target.dataset.mode)));
-                    vsCpuBtn.addEventListener('click', () => { ultraVsCpuSelect.classList.remove('open'); vsCpuSelect.classList.toggle('open'); });
-                    ultraVsCpuBtn.addEventListener('click', () => { vsCpuSelect.classList.remove('open'); ultraVsCpuSelect.classList.toggle('open'); });
-
-                    restartButton.addEventListener('click', showStartScreen);
+                    
+                    restartButton.addEventListener('click', startCountdown); 
+                    homeButton.addEventListener('click', showStartScreen);
                     pauseButton.addEventListener('click', togglePause);
                     resumeButton.addEventListener('click', togglePause);
                     forceRestartBtn.addEventListener('click', () => { if (!isOver && confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) { showStartScreen(); } else if (isOver) { showStartScreen(); } });
                     menuRestartBtn.addEventListener('click', () => { if (isOver || isPaused || confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) { showStartScreen(); } menuPanel.classList.remove('open'); });
                     pauseRestartButton.addEventListener('click', () => { if (confirm('本当に現在のゲームを終了し、モード選択に戻りますか？')) { showStartScreen(); } });
                     
+                    // Online Handlers
+                    createRoomBtn.addEventListener('click', () => handleOnlineSetup('create'));
+                    joinRoomBtn.addEventListener('click', () => handleOnlineSetup('join'));
+                    cancelOnlineBtn.addEventListener('click', () => { onlineSetupScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+
                     setupKeyHandlers();
                     setupExtraFeatures();
                     setupKeyConfigModal();
-                    setupDevMode();
                 }
 
                 function startGame(mode) {
                     gameMode = mode;
                     cpuLevel = 0;
-                    if (gameMode.startsWith('VS_CPU') || gameMode.startsWith('ULTRA_VS_CPU')) {
-                        cpuLevel = parseInt(mode.split('_').pop(), 10);
-                        gameMode = gameMode.startsWith('ULTRA_VS_CPU') ? 'ULTRA_VS_CPU' : 'VS_CPU';
-                        cpuLevelBox.textContent = `LV.${cpuLevel}`;
+                    isOnline = false;
+
+                    if (mode === 'ONLINE_VS' || mode === 'ONLINE_ULTRA') {
+                        isOnline = true;
+                        startScreen.classList.add('hidden');
+                        onlineSetupScreen.classList.remove('hidden');
+                        onlineStatusMsg.textContent = "";
+                        roomIdInput.value = "";
+                        return;
                     }
 
-                    if (gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') {
+                    // CPU modes removed from UI but logic kept just in case
+                    if (gameMode === 'VS_CPU') {
                         appContainer.className = 'app vs-cpu-mode';
-                        cpuContainer.classList.remove('hidden');
-                        playerNextPanelVS.classList.remove('hidden');
-                        cpuInfoPanel.classList.remove('hidden');
-                        spNextPanel.classList.add('hidden');
-                        document.querySelector('.side-panel.right').classList.add('hidden');
+                        // ... setup for CPU if ever restored
                     } else {
                         appContainer.className = 'app single-player-mode';
                         cpuContainer.classList.add('hidden');
@@ -1021,6 +930,15 @@ PR .............................. とわ
                     pauseScreen.classList.add('hidden');
                     appContainer.classList.remove('game-inactive-blur');
 
+                    startCountdown();
+                }
+
+                function startCountdown() {
+                    if (isCountdownActive) return;
+                    isCountdownActive = true;
+                    if (isOnline) hasOnlineGameStarted = true;
+                    
+                    gameoverScreen.classList.add('hidden');
                     let count = 3;
                     countdownEl.textContent = count;
                     countdownEl.classList.remove('hidden');
@@ -1028,8 +946,151 @@ PR .............................. とわ
                     countdownInterval = setInterval(() => {
                         count--;
                         if (count > 0) { countdownEl.textContent = count; } 
-                        else { clearInterval(countdownInterval); countdownEl.classList.add('hidden'); startActualGame(); }
+                        else { 
+                            clearInterval(countdownInterval); 
+                            countdownEl.classList.add('hidden'); 
+                            isCountdownActive = false;
+                            startActualGame(); 
+                        }
                     }, 1000);
+                }
+
+                // Online Logic
+                function handleOnlineSetup(action) {
+                    const roomId = roomIdInput.value.trim().toUpperCase();
+                    if (!roomId) { onlineStatusMsg.textContent = "Room IDを入力してください"; return; }
+                    onlineRoomId = roomId;
+                    roomRef = db.ref('rooms/' + roomId);
+
+                    if (action === 'create') {
+                        myRole = 'host';
+                        onlineStatusMsg.textContent = "部屋を作成中...";
+                        const initialSeed = Math.floor(Math.random() * 100000);
+                        roomRef.set({
+                            host: { name: playerNickname, status: 'waiting', board: null },
+                            guest: { name: "", status: 'empty', board: null },
+                            status: 'waiting',
+                            seed: initialSeed,
+                            mode: gameMode
+                        }).then(() => {
+                            onlineStatusMsg.textContent = "対戦相手を待っています...";
+                            listenToRoom();
+                        });
+                    } else {
+                        myRole = 'guest';
+                        onlineStatusMsg.textContent = "部屋を探しています...";
+                        roomRef.get().then((snapshot) => {
+                            if (snapshot.exists()) {
+                                const data = snapshot.val();
+                                if (data.status !== 'waiting') { onlineStatusMsg.textContent = "この部屋は満員かプレイ中です"; return; }
+                                if (data.mode !== gameMode) { onlineStatusMsg.textContent = "ゲームモードが一致しません"; return; }
+                                
+                                roomRef.child('guest').set({ name: playerNickname, status: 'joined', board: null });
+                                onlineStatusMsg.textContent = "参加しました。ホストの開始を待っています...";
+                                listenToRoom();
+                            } else {
+                                onlineStatusMsg.textContent = "部屋が見つかりません";
+                            }
+                        });
+                    }
+                }
+
+                // Helper to fix Firebase sparse arrays
+                function normalizeBoard(remoteBoard) {
+                    if (!remoteBoard) return Array(ROWS).fill(0).map(() => Array(COLS).fill(null));
+                    
+                    if (Array.isArray(remoteBoard)) {
+                        return remoteBoard.map(row => {
+                            if (!row) return Array(COLS).fill(null);
+                            if (Array.isArray(row)) return row;
+                            const newRow = Array(COLS).fill(null);
+                            Object.keys(row).forEach(k => newRow[k] = row[k]);
+                            return newRow;
+                        });
+                    }
+                    
+                    const newBoard = Array(ROWS).fill(0).map(() => Array(COLS).fill(null));
+                    Object.keys(remoteBoard).forEach(y => {
+                        const row = remoteBoard[y];
+                        if (row) {
+                            if (Array.isArray(row)) {
+                                newBoard[y] = row;
+                            } else {
+                                Object.keys(row).forEach(x => newBoard[y][x] = row[x]);
+                            }
+                        }
+                    });
+                    return newBoard;
+                }
+
+                function listenToRoom() {
+                    roomRef.on('value', (snapshot) => {
+                        const data = snapshot.val();
+                        if (!data) return;
+
+                        onlineSeed = data.seed;
+
+                        const opponentRole = myRole === 'host' ? 'guest' : 'host';
+                        const oppData = data[opponentRole];
+
+                        if (oppData) {
+                            opponentData.name = oppData.name || "Opponent";
+                            opponentData.board = normalizeBoard(oppData.board); 
+                            opponentData.score = oppData.score || 0;
+                            opponentData.nextPiece = oppData.nextPiece;
+                            opponentData.heldPiece = oppData.heldPiece;
+                            opponentData.currentPiece = oppData.currentPiece;
+                            opponentData.isOver = oppData.isOver || false;
+                            
+                            // Check for incoming garbage
+                            const myData = data[myRole];
+                            if(myData && myData.garbageQueue > 0) {
+                                if(player) {
+                                    player.pendingGarbage += myData.garbageQueue;
+                                    roomRef.child(myRole).update({ garbageQueue: 0 });
+                                }
+                            }
+
+                            // Opponent Game Over Sync logic
+                            if (data.status === 'playing' && opponentData.isOver && !player.isOver && !isOver) {
+                                if (gameMode === 'ONLINE_VS') {
+                                    // In VS (Survival), if opponent dies, I win immediately
+                                    gameOver(cpu); 
+                                } else if (gameMode === 'ONLINE_ULTRA') {
+                                    // In Ultra, if opponent dies, game ends (as per request)
+                                    gameOver(cpu);
+                                }
+                            }
+                        }
+
+                        // Trigger start ONLY if it hasn't started locally yet
+                        if (data.status === 'playing' && !hasOnlineGameStarted && !isCountdownActive) {
+                            // Start Game Trigger
+                            onlineSetupScreen.classList.add('hidden');
+                            appContainer.className = 'app vs-cpu-mode';
+                            cpuContainer.classList.remove('hidden');
+                            playerNextPanelVS.classList.remove('hidden');
+                            cpuInfoPanel.classList.remove('hidden');
+                            spNextPanel.classList.add('hidden');
+                            document.querySelector('.side-panel.right').classList.add('hidden');
+                            cpuLevelBox.textContent = "P2P";
+                            opponentNameEl.textContent = opponentData.name;
+                            appContainer.classList.remove('game-inactive-blur');
+                            
+                            startCountdown(); 
+                        }
+                    });
+
+                    // If host, check if guest joined to start
+                    if (myRole === 'host') {
+                        roomRef.child('guest/status').on('value', (snap) => {
+                            if (snap.val() === 'joined') {
+                                setTimeout(() => {
+                                    roomRef.update({ status: 'playing' });
+                                }, 1000);
+                            }
+                        });
+                    }
                 }
 
                 function startActualGame() {
@@ -1043,50 +1104,56 @@ PR .............................. とわ
                     player.nextPiece = getNextPieceFromBag(player);
                     spawnPiece(player);
 
-                    cpu = (gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') ? createPlayerState(true) : null;
-                    if (cpu) {
-                        fillPieceBag(cpu);
-                        cpu.nextPiece = getNextPieceFromBag(cpu);
-                        spawnPiece(cpu);
+                    if (isOnline) {
+                         cpu = createPlayerState(true);
+                         pushOnlineState(); 
+                    } else {
+                        // CPU setup (now only theoretically used as mode buttons are gone)
+                        cpu = null;
                     }
                     
                     if (gameInterval) clearInterval(gameInterval);
                     if (cpuActionInterval) clearInterval(cpuActionInterval);
+                    if (updateInterval) clearInterval(updateInterval);
 
-                    if (gameMode === 'SPRINT') gameTimer = 0;
-                    else if (gameMode === 'ULTRA' || gameMode === 'ULTRA_VS_CPU') gameTimer = 180;
+                    if (gameMode === 'SPRINT' || gameMode === 'ONLINE_VS') gameTimer = 0;
+                    else if (gameMode.includes('ULTRA')) gameTimer = 180;
                     
                     gameInterval = setInterval(() => {
                         if (isPaused || isOver) return;
-                        if (gameMode === 'SPRINT') gameTimer++;
-                        else if (gameMode === 'ULTRA' || gameMode === 'ULTRA_VS_CPU') {
+                        if (gameMode === 'SPRINT' || gameMode === 'ONLINE_VS') gameTimer++;
+                        else if (gameMode.includes('ULTRA')) {
                             gameTimer--;
                             if (gameTimer <= 0) { 
                                 gameTimer = 0;
-                                gameOver(gameMode === 'ULTRA_VS_CPU' ? (player.score > cpu.score ? cpu : player) : player);
+                                let loser = player;
+                                if (isOnline) {
+                                    // Time up in Ultra - compare scores
+                                    loser = player.score > opponentData.score ? cpu : player;
+                                } 
+                                gameOver(loser);
                             }
                         }
                         updateUI();
                     }, 1000);
 
-                    if(cpu) {
-                        cpuActionInterval = setInterval(cpuGameLoop, CPU_LEVELS[cpuLevel].actionInterval);
-                    }
+                    // Separate physics loop for tab background stability
+                    lastTime = performance.now();
+                    updateInterval = setInterval(gameLogicLoop, 33); // ~30fps logic
 
                     updateUI();
-                    lastTime = 0;
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
-                    if(devHUD.enabled) devHUD.progress.startTime = performance.now();
-                    gameLoop();
+                    drawLoop();
                 }
 
-                function gameLoop(time = 0) {
-                    if (isOver) return;
-                    animationFrameId = requestAnimationFrame(gameLoop);
-                    if (isPaused) { lastTime = time; return; }
-
-                    const deltaTime = time - lastTime;
-                    lastTime = time;
+                function gameLogicLoop() {
+                    if (isOver || isPaused) {
+                        lastTime = performance.now();
+                        return;
+                    }
+                    const now = performance.now();
+                    const deltaTime = now - lastTime;
+                    lastTime = now;
 
                     if (!player.isOver) {
                         player.dropCounter += deltaTime;
@@ -1094,29 +1161,21 @@ PR .............................. とわ
                             drop(player);
                         }
                     }
+                }
 
-                    if (cpu && !cpu.isOver) {
-                        cpu.dropCounter += deltaTime;
-                        if (cpu.dropCounter > cpu.dropInterval) {
-                            drop(cpu);
+                function drawLoop() {
+                    if (!isOver) {
+                        draw(player, boardEl);
+                        if (isOnline) {
+                            drawOnlineOpponent(cpuBoardEl);
                         }
                     }
-
-                    draw(player, boardEl);
-                    if (cpu) draw(cpu, cpuBoardEl);
+                    animationFrameId = requestAnimationFrame(drawLoop);
                 }
                 
-                function cpuGameLoop() {
-                    if (isOver || !cpu || cpu.isOver || isPaused) return;
-                    if (cpu.ai.actionQueue.length > 0) {
-                        executeCpuAction();
-                    } else if (!cpu.ai.isThinking) {
-                        runCpuTurn(cpu);
-                    }
-                }
-
                 function togglePause() {
                     if (isOver) return;
+                    if (isOnline) return; 
                     isPaused = !isPaused;
                     if (isPaused) {
                         gameOverlay.classList.remove('hidden');
@@ -1134,7 +1193,12 @@ PR .............................. とわ
 
                 function fillPieceBag(target) {
                     const p = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-                    for (let i = p.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [p[i], p[j]] = [p[j], p[i]]; }
+                    const randFunc = isOnline ? seededRandom : Math.random;
+                    
+                    for (let i = p.length - 1; i > 0; i--) { 
+                        const j = Math.floor(randFunc() * (i + 1)); 
+                        [p[i], p[j]] = [p[j], p[i]]; 
+                    }
                     target.pieceBag.push(...p);
                 }
 
@@ -1154,8 +1218,8 @@ PR .............................. とわ
                         gameOver(target);
                         return;
                     }
-                    if (target.isCPU && !target.ai.isThinking) {
-                        runCpuTurn(target);
+                    if(isOnline && !target.isCPU) {
+                         pushOnlineState();
                     }
                 }
                 
@@ -1164,7 +1228,10 @@ PR .............................. とわ
                     const piece = { ...target.currentPiece, x: target.currentPiece.x + dir };
                     if (isValidMove(piece, target.board)) {
                         target.currentPiece.x += dir;
-                        if(!target.isCPU) resetLandingTimerOnMove(target);
+                        if(!target.isCPU) {
+                             resetLandingTimerOnMove(target);
+                             if(isOnline) pushOnlineState();
+                        }
                     }
                 }
 
@@ -1173,7 +1240,10 @@ PR .............................. とわ
                     const piece = { ...target.currentPiece, y: target.currentPiece.y + 1 };
                     if (isValidMove(piece, target.board)) {
                         target.currentPiece.y++;
-                        if(!target.isCPU) clearLockDelayTimer(target);
+                        if(!target.isCPU) {
+                            clearLockDelayTimer(target);
+                            if(isOnline) pushOnlineState();
+                        }
                         target.isLanded = false;
                     } else {
                         if (!target.isLanded) {
@@ -1211,7 +1281,7 @@ PR .............................. とわ
                     }
 
                     const newRotation = (p.rotation + dir + 4) % 4;
-                    const kickTableId = dir === 1 ? `${p.rotation}-${newRotation}` : `${(p.rotation - 1 + 4)%4}-${(newRotation - 1 + 4)%4}`; // This needs to be checked
+                    const kickTableId = dir === 1 ? `${p.rotation}-${newRotation}` : `${(p.rotation - 1 + 4)%4}-${(newRotation - 1 + 4)%4}`; 
                     const effectiveKickId = `${p.rotation}-${newRotation}`;
 
                     const kickTable = WALL_KICK_DATA[p.name][effectiveKickId];
@@ -1228,7 +1298,10 @@ PR .............................. とわ
                             p.y -= dy;
                             p.shape = newShape;
                             p.rotation = newRotation;
-                            if (!target.isCPU) resetLandingTimerOnMove(target);
+                            if (!target.isCPU) {
+                                resetLandingTimerOnMove(target);
+                                if(isOnline) pushOnlineState();
+                            }
                             return;
                         }
                     }
@@ -1252,7 +1325,7 @@ PR .............................. とわ
                     if (!isValidMove(target.currentPiece, target.board)) {
                         gameOver(target);
                     }
-                    if (target.isCPU) runCpuTurn(target);
+                    if (isOnline && !target.isCPU) pushOnlineState();
                     updateUI();
                 }
 
@@ -1299,6 +1372,9 @@ PR .............................. とわ
                     target.currentPiece = null;
                     if(!target.isCPU) playSound('pushAudio');
 
+                    // Sync immediately before clearing lines so opponent sees placement
+                    if(isOnline && !target.isCPU) pushOnlineState();
+
                     const clearedLineCount = await clearLines(target);
                     let sentAttack = 0;
                     if (clearedLineCount > 0) {
@@ -1308,8 +1384,10 @@ PR .............................. とわ
                         target.combo = 0;
                     }
 
-                    if (gameMode === 'VS_CPU') {
-                        const opponent = target.isCPU ? player : cpu;
+                    // Garbage Handling separated by Mode
+                    if (gameMode === 'ONLINE_ULTRA') {
+                        // NO GARBAGE IN ONLINE ULTRA
+                    } else if (gameMode.includes('VS') || gameMode.includes('ONLINE')) {
                         let netAttack = sentAttack - target.pendingGarbage;
                         
                         if (netAttack < 0) {
@@ -1320,7 +1398,10 @@ PR .............................. とわ
                         } else {
                             target.pendingGarbage = 0;
                             if (netAttack > 0) {
-                                opponent.pendingGarbage += netAttack;
+                                if (isOnline && !target.isCPU) {
+                                    const opponentRole = myRole === 'host' ? 'guest' : 'host';
+                                    roomRef.child(opponentRole + '/garbageQueue').transaction((current) => (current || 0) + netAttack);
+                                }
                             }
                         }
                     }
@@ -1330,6 +1411,9 @@ PR .............................. とわ
                     if (!isOver) {
                         spawnPiece(target);
                         target.canHold = true;
+                    }
+                    if(isOnline && !target.isCPU) {
+                        pushOnlineState();
                     }
                     updateUI();
                 }
@@ -1398,7 +1482,7 @@ PR .............................. とわ
                             setTimeout(() => boardWrap.classList.remove(comboClass), 300);
                         }
                     }
-                    if (gameMode === 'TRAINING' || gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') {
+                    if (gameMode === 'TRAINING' || gameMode.includes('VS')) {
                         const newLevel = Math.floor(target.lines / 10) + 1;
                         if (newLevel > target.level) {
                             target.level = newLevel;
@@ -1481,7 +1565,81 @@ PR .............................. とわ
                             }
                         }));
                     }
-                    if(devHUD.enabled) devHUD.perf.drawCalls++;
+                }
+                
+                function drawOnlineOpponent(element) {
+                     if (!element) return;
+                    const cells = Array.from(element.children);
+                    
+                    cells.forEach(c => c.innerHTML = '');
+                    
+                    // Draw Board
+                    if(opponentData.board) {
+                        opponentData.board.forEach((row, y) => {
+                            row.forEach((color, x) => {
+                                if (color) {
+                                    const tile = document.createElement('div');
+                                    tile.className = 'tile' + (color === 'garbage' ? ' garbage' : '');
+                                    if (color !== 'garbage') tile.style.color = color;
+                                    const cell = cells[y * COLS + x];
+                                    if(cell) cell.appendChild(tile);
+                                }
+                            });
+                        });
+                    }
+
+                    // Draw Opponent Current Piece
+                    if(opponentData.currentPiece && opponentData.currentPiece.shape) {
+                        const op = opponentData.currentPiece;
+                        
+                        // Ghost for opponent
+                        let ghostY = op.y;
+                        while (isValidMove({ ...op, y: ghostY + 1 }, opponentData.board)) ghostY++;
+                        
+                        op.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                             if(val) {
+                                const x = op.x + dx;
+                                const gy = ghostY + dy;
+                                if(ghostY > op.y) {
+                                    const ghostCellIndex = (ghostY + dy) * COLS + x;
+                                    if(gy >= 0 && ghostCellIndex < cells.length && cells[ghostCellIndex]) {
+                                        const ghost = document.createElement('div');
+                                        ghost.className = 'ghost-tile';
+                                        cells[ghostCellIndex].appendChild(ghost);
+                                    }
+                                }
+                             }
+                        }));
+
+                        // Actual Piece
+                        op.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                            if(val) {
+                                const x = op.x + dx;
+                                const y = op.y + dy;
+                                if(y >= 0) {
+                                    const cellIndex = y * COLS + x;
+                                    if(cellIndex >= 0 && cellIndex < cells.length && cells[cellIndex]) {
+                                        const tile = document.createElement('div');
+                                        tile.className = 'tile';
+                                        tile.style.color = op.color;
+                                        cells[cellIndex].appendChild(tile);
+                                    }
+                                }
+                            }
+                        }));
+                    }
+                }
+                
+                function pushOnlineState() {
+                    if (!roomRef) return;
+                    roomRef.child(myRole).update({
+                        board: player.board,
+                        score: player.score,
+                        nextPiece: player.nextPiece,
+                        heldPiece: player.heldPiece,
+                        currentPiece: player.currentPiece,
+                        isOver: player.isOver
+                    });
                 }
 
                 function drawPreview(container, piece) {
@@ -1525,42 +1683,51 @@ PR .............................. とわ
                         case 'ULTRA': modeInfoTitle.textContent = "ULTRA"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>HIGH</span><span>${bestScores.ultra || 0}</span></div><div class="scorebox"><span>SCORE</span><span>${player.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                         case 'VS_CPU': modeInfoTitle.textContent = "VS CPU"; infoHtml = `<div class="scorebox"><span>CPU SCORE</span><span>${cpu?.score || 0}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                         case 'ULTRA_VS_CPU': modeInfoTitle.textContent = "ULTRA VS CPU"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>CPU SCORE</span><span>${cpu?.score || 0}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
+                        case 'ONLINE_VS': modeInfoTitle.textContent = "ONLINE VS"; infoHtml = `<div class="scorebox"><span>OPP SCORE</span><span>${opponentData.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
+                        case 'ONLINE_ULTRA': modeInfoTitle.textContent = "ONLINE ULTRA"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>OPP SCORE</span><span>${opponentData.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                     }
                     modeInfoContent.innerHTML = infoHtml;
                     
-                    if (gameMode === 'VS_CPU' || gameMode === 'ULTRA_VS_CPU') {
+                    if (gameMode.includes('VS') || gameMode.includes('ONLINE')) {
                         drawPreview(playerNextContainerVS, player.nextPiece);
                     } else {
                         drawPreview(nextContainer, player.nextPiece);
                     }
                     drawPreview(holdContainer, player.heldPiece);
                     
-                    if(cpu) {
+                    if(isOnline) {
+                         drawPreview(cpuNextContainer, opponentData.nextPiece);
+                         drawPreview(cpuHoldContainer, opponentData.heldPiece);
+                    } else if(cpu) {
                         drawPreview(cpuNextContainer, cpu.nextPiece);
                         drawPreview(cpuHoldContainer, cpu.heldPiece);
-                    }
-
-                    if(devHUD.enabled) {
-                      devHUD.progress.mode = gameMode; devHUD.progress.score = player.score; devHUD.progress.level = player.level; devHUD.progress.lines = player.lines; devHUD.progress.isOver = isOver;
-                      devHUD.data.currentPiece = player.currentPiece?.name || 'None'; devHUD.data.nextPiece = player.nextPiece?.name || 'None'; devHUD.data.heldPiece = player.heldPiece?.name || 'None';
                     }
                 }
 
                 function gameOver(loser) {
                     if (isOver) return;
-                    isOver = true;
+                    isOver = true; 
                     if (loser) loser.isOver = true;
+                    if (isOnline) {
+                        pushOnlineState();
+                        if (roomRef) roomRef.off(); // Disconnect listener immediately
+                    }
                     
                     clearAllInputTimers();
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
                     if (gameInterval) clearInterval(gameInterval);
                     if (cpuActionInterval) clearInterval(cpuActionInterval);
+                    if (updateInterval) clearInterval(updateInterval);
 
                     const processResults = () => {
                         const titleEl = gameoverScreen.querySelector('h2');
                         titleEl.style.animation = 'none';
                         void titleEl.offsetWidth;
                         titleEl.style.animation = null; 
+                        
+                        gameoverScore.textContent = `Score: ${player.score}`;
+                        restartButton.classList.remove('hidden');
+                        homeButton.classList.remove('hidden');
 
                         if (gameMode === 'VS_CPU') {
                             titleEl.textContent = loser.isCPU ? "YOU WIN!" : "YOU LOSE...";
@@ -1575,23 +1742,47 @@ PR .............................. とわ
                             } else {
                                 showFeedbackPopup("DRAW!");
                             }
+                        } else if (isOnline) {
+                             restartButton.classList.add('hidden'); // Only home for online
+                             
+                             if (gameMode === 'ONLINE_ULTRA') {
+                                 titleEl.textContent = "GAME OVER!"; 
+                                 if (player.score > opponentData.score) showFeedbackPopup("YOU WIN!");
+                                 else if (player.score < opponentData.score) showFeedbackPopup("YOU LOSE...");
+                                 else showFeedbackPopup("DRAW!");
+                                 gameoverResult.textContent = `You: ${player.score} vs Opp: ${opponentData.score}`;
+                             } else {
+                                 // VS Mode (Survival)
+                                 const iLost = loser === player;
+                                 titleEl.textContent = iLost ? "YOU LOSE..." : "YOU WIN!";
+                                 gameoverResult.textContent = `vs ${opponentData.name}`;
+                             }
                         }
                         else {
                             switch (gameMode) {
-                                case 'TRAINING': titleEl.textContent = "TRAINING COMPLETE"; gameoverResult.textContent = `Score: ${player.score}`; if (player.score > (bestScores.training || 0)) { bestScores.training = player.score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
+                                case 'TRAINING': titleEl.textContent = "TRAINING COMPLETE"; gameoverResult.textContent = ""; if (player.score > (bestScores.training || 0)) { bestScores.training = player.score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
                                 case 'SPRINT': titleEl.textContent = "SPRINT COMPLETE"; gameoverResult.textContent = `Time: ${formatTime(gameTimer)}`; if (player.lines >= 40 && gameTimer < (bestScores.sprint || Infinity)) { bestScores.sprint = gameTimer; saveBestScores(); showFeedbackPopup("New Best Time!"); } break;
-                                case 'ULTRA': titleEl.textContent = "TIME UP!"; gameoverResult.textContent = `Score: ${player.score}`; if (player.score > (bestScores.ultra || 0)) { bestScores.ultra = player.score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
+                                case 'ULTRA': titleEl.textContent = "TIME UP!"; gameoverResult.textContent = ""; if (player.score > (bestScores.ultra || 0)) { bestScores.ultra = player.score; saveBestScores(); showFeedbackPopup("New High Score!"); } break;
                             }
                         }
                         showGameOverScreen();
                     };
-                    playGameOverAnimation(loser).then(processResults);
+                    
+                    // Allow UI to update before blocking
+                    setTimeout(processResults, 100);
+                    playGameOverAnimation(loser);
                 }
 
                 function showStartScreen() {
                     if (countdownInterval) clearInterval(countdownInterval);
                     if (gameInterval) clearInterval(gameInterval);
                     if (cpuActionInterval) clearInterval(cpuActionInterval);
+                    if (updateInterval) clearInterval(updateInterval);
+                    if (roomRef) roomRef.off(); // Detach listeners
+                    isOnline = false;
+                    hasOnlineGameStarted = false;
+                    isCountdownActive = false; 
+
                     appContainer.className = 'app single-player-mode';
                     cpuContainer.classList.add('hidden');
                     playerNextPanelVS.classList.add('hidden');
@@ -1604,13 +1795,12 @@ PR .............................. とわ
                     startScreen.classList.remove('hidden');
                     gameoverScreen.classList.add('hidden');
                     pauseScreen.classList.add('hidden');
+                    onlineSetupScreen.classList.add('hidden');
                     appContainer.classList.add('game-inactive-blur');
                     isOver = true; isPaused = true;
                     createEmptyBoard(boardEl); if(cpuBoardEl) createEmptyBoard(cpuBoardEl);
                     setupUI();
                     pauseButton.textContent = "停止";
-                    vsCpuSelect.classList.remove('open');
-                    ultraVsCpuSelect.classList.remove('open');
                 }
 
                 function showGameOverScreen() { gameOverlay.classList.remove('hidden'); startScreen.classList.add('hidden'); gameoverScreen.classList.remove('hidden'); pauseScreen.classList.add('hidden'); appContainer.classList.add('game-inactive-blur'); }
@@ -1717,12 +1907,6 @@ PR .............................. とわ
                 }
 
                 function setupExtraFeatures() {
-                    const cheatCodeModal = document.getElementById('cheatCodeModal'), cheatInput = document.getElementById('cheatInput'), submitCheatBtn = document.getElementById('submitCheatBtn'), closeCheatBtn = document.getElementById('closeCheatBtn');
-                    menuCheatBtn.addEventListener('click', () => { cheatCodeModal?.classList.remove('hidden'); menuPanel.classList.remove('open'); });
-                    if (closeCheatBtn) closeCheatBtn.addEventListener('click', () => cheatCodeModal.classList.add('hidden'));
-                    if (submitCheatBtn) submitCheatBtn.addEventListener('click', handleCheatCode);
-                    if (cheatInput) cheatInput.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') handleCheatCode(); });
-                    
                     const menuShareBtn = document.getElementById('menu-share-btn'), shareModal = document.getElementById('shareModal'), qrcodeContainer = document.getElementById('qrcode'), urlInput = document.getElementById('urlInput'), copyUrlBtn = document.getElementById('copyUrlBtn'), closeShareBtn = document.getElementById('closeShareBtn'), bgmAudio = document.getElementById('bgmAudio'), translatorInput = document.getElementById('translator-input'), translatorOutput = document.getElementById('translator-output');
                     hamburgerIcon.addEventListener('click', () => menuPanel.classList.toggle('open'));
                     const savedSoundSetting = localStorage.getItem('blockfall_sound');
@@ -1737,160 +1921,20 @@ PR .............................. とわ
                     window.addEventListener('blur', () => { document.title = fakeTitle; if (favicon) favicon.href = fakeFavicon; });
                     window.addEventListener('focus', () => { document.title = originalTitle; if (favicon) favicon.href = originalFavicon; });
                     if (translatorInput) { translatorInput.addEventListener('keyup', () => { if (translatorOutput) translatorOutput.value = translatorInput.value.toLowerCase().split('').map(char => ({ 'a': 'b', 'あ': 'い', 'i': 'j' })[char] || char).join(''); }); }
-                }
-
-                function handleCheatCode() {
-                    const cheatInput = document.getElementById('cheatInput'), cheatCodeModal = document.getElementById('cheatCodeModal');
-                    const code = cheatInput.value.trim().toLowerCase();
-                    if (code === 'towa.soko0406') {
-                        const newScoreStr = prompt('新しいスコアを入力:', player.score);
-                        const newScore = parseInt(newScoreStr, 10);
-                        if (!isNaN(newScore)) { player.score = newScore; updateUI(); } else { alert('無効な数値'); }
-                    } else if (code === 'deletadata' || code === 'reset') {
-                        try { localStorage.removeItem('blockfall_bests'); localStorage.removeItem('blockfall_keymap'); localStorage.removeItem('blockfall_sound'); alert('全モードのハイスコアとキー設定を削除しました'); location.reload(); } catch (e) { alert('削除失敗'); }
-                    } else { alert('コードが違います'); }
-                    if (cheatInput) cheatInput.value = '';
-                    if (cheatCodeModal) cheatCodeModal.classList.add('hidden');
-                }
-
-                function setupDevMode() {
-                    const devPasswordModal = document.getElementById('devPasswordModal'), devPasswordInput = document.getElementById('devPasswordInput'), submitDevPasswordBtn = document.getElementById('submitDevPasswordBtn'), closeDevPasswordBtn = document.getElementById('closeDevPasswordBtn');
-                    document.getElementById('menu-dev-mode-btn').addEventListener('click', () => { devPasswordModal.classList.remove('hidden'); devPasswordInput.focus(); menuPanel.classList.remove('open'); });
-                    closeDevPasswordBtn.addEventListener('click', () => devPasswordModal.classList.add('hidden'));
-                    submitDevPasswordBtn.addEventListener('click', handleDevPassword);
-                    devPasswordInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') handleDevPassword(); });
-                    devHUD.elements.hud.addEventListener('click', (e) => {
-                        if (!devHUD.enabled || e.target.dataset.action !== 'set-score') return;
-                        const newScoreStr = prompt('新しいスコアを入力してください:', player.score);
-                        const newScore = parseInt(newScoreStr, 10);
-                        if (!isNaN(newScore) && newScore >= 0) { player.score = newScore; logToDevConsole(`Score changed to ${player.score}`); updateUI(); }
-                        else { alert('無効な数値です。'); }
+                    
+                    document.getElementById('menu-nickname-btn').addEventListener('click', () => {
+                        const newName = prompt('新しいニックネームを入力:', playerNickname);
+                        if(newName && newName.trim()) {
+                            playerNickname = newName.trim();
+                            localStorage.setItem('blockfall_nickname', playerNickname);
+                            document.getElementById('welcome-msg').textContent = `ようこそ、${playerNickname}さん`;
+                            alert('ニックネームを変更しました');
+                        }
                     });
                 }
-                function handleDevPassword() {
-                    const devPasswordInput = document.getElementById('devPasswordInput'), devPasswordModal = document.getElementById('devPasswordModal');
-                    const password = devPasswordInput.value.trim();
-                    if (password === 'towa.soko0406') {
-                        devHUD.enabled = !devHUD.enabled;
-                        devHUD.debug.flags.devMode = devHUD.enabled;
-                        devHUD.debug.flags.lowAnim = lowAnimationMode;
-                        if (devHUD.enabled) { devHUD.elements.hud.classList.remove('hidden'); devHUD.elements.console.classList.remove('hidden'); alert('開発者モードが有効になりました。'); } 
-                        else { devHUD.elements.hud.classList.add('hidden'); devHUD.elements.console.classList.add('hidden'); alert('開発者モードが無効になりました。'); }
-                    } else if (password === 'reset') {
-                        if (confirm('本当に保存されているデータを全てリセットしますか？')) {
-                            try { localStorage.clear(); alert('データをリセットしました。ページをリロードします。'); location.reload(); } 
-                            catch (e) { alert('データのリセットに失敗しました。'); }
-                        }
-                    } else { alert('パスワードが違います。'); }
-                    devPasswordModal.classList.add('hidden');
-                    devPasswordInput.value = '';
-                }
 
-                function runCpuTurn(cpu) {
-                    if (isOver || cpu.isOver || !cpu.currentPiece || cpu.ai.isThinking) return;
-                    cpu.ai.isThinking = true;
-                    setTimeout(() => {
-                        const bestMoves = findBestMoves(cpu);
-                        if (!bestMoves || bestMoves.length === 0) { cpu.ai.isThinking = false; return; }
-                        let bestMove;
-                        
-                        if (cpuLevel <= 6 && Math.random() < 0.04) {
-                            bestMove = bestMoves[Math.floor(Math.random() * bestMoves.length)];
-                        } else {
-                            bestMove = bestMoves[0];
-                            if (Math.random() < CPU_LEVELS[cpuLevel].mistakeChance && bestMoves.length > 1) {
-                                bestMove = bestMoves[1 + Math.floor(Math.random() * Math.min(2, bestMoves.length - 1))];
-                            }
-                        }
-
-                        cpu.ai.actionQueue = planCpuMoves(cpu, bestMove.move);
-                        cpu.ai.isThinking = false;
-                    }, CPU_LEVELS[cpuLevel].thinkTime + Math.random() * 50);
-                }
-                function planCpuMoves(cpu, bestMove) {
-                    if (!bestMove || !cpu.currentPiece) return [];
-                    const queue = [];
-                    if (bestMove.isHold) { queue.push('hold'); return queue; }
-                    const p = { ...cpu.currentPiece, shape: JSON.parse(JSON.stringify(cpu.currentPiece.shape))};
-                    for(let i = 0; i < bestMove.rotation; i++) { queue.push('rotate'); }
-                    const finalX = bestMove.x;
-                    let startX = p.x;
-                    const moveDiff = finalX - startX;
-                    const moveDir = moveDiff > 0 ? 'moveRight' : 'moveLeft';
-                    for (let i = 0; i < Math.abs(moveDiff); i++) queue.push(moveDir);
-                    queue.push('hardDrop');
-                    return queue;
-                }
-                function executeCpuAction() {
-                    const action = cpu.ai.actionQueue.shift();
-                    if (!action) return;
-                    switch (action) {
-                        case 'rotate': rotate(cpu, 1); break;
-                        case 'moveLeft': move(cpu, -1); break;
-                        case 'moveRight': move(cpu, 1); break;
-                        case 'hardDrop': hardDrop(cpu); break;
-                        case 'hold': hold(cpu); break;
-                    }
-                }
-                function findBestMoves(target) {
-                    let moves = [];
-                    const checkPiece = (piece, isHold) => {
-                        if (!piece) return;
-                        for (let r = 0; r < 4; r++) {
-                            let tempPiece = { ...piece, rotation: 0, shape: JSON.parse(JSON.stringify(TETROMINOS[piece.name].shape)) };
-                            for(let i = 0; i < r; i++) {
-                                tempPiece.shape = tempPiece.shape[0].map((_, c) => tempPiece.shape.map(row => row[c]).reverse());
-                                tempPiece.rotation = (tempPiece.rotation + 1) % 4;
-                            }
-                            
-                            for (let x = -2; x < COLS; x++) {
-                                tempPiece.x = x;
-                                tempPiece.y = 0;
-                                let y = 0;
-                                while (isValidMove({ ...tempPiece, y: y + 1 }, target.board)) y++;
-                                tempPiece.y = y;
-                                if (!isValidMove(tempPiece, target.board)) continue;
-
-                                let tempBoard = target.board.map(row => [...row]);
-                                tempPiece.shape.forEach((row, dy) => row.forEach((v, dx) => { if (v && tempPiece.y + dy >= 0) tempBoard[tempPiece.y + dy][tempPiece.x + dx] = '1'; }));
-                                moves.push({ move: { rotation: r, x: tempPiece.x, isHold }, score: evaluateBoard(tempBoard, CPU_LEVELS[cpuLevel].weights) });
-                            }
-                        }
-                    };
-                    checkPiece(target.currentPiece, false);
-                    if (target.canHold) {
-                        const pieceToConsider = target.heldPiece || target.nextPiece;
-                        checkPiece(pieceToConsider, true);
-                    }
-                    return moves.sort((a, b) => b.score - a.score);
-                }
-                function evaluateBoard(board, weights) {
-                    const {AGG_H, COMP_L, HOLES, BUMP, WELLS} = weights;
-                    const heights = Array(COLS).fill(0);
-                    let aggHeight = 0, holes = 0;
-                    for (let c = 0; c < COLS; c++) {
-                        let blockFound = false;
-                        for (let r = 0; r < ROWS; r++) {
-                            if (board[r][c]) {
-                                if (!blockFound) { heights[c] = ROWS - r; blockFound = true; }
-                            } else if (blockFound) holes++;
-                        }
-                        aggHeight += heights[c];
-                    }
-                    let completedLines = 0;
-                    for (let r = 0; r < ROWS; r++) if (board[r].every(cell => cell)) completedLines++;
-                    let bumpiness = 0, wells = 0;
-                    for (let c = 0; c < COLS; c++) {
-                        if (c > 0) bumpiness += Math.abs(heights[c] - heights[c - 1]);
-                        const left = heights[c - 1] || ROWS, right = heights[c + 1] || ROWS;
-                        if (left > heights[c] && right > heights[c]) wells += Math.min(left - heights[c], right - heights[c]);
-                    }
-                    return AGG_H * aggHeight + COMP_L * (completedLines ** 2) + HOLES * holes + BUMP * bumpiness + WELLS * wells;
-                }
-                
                 init();
             }
         </script>
     </body>
 </html>
-
