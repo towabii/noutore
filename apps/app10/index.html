@@ -452,7 +452,7 @@
             </div>
             <div id="menu-panel">
                 <div class="menu-item" id="menu-restart-btn">
-                    <span>やり直す</span>
+                    <span>モード選択</span>
                 </div>
                 <div class="menu-item" id="menu-nickname-btn">
                     <span>ニックネーム変更</span>
@@ -499,7 +499,7 @@
                         </div>
                         <div class="controls-panel">
                             <button class="btn" id="pauseButton">停止</button>
-                            <button class="btn ghost" id="forceRestartBtn">やり直す</button>
+                            <button class="btn ghost" id="forceRestartBtn">モード選択</button>
                         </div>
                     </div>
                     <div class="panel-card hidden" id="modeInfoPanel">
@@ -524,8 +524,8 @@
                                     <button class="btn" data-mode="TRAINING">トレーニング</button>
                                     <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
                                     <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
-                                    <button class="btn" data-mode="ONLINE_VS">ONLINE VS</button>
-                                    <button class="btn" data-mode="ONLINE_ULTRA">ONLINE ULTRA</button>
+                                    <button class="btn" data-mode="ONLINE_VS">オンライン対戦</button>
+                                    <button class="btn" data-mode="ONLINE_ULTRA">オンライン3分ウルトラ</button>
                                 </div>
                             </div>
                             <div id="online-setup-screen" class="hidden">
@@ -560,7 +560,7 @@
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" id="resumeButton">ゲームに戻る</button>
-                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
+                                    <button class="btn ghost" id="pauseRestartButton">モード選択</button>
                                 </div>
                             </div>
                         </div>
@@ -774,7 +774,7 @@
                 appContainer.classList.remove('hidden');
                 appContainer.classList.add('fade-in');
                 hamburgerIcon.classList.remove('hidden');
-                document.getElementById('welcome-msg').textContent = `ようこそ、${playerNickname}さん`;
+                document.getElementById('welcome-msg').textContent = `よう②そ、${playerNickname}さん`;
                 initGame();
             }
 
@@ -1009,7 +1009,7 @@
                         roomRef.get().then((snapshot) => {
                             if (snapshot.exists()) {
                                 const data = snapshot.val();
-                                if (data.status !== 'waiting') { onlineStatusMsg.textContent = "この部屋は満員かプレイ中です"; return; }
+                                if (data.status !== 'waiting') { onlineStatusMsg.textContent = "②の部屋は満員かプレイ中です"; return; }
                                 if (data.mode !== gameMode) { onlineStatusMsg.textContent = "ゲームモードが一致しません"; return; }
                                 
                                 roomRef.child('guest').set({ name: playerNickname, status: 'joined', board: null });
@@ -1938,7 +1938,7 @@
                         if(newName && newName.trim()) {
                             playerNickname = newName.trim();
                             localStorage.setItem('blockfall_nickname', playerNickname);
-                            document.getElementById('welcome-msg').textContent = `ようこそ、${playerNickname}さん`;
+                            document.getElementById('welcome-msg').textContent = `よう②そ、${playerNickname}さん`;
                             alert('ニックネームを変更しました');
                         }
                     });
