@@ -452,7 +452,7 @@
             </div>
             <div id="menu-panel">
                 <div class="menu-item" id="menu-restart-btn">
-                    <span>モード選択</span>
+                    <span>やり直す</span>
                 </div>
                 <div class="menu-item" id="menu-nickname-btn">
                     <span>ニックネーム変更</span>
@@ -560,7 +560,7 @@
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" id="resumeButton">ゲームに戻る</button>
-                                    <button class="btn ghost" id="pauseRestartButton">モード選択</button>
+                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
                                 </div>
                             </div>
                         </div>
@@ -707,7 +707,10 @@
             let lowAnimationMode = false;
             let playerNickname = "Player";
             
-            // RNG for online sync
+            // WebRTC vars
+            const rtcConfig = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+            let pc = null;
+            let dc = null;
             let onlineSeed = 1;
             function seededRandom() {
                 const x = Math.sin(onlineSeed++) * 10000;
@@ -774,7 +777,7 @@
                 appContainer.classList.remove('hidden');
                 appContainer.classList.add('fade-in');
                 hamburgerIcon.classList.remove('hidden');
-                document.getElementById('welcome-msg').textContent = `よう②そ、${playerNickname}さん`;
+                document.getElementById('welcome-msg').textContent = `ようこそ、${playerNickname}さん`;
                 initGame();
             }
 
@@ -840,7 +843,7 @@
                 let roomRef = null;
                 let opponentData = { board: [], score: 0, nextPiece: null, heldPiece: null, currentPiece: null, isOver: false, name: "Opponent" };
                 let isCountdownActive = false;
-                let hasOnlineGameStarted = false; // Flag to prevent double start/countdown
+                let hasOnlineGameStarted = false; 
 
                 const defaultKeyMap = { moveLeft: 'ArrowLeft', moveRight: 'ArrowRight', softDrop: 'ArrowDown', hardDrop: 'ArrowUp', rotateLeft: 'z', rotateRight: 'x', hold: 'c' };
                 const actionLabels = { moveLeft: '左移動', moveRight: '右移動', softDrop: 'ソフトドロップ', hardDrop: 'ハードドロップ', rotateLeft: '左回転', rotateRight: '右回転', hold: 'ホールド' };
@@ -914,7 +917,6 @@
                         return;
                     }
 
-                    // Setup Single Player
                     appContainer.className = 'app single-player-mode';
                     cpuContainer.classList.add('hidden');
                     playerNextPanelVS.classList.add('hidden');
@@ -982,7 +984,86 @@
                         });
                 }
 
-                // Online Logic
+                // Online Logic with WebRTC
+                async function setupWebRTC(isHost) {
+                    pc = new RTCPeerConnection(rtcConfig);
+
+                    pc.onicecandidate = event => {
+                        if (event.candidate) {
+                            const path = isHost ? 'hostCandidates' : 'guestCandidates';
+                            db.ref(`rooms/${onlineRoomId}/${path}`).push(event.candidate.toJSON());
+                        }
+                    };
+
+                    if (isHost) {
+                        dc = pc.createDataChannel("game");
+                        setupDataChannel(dc);
+                        const offer = await pc.createOffer();
+                        await pc.setLocalDescription(offer);
+                        await db.ref(`rooms/${onlineRoomId}/offer`).set({ type: offer.type, sdp: offer.sdp });
+                    } else {
+                        pc.ondatachannel = event => setupDataChannel(event.channel);
+                    }
+
+                    if (isHost) {
+                        db.ref(`rooms/${onlineRoomId}/answer`).on('value', async snap => {
+                            const data = snap.val();
+                            if (!data || pc.currentRemoteDescription) return;
+                            await pc.setRemoteDescription(new RTCSessionDescription(data));
+                        });
+                    } else {
+                        db.ref(`rooms/${onlineRoomId}/offer`).on('value', async snap => {
+                            const data = snap.val();
+                            if (!data || pc.currentRemoteDescription) return;
+                            await pc.setRemoteDescription(new RTCSessionDescription(data));
+                            const answer = await pc.createAnswer();
+                            await pc.setLocalDescription(answer);
+                            await db.ref(`rooms/${onlineRoomId}/answer`).set({ type: answer.type, sdp: answer.sdp });
+                        });
+                    }
+
+                    const remotePath = isHost ? 'guestCandidates' : 'hostCandidates';
+                    db.ref(`rooms/${onlineRoomId}/${remotePath}`).on('child_added', snap => {
+                        const candidate = new RTCIceCandidate(snap.val());
+                        pc.addIceCandidate(candidate);
+                    });
+                }
+
+                function setupDataChannel(channel) {
+                    dc = channel;
+                    dc.onopen = () => {
+                        if (myRole === 'host') {
+                            db.ref(`rooms/${onlineRoomId}`).update({ status: 'playing' });
+                        }
+                    };
+                    dc.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'STATE') {
+                            opponentData.board = normalizeBoard(data.payload.board);
+                            opponentData.score = data.payload.score;
+                            opponentData.currentPiece = data.payload.currentPiece;
+                            opponentData.nextPiece = data.payload.nextPiece;
+                            opponentData.heldPiece = data.payload.heldPiece;
+                            opponentData.name = data.payload.name;
+                            opponentNameEl.textContent = data.payload.name; // Keep name sync fresh
+                        } else if (data.type === 'GARBAGE') {
+                            if (player) {
+                                player.pendingGarbage += data.amount;
+                            }
+                        } else if (data.type === 'GAMEOVER') {
+                            opponentData.isOver = true;
+                            // Check win conditions immediately
+                            if (gameMode === 'ONLINE_VS') {
+                                // Opponent Died -> I Win
+                                gameOver(cpu);
+                            } else if (gameMode === 'ONLINE_ULTRA') {
+                                // Opponent Ended -> Trigger disconnect and end
+                                gameOver(cpu);
+                            }
+                        }
+                    };
+                }
+
                 function handleOnlineSetup(action) {
                     const roomId = roomIdInput.value.trim().toUpperCase();
                     if (!roomId) { onlineStatusMsg.textContent = "Room IDを入力してください"; return; }
@@ -994,14 +1075,13 @@
                         onlineStatusMsg.textContent = "部屋を作成中...";
                         const initialSeed = Math.floor(Math.random() * 100000);
                         roomRef.set({
-                            host: { name: playerNickname, status: 'waiting', board: null },
-                            guest: { name: "", status: 'empty', board: null },
                             status: 'waiting',
                             seed: initialSeed,
                             mode: gameMode
                         }).then(() => {
                             onlineStatusMsg.textContent = "対戦相手を待っています...";
-                            listenToRoom();
+                            setupWebRTC(true);
+                            listenToRoomStatus();
                         });
                     } else {
                         myRole = 'guest';
@@ -1009,12 +1089,12 @@
                         roomRef.get().then((snapshot) => {
                             if (snapshot.exists()) {
                                 const data = snapshot.val();
-                                if (data.status !== 'waiting') { onlineStatusMsg.textContent = "②の部屋は満員かプレイ中です"; return; }
+                                if (data.status !== 'waiting') { onlineStatusMsg.textContent = "この部屋は満員かプレイ中です"; return; }
                                 if (data.mode !== gameMode) { onlineStatusMsg.textContent = "ゲームモードが一致しません"; return; }
                                 
-                                roomRef.child('guest').set({ name: playerNickname, status: 'joined', board: null });
-                                onlineStatusMsg.textContent = "参加しました。ホストの開始を待っています...";
-                                listenToRoom();
+                                onlineStatusMsg.textContent = "参加しました。接続中...";
+                                setupWebRTC(false);
+                                listenToRoomStatus();
                             } else {
                                 onlineStatusMsg.textContent = "部屋が見つかりません";
                             }
@@ -1025,7 +1105,6 @@
                 // Helper to fix Firebase sparse arrays
                 function normalizeBoard(remoteBoard) {
                     if (!remoteBoard) return Array(ROWS).fill(0).map(() => Array(COLS).fill(null));
-                    
                     if (Array.isArray(remoteBoard)) {
                         return remoteBoard.map(row => {
                             if (!row) return Array(COLS).fill(null);
@@ -1035,7 +1114,6 @@
                             return newRow;
                         });
                     }
-                    
                     const newBoard = Array(ROWS).fill(0).map(() => Array(COLS).fill(null));
                     Object.keys(remoteBoard).forEach(y => {
                         const row = remoteBoard[y];
@@ -1050,73 +1128,33 @@
                     return newBoard;
                 }
 
-                function listenToRoom() {
-                    roomRef.on('value', (snapshot) => {
-                        const data = snapshot.val();
-                        if (!data) return;
-
-                        onlineSeed = data.seed;
-
-                        const opponentRole = myRole === 'host' ? 'guest' : 'host';
-                        const oppData = data[opponentRole];
-
-                        if (oppData) {
-                            opponentData.name = oppData.name || "Opponent";
-                            opponentData.board = normalizeBoard(oppData.board); 
-                            opponentData.score = oppData.score || 0;
-                            opponentData.nextPiece = oppData.nextPiece;
-                            opponentData.heldPiece = oppData.heldPiece;
-                            opponentData.currentPiece = oppData.currentPiece;
-                            opponentData.isOver = oppData.isOver || false;
+                function listenToRoomStatus() {
+                    roomRef.child('status').on('value', (snap) => {
+                        const status = snap.val();
+                        if (status === 'playing' && !hasOnlineGameStarted && !isCountdownActive) {
                             
-                            // Check for incoming garbage
-                            const myData = data[myRole];
-                            if(myData && myData.garbageQueue > 0) {
-                                if(player) {
-                                    player.pendingGarbage += myData.garbageQueue;
-                                    roomRef.child(myRole).update({ garbageQueue: 0 });
-                                }
-                            }
-
-                            // Opponent Game Over Sync logic
-                            if (data.status === 'playing' && opponentData.isOver && !player.isOver && !isOver) {
-                                if (gameMode === 'ONLINE_VS') {
-                                    // In VS (Survival), if opponent dies, I win immediately
-                                    gameOver(cpu); 
-                                } else if (gameMode === 'ONLINE_ULTRA') {
-                                    // In Ultra, if opponent dies, game ends (disconnection logic triggers)
-                                    gameOver(cpu);
-                                }
-                            }
-                        }
-
-                        if (data.status === 'playing' && isOver && !isCountdownActive && !hasOnlineGameStarted) {
-                            // Start Game Trigger
-                            onlineSetupScreen.classList.add('hidden');
-                            appContainer.className = 'app vs-cpu-mode';
-                            cpuContainer.classList.remove('hidden');
-                            playerNextPanelVS.classList.remove('hidden');
-                            cpuInfoPanel.classList.remove('hidden');
-                            spNextPanel.classList.add('hidden');
-                            document.querySelector('.side-panel.right').classList.add('hidden');
-                            cpuLevelBox.textContent = "P2P";
-                            opponentNameEl.textContent = opponentData.name;
-                            appContainer.classList.remove('game-inactive-blur');
-                            
-                            startCountdown(); 
+                            // Fetch names first
+                            const opponentRole = myRole === 'host' ? 'guest' : 'host';
+                            roomRef.child(opponentRole + '/name').once('value').then(nameSnap => {
+                                opponentData.name = nameSnap.val() || "Opponent";
+                                opponentNameEl.textContent = opponentData.name;
+                                
+                                roomRef.child('seed').once('value').then(s => {
+                                    onlineSeed = s.val();
+                                    onlineSetupScreen.classList.add('hidden');
+                                    appContainer.className = 'app vs-cpu-mode';
+                                    cpuContainer.classList.remove('hidden');
+                                    playerNextPanelVS.classList.remove('hidden');
+                                    cpuInfoPanel.classList.remove('hidden');
+                                    spNextPanel.classList.add('hidden');
+                                    document.querySelector('.side-panel.right').classList.add('hidden');
+                                    cpuLevelBox.textContent = "P2P";
+                                    appContainer.classList.remove('game-inactive-blur');
+                                    startCountdown();
+                                });
+                            });
                         }
                     });
-
-                    // If host, check if guest joined to start
-                    if (myRole === 'host') {
-                        roomRef.child('guest/status').on('value', (snap) => {
-                            if (snap.val() === 'joined') {
-                                setTimeout(() => {
-                                    roomRef.update({ status: 'playing' });
-                                }, 1000);
-                            }
-                        });
-                    }
                 }
 
                 function startActualGame() {
@@ -1153,7 +1191,6 @@
                                 gameTimer = 0;
                                 let loser = player;
                                 if (isOnline) {
-                                    // Time up in Ultra - compare scores
                                     loser = player.score > opponentData.score ? cpu : player;
                                 } 
                                 gameOver(loser);
@@ -1162,9 +1199,8 @@
                         updateUI();
                     }, 1000);
 
-                    // Separate physics loop for tab background stability
                     lastTime = performance.now();
-                    updateInterval = setInterval(gameLogicLoop, 33); // ~30fps logic
+                    updateInterval = setInterval(gameLogicLoop, 33); 
 
                     updateUI();
                     if (animationFrameId) cancelAnimationFrame(animationFrameId);
@@ -1412,7 +1448,7 @@
                     // Garbage Handling separated by Mode
                     if (gameMode === 'ONLINE_ULTRA') {
                         // NO GARBAGE IN ONLINE ULTRA
-                    } else if (gameMode.includes('VS') || gameMode.includes('ONLINE')) {
+                    } else if (gameMode === 'ONLINE_VS') {
                         let netAttack = sentAttack - target.pendingGarbage;
                         
                         if (netAttack < 0) {
@@ -1423,9 +1459,8 @@
                         } else {
                             target.pendingGarbage = 0;
                             if (netAttack > 0) {
-                                if (isOnline && !target.isCPU) {
-                                    const opponentRole = myRole === 'host' ? 'guest' : 'host';
-                                    roomRef.child(opponentRole + '/garbageQueue').transaction((current) => (current || 0) + netAttack);
+                                if (isOnline && !target.isCPU && dc && dc.readyState === 'open') {
+                                    dc.send(JSON.stringify({ type: 'GARBAGE', amount: netAttack }));
                                 }
                             }
                         }
@@ -1656,15 +1691,23 @@
                 }
                 
                 function pushOnlineState() {
-                    if (!roomRef) return;
-                    roomRef.child(myRole).update({
-                        board: player.board,
-                        score: player.score,
-                        nextPiece: player.nextPiece,
-                        heldPiece: player.heldPiece,
-                        currentPiece: player.currentPiece,
-                        isOver: player.isOver
-                    });
+                    if (dc && dc.readyState === 'open') {
+                        dc.send(JSON.stringify({
+                            type: 'STATE',
+                            payload: {
+                                board: player.board,
+                                score: player.score,
+                                nextPiece: player.nextPiece,
+                                heldPiece: player.heldPiece,
+                                currentPiece: player.currentPiece,
+                                isOver: player.isOver,
+                                name: playerNickname
+                            }
+                        }));
+                        if(player.isOver) {
+                             dc.send(JSON.stringify({ type: 'GAMEOVER' }));
+                        }
+                    }
                 }
 
                 function drawPreview(container, piece) {
@@ -1735,6 +1778,8 @@
                         pushOnlineState();
                         // Disconnect immediately to prevent re-sync or countdowns
                         if (roomRef) roomRef.off(); 
+                        if (pc) pc.close();
+                        if (dc) dc.close();
                     }
                     
                     clearAllInputTimers();
@@ -1790,6 +1835,7 @@
                     if (cpuActionInterval) clearInterval(cpuActionInterval);
                     if (updateInterval) clearInterval(updateInterval);
                     if (roomRef) roomRef.off(); // Detach listeners
+                    if (pc) { pc.close(); pc = null; }
                     isOnline = false;
                     hasOnlineGameStarted = false;
                     isCountdownActive = false; 
@@ -1938,7 +1984,7 @@
                         if(newName && newName.trim()) {
                             playerNickname = newName.trim();
                             localStorage.setItem('blockfall_nickname', playerNickname);
-                            document.getElementById('welcome-msg').textContent = `よう②そ、${playerNickname}さん`;
+                            document.getElementById('welcome-msg').textContent = `ようこそ、${playerNickname}さん`;
                             alert('ニックネームを変更しました');
                         }
                     });
