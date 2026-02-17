@@ -452,7 +452,7 @@
             </div>
             <div id="menu-panel">
                 <div class="menu-item" id="menu-restart-btn">
-                    <span>モード選択</span>
+                    <span>やり直す</span>
                 </div>
                 <div class="menu-item" id="menu-nickname-btn">
                     <span>ニックネーム変更</span>
@@ -499,7 +499,7 @@
                         </div>
                         <div class="controls-panel">
                             <button class="btn" id="pauseButton">停止</button>
-                            <button class="btn ghost" id="forceRestartBtn">モード選択</button>
+                            <button class="btn ghost" id="forceRestartBtn">やり直す</button>
                         </div>
                     </div>
                     <div class="panel-card hidden" id="modeInfoPanel">
@@ -524,8 +524,8 @@
                                     <button class="btn" data-mode="TRAINING">トレーニング</button>
                                     <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
                                     <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
-                                    <button class="btn" data-mode="ONLINE_VS">オンライン通常対戦</button>
-                                    <button class="btn" data-mode="ONLINE_ULTRA">オンライン3分ウルトラ</button>
+                                    <button class="btn" data-mode="ONLINE_VS">ONLINE VS</button>
+                                    <button class="btn" data-mode="ONLINE_ULTRA">ONLINE ULTRA</button>
                                 </div>
                             </div>
                             <div id="online-setup-screen" class="hidden">
@@ -538,6 +538,7 @@
                                 <div class="overlay-footer">
                                     <button class="btn" id="createRoomBtn">部屋を作成 (Host)</button>
                                     <button class="btn" id="joinRoomBtn">部屋に参加 (Guest)</button>
+                                    <button class="btn" id="freeMatchBtn" style="background: linear-gradient(145deg, #FFD166, #e5b000); color: #000;">ランダムマッチ (Free)</button>
                                     <button class="btn ghost" id="cancelOnlineBtn">戻る</button>
                                 </div>
                             </div>
@@ -559,7 +560,7 @@
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" id="resumeButton">ゲームに戻る</button>
-                                    <button class="btn ghost" id="pauseRestartButton">モード選択</button>
+                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
                                 </div>
                             </div>
                         </div>
@@ -823,7 +824,7 @@
                 const pauseRestartButton = document.getElementById('pauseRestartButton');
 
                 // Online Elements
-                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg');
+                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg'), freeMatchBtn = document.getElementById('freeMatchBtn');
 
                 let player = {};
                 let cpu = null;
@@ -891,6 +892,7 @@
                     // Online Handlers
                     createRoomBtn.addEventListener('click', () => handleOnlineSetup('create'));
                     joinRoomBtn.addEventListener('click', () => handleOnlineSetup('join'));
+                    freeMatchBtn.addEventListener('click', handleFreeMatch);
                     cancelOnlineBtn.addEventListener('click', () => { onlineSetupScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
 
                     setupKeyHandlers();
@@ -912,18 +914,13 @@
                         return;
                     }
 
-                    // CPU modes removed from UI but logic kept just in case
-                    if (gameMode === 'VS_CPU') {
-                        appContainer.className = 'app vs-cpu-mode';
-                        // ... setup for CPU if ever restored
-                    } else {
-                        appContainer.className = 'app single-player-mode';
-                        cpuContainer.classList.add('hidden');
-                        playerNextPanelVS.classList.add('hidden');
-                        cpuInfoPanel.classList.add('hidden');
-                        spNextPanel.classList.remove('hidden');
-                        document.querySelector('.side-panel.right').classList.remove('hidden');
-                    }
+                    // Setup Single Player
+                    appContainer.className = 'app single-player-mode';
+                    cpuContainer.classList.add('hidden');
+                    playerNextPanelVS.classList.add('hidden');
+                    cpuInfoPanel.classList.add('hidden');
+                    spNextPanel.classList.remove('hidden');
+                    document.querySelector('.side-panel.right').classList.remove('hidden');
 
                     startScreen.classList.add('hidden');
                     gameoverScreen.classList.add('hidden');
@@ -953,6 +950,36 @@
                             startActualGame(); 
                         }
                     }, 1000);
+                }
+
+                function handleFreeMatch() {
+                    onlineStatusMsg.textContent = "対戦相手を探しています...";
+                    db.ref('rooms').orderByChild('status').equalTo('waiting').limitToFirst(20).once('value')
+                        .then((snapshot) => {
+                            let foundRoomId = null;
+                            if (snapshot.exists()) {
+                                snapshot.forEach((childSnapshot) => {
+                                    const room = childSnapshot.val();
+                                    if (room.mode === gameMode && room.guest && room.guest.status === 'empty') {
+                                        foundRoomId = childSnapshot.key;
+                                        return true; 
+                                    }
+                                });
+                            }
+
+                            if (foundRoomId) {
+                                roomIdInput.value = foundRoomId; 
+                                handleOnlineSetup('join');
+                            } else {
+                                const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                                roomIdInput.value = randomId;
+                                handleOnlineSetup('create');
+                            }
+                        })
+                        .catch((err) => {
+                            onlineStatusMsg.textContent = "エラーが発生しました";
+                            console.error(err);
+                        });
                 }
 
                 // Online Logic
@@ -1057,14 +1084,13 @@
                                     // In VS (Survival), if opponent dies, I win immediately
                                     gameOver(cpu); 
                                 } else if (gameMode === 'ONLINE_ULTRA') {
-                                    // In Ultra, if opponent dies, game ends (as per request)
+                                    // In Ultra, if opponent dies, game ends (disconnection logic triggers)
                                     gameOver(cpu);
                                 }
                             }
                         }
 
-                        // Trigger start ONLY if it hasn't started locally yet
-                        if (data.status === 'playing' && !hasOnlineGameStarted && !isCountdownActive) {
+                        if (data.status === 'playing' && isOver && !isCountdownActive && !hasOnlineGameStarted) {
                             // Start Game Trigger
                             onlineSetupScreen.classList.add('hidden');
                             appContainer.className = 'app vs-cpu-mode';
@@ -1108,7 +1134,6 @@
                          cpu = createPlayerState(true);
                          pushOnlineState(); 
                     } else {
-                        // CPU setup (now only theoretically used as mode buttons are gone)
                         cpu = null;
                     }
                     
@@ -1681,8 +1706,6 @@
                         case 'TRAINING': highScoreEl.textContent = bestScores.training || 0; modeInfoPanel.classList.add('hidden'); break;
                         case 'SPRINT': modeInfoTitle.textContent = "SPRINT"; infoHtml = `<div class="scorebox"><span>TIME</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>BEST</span><span>${bestScores.sprint === Infinity ? 'N/A' : formatTime(bestScores.sprint)}</span></div><div class="scorebox"><span>LINES LEFT</span><span>${Math.max(0, 40 - player.lines)}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                         case 'ULTRA': modeInfoTitle.textContent = "ULTRA"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>HIGH</span><span>${bestScores.ultra || 0}</span></div><div class="scorebox"><span>SCORE</span><span>${player.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
-                        case 'VS_CPU': modeInfoTitle.textContent = "VS CPU"; infoHtml = `<div class="scorebox"><span>CPU SCORE</span><span>${cpu?.score || 0}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
-                        case 'ULTRA_VS_CPU': modeInfoTitle.textContent = "ULTRA VS CPU"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>CPU SCORE</span><span>${cpu?.score || 0}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                         case 'ONLINE_VS': modeInfoTitle.textContent = "ONLINE VS"; infoHtml = `<div class="scorebox"><span>OPP SCORE</span><span>${opponentData.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                         case 'ONLINE_ULTRA': modeInfoTitle.textContent = "ONLINE ULTRA"; infoHtml = `<div class="scorebox"><span>TIME LEFT</span><span>${formatTime(gameTimer)}</span></div><div class="scorebox"><span>OPP SCORE</span><span>${opponentData.score}</span></div>`; modeInfoPanel.classList.remove('hidden'); break;
                     }
@@ -1710,7 +1733,8 @@
                     if (loser) loser.isOver = true;
                     if (isOnline) {
                         pushOnlineState();
-                        if (roomRef) roomRef.off(); // Disconnect listener immediately
+                        // Disconnect immediately to prevent re-sync or countdowns
+                        if (roomRef) roomRef.off(); 
                     }
                     
                     clearAllInputTimers();
@@ -1729,20 +1753,7 @@
                         restartButton.classList.remove('hidden');
                         homeButton.classList.remove('hidden');
 
-                        if (gameMode === 'VS_CPU') {
-                            titleEl.textContent = loser.isCPU ? "YOU WIN!" : "YOU LOSE...";
-                            gameoverResult.textContent = `CPU LV.${cpuLevel} との対戦結果`;
-                        } else if (gameMode === 'ULTRA_VS_CPU') {
-                            titleEl.textContent = "TIME UP!";
-                            gameoverResult.textContent = `You: ${player.score} vs CPU: ${cpu.score}`;
-                             if (player.score > cpu.score) {
-                                showFeedbackPopup("YOU WIN!");
-                            } else if (player.score < cpu.score) {
-                                showFeedbackPopup("YOU LOSE...");
-                            } else {
-                                showFeedbackPopup("DRAW!");
-                            }
-                        } else if (isOnline) {
+                        if (isOnline) {
                              restartButton.classList.add('hidden'); // Only home for online
                              
                              if (gameMode === 'ONLINE_ULTRA') {
