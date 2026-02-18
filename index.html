@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toway - by TOWA</title>
+    <meta name="description" content="TOWAが制作した楽しいやつやツールを公開するプラットフォーム「Toway」。">
+    <meta name="keywords" content="とわ, TOWA, Toway, トゥウェイ, 楽しいやつ, ツール, 無料, 中学生クリエイター">
+    
+    <link rel="icon" href="icon.png">
+
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebSite",
+            "name": "Toway",
+            "url": "https://towabii.github.io/noutore/",
+            "author": {
+                "@type": "Person",
+                "name": "TOWA",
+                "jobTitle": "Creator"
+            }
+        }
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body data-theme="light">
+
+    <div id="loader">
+        <div class="spinner"></div>
+        <p>Loading Toway...</p>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-left">
+                <div class="nav-brand">
+                    <img src="icon1.jpeg" alt="Logo" class="brand-logo" onerror="this.style.display='none'">
+                    <span class="brand-name">Toway <span class="brand-sub">- by TOWA</span></span>
+                </div>
+                
+                <div class="nav-menu">
+                    <button class="nav-item active" data-target="home">
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        ホーム
+                    </button>
+                    <button class="nav-item" data-target="faq">
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        FAQ
+                    </button>
+                    <button class="nav-item" data-target="author">
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        作者
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-right">
+                <div class="theme-toggle-wrapper">
+                    <input type="checkbox" id="theme-toggle" class="theme-check">
+                    <label for="theme-toggle" class="theme-label">
+                        <svg class="icon-svg moon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+                        <svg class="icon-svg sun" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    </label>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-container">
+        
+        <section id="content-home" class="view-section active">
+            
+            <div class="sub-header">
+                <div class="pill-filters">
+                    <button class="pill-btn active" data-category="fun">
+                        <svg class="icon-svg-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg> 楽しいやつ
+                    </button>
+                    <button class="pill-btn" data-category="study">
+                        <svg class="icon-svg-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg> 学び
+                    </button>
+                    <button class="pill-btn" data-category="other">
+                        <svg class="icon-svg-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg> ツール
+                    </button>
+                </div>
+                <div class="status-indicators">
+                    <button id="show-update-info-btn" class="pill-btn info-btn">
+                        <svg class="icon-svg-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                        更新履歴
+                    </button>
+                    <button id="show-schedule-btn" class="pill-btn info-btn">
+                        <svg class="icon-svg-sm" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        予定表
+                    </button>
+                </div>
+            </div>
+
+            <div id="item-grid" class="poki-grid"></div>
+
+        </section>
+
+        <section id="content-faq" class="view-section">
+            <div class="text-container">
+                <h2>よくある質問</h2>
+                <div class="faq-box">
+                    <details open>
+                        <summary>Q. TOWAYの読み方は何ですか？</summary>
+                        <p>A. 「トゥウェイ」です。</p>
+                    </details>
+                    <details>
+                        <summary>Q. 無料で遊べますか？</summary>
+                        <p>A. はい、Toway内のすべての楽しいやつとツールは完全無料です。</p>
+                    </details>
+                    <details>
+                        <summary>Q. 推奨ブラウザは何ですか？</summary>
+                        <p>A. Google Chrome、Microsoft Edge、Safariの最新版を推奨しています。</p>
+                    </details>
+                    <details>
+                        <summary>Q. 広告が表示されるのはなぜですか？</summary>
+                        <p>A. サーバー代と開発費を賄うために表示させていただいております。</p>
+                    </details>
+                    <details>
+                        <summary>Q. アプリの更新はいつですか？</summary>
+                        <p>A. 基本的に毎日微調整を行っていますが、新作は週末に追加されることが多いです。</p>
+                    </details>
+                    <details>
+                        <summary>Q. 動作が重い場合はどうすればいいですか？</summary>
+                        <p>A. ブラウザのキャッシュをクリアするか、ページをリロードしてみてください。PCでのプレイを推奨します。</p>
+                    </details>
+                    <details>
+                        <summary>Q. セーブデータは保存されますか？</summary>
+                        <p>A. 楽しいやつによって異なりますが、多くの楽しいやつはブラウザのローカルストレージに自動保存されます。</p>
+                    </details>
+                    <details>
+                        <summary>Q. 楽しいやつのリクエストはできますか？</summary>
+                        <p>A. はい！フッターの「ヘルプ・プライバシーセンター」から機能リクエストとしてお送りください。</p>
+                    </details>
+                    <details>
+                        <summary>Q. バグを見つけました。</summary>
+                        <p>A. ページ下部の「ヘルプ・プライバシーセンター」からご報告いただけると助かります。</p>
+                    </details>
+                </div>
+            </div>
+        </section>
+
+        <section id="content-author" class="view-section">
+            <div class="author-profile-box">
+                <img src="kao.png" alt="TOWA" class="author-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNjNDA0MyI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjREREIi8+PC9zdmc+';">
+                <h1>TOWA</h1>
+                <p class="author-title">Student Developer</p>
+                <p class="author-desc">
+                    中学2年生のクリエイター。<br>
+                    「楽しい」を作るために、デザインからプログラミングまで全て一人で行っています。<br>
+                    Towayへようこそ！
+                </p>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="main-footer">
+        <div class="footer-links">
+            <a href="#" id="open-terms-btn">利用規約</a>
+            <a href="#" id="open-privacy-btn">プライバシーポリシー</a>
+            <a href="#" id="open-personal-info-btn">個人情報の取り扱いについて</a>
+            <a href="#" id="open-compatibility-btn">対応機種</a>
+            <button id="footer-help-btn" class="footer-btn">ヘルプ・プライバシーセンター</button>
+        </div>
+        <p class="copyright">&copy; 2026 Toway - by TOWA</p>
+    </footer>
+
+    <div id="cookie-banner" class="cookie-banner hidden">
+        <p>当サイトではユーザー体験向上のためにクッキーを使用します。</p>
+        <div class="cookie-actions">
+            <button id="cookie-accept" class="btn-accept">許可する</button>
+        </div>
+    </div>
+
+    <div id="details-modal" class="modal-overlay">
+        <div class="modal-card">
+            <button class="modal-close-btn" data-close-modal>
+                <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="modal-body split-layout">
+                <div class="modal-media">
+                    <img id="details-modal-img" src="" alt="">
+                </div>
+                <div class="modal-info">
+                    <h2 id="details-modal-title">タイトル</h2>
+                    <p id="details-modal-desc">説明文</p>
+                    
+                    <div class="modal-buttons unified-buttons">
+                        <a id="details-modal-launch-btn" href="#" target="_blank" class="play-btn">
+                            <svg class="icon-svg" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+                            プレイ
+                        </a>
+                        <button id="details-modal-share-btn" class="share-btn">
+                            <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-modal" class="modal-overlay">
+        <div class="modal-card medium scrollable">
+            <div class="modal-header">
+                <h3>ヘルプ・プライバシーセンター</h3>
+                <button class="modal-close-btn" data-close-modal>
+                    <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="modal-body-content">
+                <h4>プライバシーポリシー概要</h4>
+                <p>当サイトではアクセス解析のためにCookieを使用しています。個人情報は適切に管理されます。</p>
+                <hr>
+                <h4>お問い合わせ・フィードバック</h4>
+                <p>バグ報告やご意見はこちらからお送りください。</p>
+                <form id="feedback-form">
+                    <label>お名前</label>
+                    <input type="text" id="fb-name" required placeholder="TOWA">
+                    
+                    <label>種類</label>
+                    <select id="fb-type">
+                        <option value="バグ報告">バグ報告</option>
+                        <option value="感想">感想</option>
+                        <option value="改良案">機能リクエスト</option>
+                        <option value="その他">その他</option>
+                    </select>
+
+                    <label>対象アプリ</label>
+                    <select id="fb-game"></select>
+
+                    <label>内容</label>
+                    <textarea id="fb-content" rows="4" required></textarea>
+
+                    <button type="submit" id="fb-submit-btn" class="submit-btn">送信</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="share-modal" class="modal-overlay">
+        <div class="modal-card small center-text">
+            <button class="modal-close-btn" data-close-modal>
+                <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <h3>共有する</h3>
+            <div id="qrcode" class="qr-box"></div>
+            <input type="text" id="share-url-input" readonly>
+            <button id="copy-url-btn" class="action-btn-block">URLをコピー</button>
+        </div>
+    </div>
+
+    <div id="info-modal" class="modal-overlay">
+        <div class="modal-card medium scrollable">
+            <div class="modal-header">
+                <h3 id="info-modal-title">Title</h3>
+                <button class="modal-close-btn" data-close-modal>
+                    <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="info-modal-content"></div>
+        </div>
+    </div>
+
+    <div id="toast-notification"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
