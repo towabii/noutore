@@ -23,7 +23,6 @@ const items = [
     { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "play.html?game=./apps/app2/index.html", recommend: "人気", category: "fun" },
     { title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "play.html?game=./apps/app8/index.html", recommend: "Beta", category: "fun" },
     { title: "Meta Dash", description: "リズムに合わせてジャンプ！", thumbnail: "./apps/app5/thumbnail.png", url: "play.html?game=./apps/app5/選択.html", recommend: null, category: "fun" },
-    { title: "StudyConnect", description: "初のSNSアプリ", thumbnail: "./apps/スタディーコネクト/thumbnail.png", url: "play.html?game=./apps/スタディーコネクト/紹介.html", recommend: null, category: "fun" },
     { title: "果物集め", description: "大きな果物を作ろう！", thumbnail: "./apps/app3/thumbnail.png", url: "play.html?game=./apps/app3/index.html", recommend: null, category: "fun" },
     { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "play.html?game=./apps/app6/index.html", recommend: null, category: "fun" },
     { title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "play.html?game=./apps/app4/index.html", recommend: null, category: "fun" },
