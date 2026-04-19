@@ -294,11 +294,11 @@
             siteName: "とわの作った楽しいやつ",
             adminName: "とわ",
             reloadSeconds: 60, // 自動更新秒数
-            tickerText: "【重要】現在、アカウント停止不具合が発生しています。user_mgztaadk2965dg7qzlk、user_mgopf47t6q8vyeafsvw9t4l1xwhbne、user_mgzrovsgpoog1d260hhの方は重大な不具合が発生していますので、フィードバックまたは底原 永和に直接申し付けください。復旧まで今しばらくお待ちください。",
+            tickerText: "電波工事中です。",
             news: [
-                "「7番出口」早期アクセスバージョンを解放！",
-                "「ジオメタリートレーニング」早期アクセスバージョンを解放！",
-                "本名の公開を停止。とわが作った楽しいやつに変更"
+                "Friend Stationのバージョン1を公開",
+                "TOWAY",
+                "TOWAY"
             ]
         };
 
@@ -327,11 +327,8 @@
         function getRandom(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
         
         const regions = [
-            { name: "沖縄県", min: 23, max: 26 }, // 指定: 23-26
-            { name: "東京都", min: 6, max: 10 },  // 指定: 6-10
-            { name: "大阪府", min: 10, max: 20 },
-            { name: "福岡県", min: 5, max: 15 },
-            { name: "奈良県", min: 3, max: 8 },
+            { name: "沖縄県", min: 2, max: 2 }, // 指定: 23-26
+            { name: "福岡県", min: 5, max: 6 },
             { name: "長野県", min: 2, max: 9 }
         ];
 
