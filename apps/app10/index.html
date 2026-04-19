@@ -1026,8 +1026,8 @@
                     }
                     friendList.forEach(name => {
                         const status = friendStatuses[name];
-                        const isOnlineFriend = status && status.online;
-                        const label = isOnlineFriend ? (status.status === 'playing' ? 'プレイ中' : status.status === 'waiting' ? '待機中' : 'オンライン') : 'オフライン';
+                        const isOnlineFriend = status && (status.online === undefined ? true : status.online === true || ['lobby', 'waiting', 'playing'].includes(status.status));
+                        const label = status ? (status.status === 'playing' ? 'プレイ中' : status.status === 'waiting' ? '待機中' : 'オンライン') : 'オフライン';
                         const item = document.createElement('div');
                         item.className = 'panel-card';
                         item.style.display = 'flex';
@@ -1069,6 +1069,8 @@
                             delete friendStatuses[name];
                         }
                         renderFriendList();
+                    }, (error) => {
+                        console.error('Friend presence watch failed for', name, error);
                     });
                 }
 
