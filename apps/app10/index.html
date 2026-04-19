@@ -916,8 +916,9 @@
                         addFriendBtn.addEventListener('click', () => {
                             const name = addFriendInput.value.trim();
                             if (!name) return;
-                            addFriend(name);
-                            addFriendInput.value = '';
+                            addFriend(name).then(() => {
+                                addFriendInput.value = '';
+                            });
                         });
                     }
                     if (closeFriendBtn) {
@@ -946,16 +947,43 @@
                     }
                 }
 
-                function addFriend(name, syncDb = true) {
+                async function addFriend(name, syncDb = true) {
                     const trimmed = name.trim();
-                    if (!trimmed || trimmed === playerNickname) return;
-                    if (!friendList.includes(trimmed)) {
-                        friendList.push(trimmed);
-                        saveFriendList();
-                        renderFriendList();
-                        watchFriendPresence(trimmed);
-                        if (syncDb) addFriendToDb(trimmed);
+                    if (!trimmed || trimmed === playerNickname) {
+                        showFeedbackPopup('自分自身はフレンドに追加できません');
+                        return;
                     }
+                    if (friendList.includes(trimmed)) {
+                        showFeedbackPopup('すでに追加されています');
+                        return;
+                    }
+                    if (syncDb) {
+                        const exists = await userExists(trimmed);
+                        if (!exists) {
+                            showFeedbackPopup('そのユーザーは見つかりませんでした');
+                            return;
+                        }
+                    }
+                    friendList.push(trimmed);
+                    saveFriendList();
+                    renderFriendList();
+                    watchFriendPresence(trimmed);
+                    if (syncDb) {
+                        addFriendToDb(trimmed);
+                    }
+                }
+
+                async function userExists(name) {
+                    if (!db || !name) return false;
+                    const key = sanitizeFriendKey(name);
+                    const snap = await db.ref(`users/${key}`).once('value');
+                    return snap.exists();
+                }
+
+                function registerCurrentUser() {
+                    if (!db || !playerNickname) return;
+                    const key = sanitizeFriendKey(playerNickname);
+                    db.ref(`users/${key}`).set({ name: playerNickname, updatedAt: Date.now() });
                 }
 
                 function addFriendToDb(friendName) {
@@ -1086,6 +1114,7 @@
                     const key = sanitizeFriendKey(playerNickname);
                     myPresenceRef = db.ref('presence/' + key);
                     myPresenceRef.onDisconnect().remove();
+                    registerCurrentUser();
                     updateOwnPresence('idle', null, null);
                     friendRequestsRef = db.ref('friendRequests/' + key);
                     friendRequestsRef.on('child_added', (snap) => handleFriendRequest(snap.key, snap.val()));
