@@ -27,7 +27,6 @@ const items = [
     { title: "待ち針のやつ", description: "回転する円に針を刺していくやつ。", thumbnail: "./apps/app6/thumbnail.png", url: "play.html?game=./apps/app6/index.html", recommend: null, category: "fun" },
     { title: "ボール移動", description: "意外と人気！！", thumbnail: "./apps/app4/thumbnail.png", url: "play.html?game=./apps/app4/index.html", recommend: null, category: "fun" },
     { title: "ボールコロコロ", description: "楽しい", thumbnail: "./apps/appボール/thumbnail.jpeg", url: "play.html?game=./apps/appボール/index.html", recommend: null, category: "fun" },
-    { title: "街づくり", description: "大きな町を作ろう", thumbnail: "./apps/appcity/thumbnail.png", url: "play.html?game=./apps/appctyi/index.html", recommend: null, category: "fun" },
     
     // WIP (Work In Progress) - fun
 
