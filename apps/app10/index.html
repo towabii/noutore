@@ -191,7 +191,8 @@
                 box-sizing: border-box;
             }
 
-            #start-screen, #gameover-screen, #pause-screen, #animation-mode-screen, #online-setup-screen {
+            /* UI Screens - Removed animation-mode-screen */
+            #start-screen, #gameover-screen, #pause-screen, #online-setup-screen {
                 display: flex;
                 flex-direction: column;
                 justify-content: center;
@@ -200,7 +201,7 @@
                 width: 100%;
             }
             
-            #start-screen.hidden, #gameover-screen.hidden, #pause-screen.hidden, #animation-mode-screen.hidden, #online-setup-screen.hidden {
+            #start-screen.hidden, #gameover-screen.hidden, #pause-screen.hidden, #online-setup-screen.hidden {
                 display: none;
             }
 
@@ -226,7 +227,7 @@
             @keyframes gameover-text-zoom { to { transform: scale(1); opacity: 1; } }
 
             .overlay-content p { font-size: 20px; margin-top: 8px; margin-bottom: 24px; }
-            #start-screen .overlay-footer, #animation-mode-screen .overlay-footer, #online-setup-screen .overlay-footer { 
+            #start-screen .overlay-footer, #online-setup-screen .overlay-footer { 
                 flex-direction: column; 
                 align-items: center;
             }
@@ -239,31 +240,10 @@
                 margin-top: auto;
             }
 
-            #start-screen .overlay-footer .btn, #animation-mode-screen .overlay-footer .btn, #online-setup-screen .overlay-footer .btn {
+            #start-screen .overlay-footer .btn, #online-setup-screen .overlay-footer .btn {
                 width: 90%;
                 max-width: 280px;
             }
-
-            .cpu-select-container {
-                position: relative;
-                width: 90%;
-                max-width: 280px;
-            }
-
-            .cpu-level-dropdown {
-                max-height: 0;
-                overflow: hidden;
-                transition: max-height 0.3s ease-in-out;
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                background: rgba(0,0,0,0.2);
-                padding: 0 10px;
-                border-radius: 8px;
-            }
-
-            .cpu-level-dropdown.open { max-height: 200px; padding: 10px; }
-            .cpu-level-dropdown .btn { flex: 1 1 50px; min-width: 50px; font-size: 12px; padding: 8px; }
 
             #countdown {
                 font-size: 120px;
@@ -313,11 +293,12 @@
             .controls-panel { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
 
             .btn { padding: 10px 12px; border-radius: 8px; background: linear-gradient(145deg, #4f23a6, #3b1a7d); color: var(--text-primary); border: 1px solid var(--panel-border); cursor: pointer; font-weight: 700; text-transform: uppercase; transition: all 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-            .btn:hover { background: linear-gradient(145deg, #6a34d9, #4f23a6); box-shadow: 0 0 15px var(--accent-color); }
+            .btn:hover:not(:disabled) { background: linear-gradient(145deg, #6a34d9, #4f23a6); box-shadow: 0 0 15px var(--accent-color); }
+            .btn:disabled { opacity: 0.6; cursor: not-allowed; }
             .btn.ghost { background: transparent; border-style: dashed; }
             .note { font-size: 12px; color: var(--text-secondary); line-height: 1.6; }
             
-            /* --- ANIMATION CHANGE START --- */
+            /* --- ANIMATION --- */
             .tile.clearing {
                 animation: block-clear-animation 0.5s ease-out forwards;
             }
@@ -338,7 +319,6 @@
                     filter: brightness(5);
                 }
             }
-            /* --- ANIMATION CHANGE END --- */
             
             @keyframes piece-lock-animation { 0% { transform: translateY(-5%); background: rgba(255, 255, 255, 0.6); opacity: 1; } 50% { transform: translateY(0) scale(1.05, 0.95); background: rgba(255, 255, 255, 0.2); } 100% { transform: translateY(0) scale(1, 1); background: transparent; opacity: 1; } }
             .lock-flash-effect { position: absolute; inset: 0; border-radius: 3px; animation: piece-lock-animation 0.2s ease-out; pointer-events: none; }
@@ -346,7 +326,6 @@
             @keyframes particle-anim { 0% { transform: translate(0, 0) scale(1); opacity: 1; } 100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; } }
             .hidden { display: none !important; }
 
-            /* New Animations */
             @keyframes shake-hard-drop { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-2px); } 40%, 80% { transform: translateX(2px); } }
             .shake-hard-drop { animation: shake-hard-drop 0.15s linear; }
             .board.combo-1 { box-shadow: 0 0 25px #ffab00, inset 0 0 10px #ffab0080; }
@@ -369,13 +348,12 @@
             .menu-item { padding: 15px 10px; border-bottom: 1px solid var(--panel-border); color: #e6eef8; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
             .feedback-popup { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: clamp(32px, 5vw, 48px); font-weight: 900; color: #fff; text-shadow: 0 0 10px #FFD166, 0 0 20px #FF6B6B, 0 0 30px #06D6A0; pointer-events: none; z-index: 100; white-space: nowrap; animation: feedback-popup-animation 1.2s ease-out forwards; }
             @keyframes feedback-popup-animation { 0% { opacity: 1; transform: translate(-50%, -50%) scale(0.8); } 20% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); } }
-            #loadComplete h1 { font-size: 48px; font-weight: 800; color: #fff; letter-spacing: 0.1em; text-shadow: 0 0 10px #4D96FF, 0 0 20px #4D96FF; margin-bottom: 8px; }
+            
             .fade-in { animation: fade-in 1s ease-out forwards; }
             @keyframes fade-in { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-            .fade-out { animation: fade-out 1s ease-in forwards; }
+            .fade-out { animation: fade-out 0.5s ease-in forwards; }
             @keyframes fade-out { from { opacity: 1; } to { opacity: 0; } }
-            .modal-content ul { padding-left: 20px; line-height: 1.7; }
-            .modal-content .sub-header { font-weight: bold; margin-top: 16px; margin-bottom: 4px; color: #a0b0d0; }
+            
             .modal-footer { text-align: right; margin-top: 24px; }
             .password-input, .cheat-input { width: 100%; padding: 10px; border-radius: 6px; background: rgba(0,0,0,0.3); border: 1px solid var(--panel-border); color: #fff; font-size: 16px; margin-top: 8px; box-sizing: border-box; }
             .menu-item:hover { background: rgba(138, 43, 226, 0.2); }
@@ -427,24 +405,10 @@
             <div id="loader">
                 <div id="initial-form">
                     <input type="text" id="nicknameInput" placeholder="ニックネームを入力" maxlength="10">
-                    <button id="skipBtn" class="btn">スタート</button>
-                </div>
-                <div id="loadComplete" class="hidden">
-                    <h1>楽しいね</h1>
+                    <button id="skipBtn" class="btn">決定</button>
                 </div>
             </div>
-            <div id="initial-setup-container">
-                <div id="animation-mode-screen" class="hidden">
-                    <div class="overlay-content">
-                        <h2>アニメーション設定</h2>
-                        <p>体験を選択してください</p>
-                    </div>
-                    <div class="overlay-footer">
-                        <button class="btn" data-animation-mode="normal">通常アニメーション</button>
-                        <button class="btn" data-animation-mode="low">低アニメーションモード</button>
-                    </div>
-                </div>
-            </div>
+            
             <div id="hamburger-icon" class="hidden">
                 <span></span>
                 <span></span>
@@ -522,10 +486,10 @@
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" data-mode="TRAINING">トレーニング</button>
-                                    <button class="btn" data-mode="SPRINT">40ライン スプリント</button>
-                                    <button class="btn" data-mode="ULTRA">3分 ウルトラ</button>
+                                    <button class="btn" data-mode="SPRINT">スプリント (40ライン)</button>
+                                    <button class="btn" data-mode="ULTRA">ウルトラ (3分)</button>
                                     <button class="btn" data-mode="ONLINE_VS">オンライン対戦</button>
-                                    <button class="btn" data-mode="ONLINE_ULTRA">オンライン3分ウルトラ</button>
+                                    <button class="btn" data-mode="ONLINE_ULTRA">オンラインウルトラ (3分)</button>
                                 </div>
                             </div>
                             <div id="online-setup-screen" class="hidden">
@@ -536,10 +500,11 @@
                                     <p id="online-status-msg" style="font-size: 14px; color: #a7b3d9; min-height: 20px;"></p>
                                 </div>
                                 <div class="overlay-footer">
-                                    <button class="btn" id="createRoomBtn">部屋を作成 (Host)</button>
-                                    <button class="btn" id="joinRoomBtn">部屋に参加 (Guest)</button>
-                                    <button class="btn" id="freeMatchBtn" style="background: linear-gradient(145deg, #FFD166, #e5b000); color: #000;">ランダムマッチ (Free)</button>
-                                    <button class="btn ghost" id="cancelOnlineBtn">戻る</button>
+                                    <button class="btn" id="createRoomBtn">部屋を作成 (ホスト)</button>
+                                    <button class="btn" id="joinRoomBtn">部屋に参加 (ゲスト)</button>
+                                    <button class="btn" id="friendMatchBtn">フレンド</button>
+                                    <button class="btn" id="freeMatchBtn" style="background: linear-gradient(145deg, #FFD166, #e5b000); color: #000;">ランダムマッチ (フリー)</button>
+                                    <button class="btn ghost" id="cancelOnlineBtn">ホームへ戻る</button>
                                 </div>
                             </div>
                             <div id="gameover-screen" class="hidden">
@@ -549,8 +514,8 @@
                                     <p id="gameover-result"></p>
                                 </div>
                                 <div class="overlay-footer" id="gameover-buttons">
-                                    <button class="btn" id="restartButton">もう一度プレイ</button>
-                                    <button class="btn ghost" id="homeButton">ホームに戻る</button>
+                                    <button class="btn" id="restartButton">再プレイ</button>
+                                    <button class="btn ghost" id="homeButton">ホームへ戻る</button>
                                 </div>
                             </div>
                             <div id="pause-screen" class="hidden">
@@ -560,7 +525,7 @@
                                 </div>
                                 <div class="overlay-footer">
                                     <button class="btn" id="resumeButton">ゲームに戻る</button>
-                                    <button class="btn ghost" id="pauseRestartButton">やり直す</button>
+                                    <button class="btn ghost" id="pauseRestartButton">初めからやり直す</button>
                                 </div>
                             </div>
                         </div>
@@ -623,19 +588,7 @@
                     </div>
                 </aside>
             </div>
-            <div id="noticeModal" class="modal-overlay hidden">
-                <div class="modal-content">
-                    <h2>アップデート情報</h2>
-                    <div class="sub-header">今回の修正・追加</div>
-                    <ul>
-                        <li>オンライン対戦機能を追加しました。</li>
-                        <li>ニックネーム機能を追加しました。</li>
-                    </ul>
-                    <div class="modal-footer">
-                        <button class="btn" id="closeNoticeBtn">閉じる</button>
-                    </div>
-                </div>
-            </div>
+            
             <div id="keyConfigModal" class="modal-overlay hidden">
                 <div class="modal-content">
                     <h2>キー設定</h2>
@@ -657,6 +610,40 @@
                     </div>
                     <div class="modal-footer">
                         <button class="btn" id="closeShareBtn">閉じる</button>
+                    </div>
+                </div>
+            </div>
+            <div id="friendModal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <h2>フレンド</h2>
+                    <p class="note">このブラウザにフレンド情報を保存します。</p>
+                    <div class="friend-input-row" style="display:flex; gap:8px; margin:12px 0;">
+                        <input type="text" id="addFriendInput" class="password-input" placeholder="フレンドの名前" style="flex:1; font-size:16px;" />
+                        <button class="btn" id="addFriendBtn">追加</button>
+                    </div>
+                    <div id="friend-list" class="friend-list" style="max-height:260px; overflow:auto; display:grid; gap:10px;"></div>
+                    <div class="modal-footer">
+                        <button class="btn ghost" id="closeFriendBtn">閉じる</button>
+                    </div>
+                </div>
+            </div>
+            <div id="friendRequestModal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <h2>プレイ申請</h2>
+                    <p id="friendRequestText"></p>
+                    <div class="modal-footer">
+                        <button class="btn" id="acceptFriendRequestBtn">承諾</button>
+                        <button class="btn ghost" id="declineFriendRequestBtn">断る</button>
+                    </div>
+                </div>
+            </div>
+            <div id="rematchModal" class="modal-overlay hidden">
+                <div class="modal-content">
+                    <h2>再プレイ申請</h2>
+                    <p>相手が再プレイを申請しました。承諾しますか？</p>
+                    <div class="modal-footer">
+                        <button class="btn" id="acceptRematchBtn">承諾</button>
+                        <button class="btn ghost" id="declineRematchBtn">あとで</button>
                     </div>
                 </div>
             </div>
@@ -704,7 +691,6 @@
             firebase.initializeApp(firebaseConfig);
             const db = firebase.database();
 
-            let lowAnimationMode = false;
             let playerNickname = "Player";
             
             // WebRTC vars
@@ -720,17 +706,19 @@
             window.addEventListener('DOMContentLoaded', () => {
                 const loader = document.getElementById('loader');
                 const skipBtn = document.getElementById('skipBtn');
-                const animationScreen = document.getElementById('animation-mode-screen');
-                const initialSetupContainer = document.getElementById('initial-setup-container');
                 const nicknameInput = document.getElementById('nicknameInput');
 
                 const savedName = localStorage.getItem('blockfall_nickname');
                 if (savedName) {
                     playerNickname = savedName;
-                    nicknameInput.value = savedName;
+                    if (loader.parentNode) loader.remove();
+                    startMainApp();
+                } else {
+                    skipBtn.addEventListener('click', saveNicknameAndStart);
+                    nicknameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') saveNicknameAndStart(); });
                 }
 
-                const showAnimationChoice = () => {
+                function saveNicknameAndStart() {
                     const name = nicknameInput.value.trim();
                     if(name) {
                         playerNickname = name;
@@ -742,34 +730,10 @@
                         loader.addEventListener('animationend', () => {
                             if (loader.parentNode) loader.remove();
                         }, { once: true });
-                        
-                        initialSetupContainer.classList.remove('hidden');
-                        animationScreen.classList.remove('hidden');
-                        animationScreen.classList.add('fade-in');
-
-                        document.querySelectorAll('[data-animation-mode]').forEach(btn => {
-                            btn.addEventListener('click', (e) => {
-                                lowAnimationMode = e.target.dataset.animationMode === 'low';
-                                initialSetupContainer.classList.add('hidden');
-                                showUpdateInfo();
-                            }, { once: true });
-                        });
                     }
-                };
-
-                skipBtn.addEventListener('click', showAnimationChoice);
-                nicknameInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') showAnimationChoice(); });
-            });
-
-            function showUpdateInfo() {
-                const noticeModal = document.getElementById('noticeModal');
-                noticeModal.classList.remove('hidden');
-                
-                document.getElementById('closeNoticeBtn').addEventListener('click', () => {
-                    noticeModal.classList.add('hidden');
                     startMainApp();
-                }, { once: true });
-            }
+                }
+            });
 
             function startMainApp() {
                 const appContainer = document.getElementById('appContainer');
@@ -827,7 +791,7 @@
                 const pauseRestartButton = document.getElementById('pauseRestartButton');
 
                 // Online Elements
-                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg'), freeMatchBtn = document.getElementById('freeMatchBtn');
+                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg'), freeMatchBtn = document.getElementById('freeMatchBtn'), friendMatchBtn = document.getElementById('friendMatchBtn'), friendModal = document.getElementById('friendModal'), addFriendInput = document.getElementById('addFriendInput'), addFriendBtn = document.getElementById('addFriendBtn'), closeFriendBtn = document.getElementById('closeFriendBtn'), friendListContainer = document.getElementById('friend-list'), friendRequestModal = document.getElementById('friendRequestModal'), friendRequestText = document.getElementById('friendRequestText'), acceptFriendRequestBtn = document.getElementById('acceptFriendRequestBtn'), declineFriendRequestBtn = document.getElementById('declineFriendRequestBtn'), rematchModal = document.getElementById('rematchModal'), acceptRematchBtn = document.getElementById('acceptRematchBtn'), declineRematchBtn = document.getElementById('declineRematchBtn');
 
                 let player = {};
                 let cpu = null;
@@ -844,6 +808,16 @@
                 let opponentData = { board: [], score: 0, nextPiece: null, heldPiece: null, currentPiece: null, isOver: false, name: "Opponent" };
                 let isCountdownActive = false;
                 let hasOnlineGameStarted = false; 
+                let myRematchReady = false;
+                let oppRematchReady = false;
+                let friendList = [];
+                let friendStatuses = {};
+                let friendPresenceListeners = {};
+                let incomingFriendRequest = null;
+                let myPresenceRef = null;
+                let friendRequestsRef = null;
+                let friendResponsesRef = null;
+                let friendListsRef = null;
 
                 const defaultKeyMap = { moveLeft: 'ArrowLeft', moveRight: 'ArrowRight', softDrop: 'ArrowDown', hardDrop: 'ArrowUp', rotateLeft: 'z', rotateRight: 'x', hold: 'c' };
                 const actionLabels = { moveLeft: '左移動', moveRight: '右移動', softDrop: 'ソフトドロップ', hardDrop: 'ハードドロップ', rotateLeft: '左回転', rotateRight: '右回転', hold: 'ホールド' };
@@ -884,7 +858,22 @@
 
                     document.querySelectorAll('#start-screen .btn[data-mode]').forEach(btn => btn.addEventListener('click', (e) => startGame(e.target.dataset.mode)));
                     
-                    restartButton.addEventListener('click', startCountdown); 
+                    restartButton.addEventListener('click', () => {
+                        if (isOnline) {
+                            myRematchReady = true;
+                            restartButton.textContent = "待機中...";
+                            restartButton.disabled = true;
+                            prepareOnlineRematchWaitingState();
+                            if (dc && dc.readyState === 'open') {
+                                dc.send(JSON.stringify({ type: 'REMATCH' }));
+                            }
+                            if (myRole === 'host' && myRematchReady && oppRematchReady) {
+                                startOnlineRematchAsHost();
+                            }
+                        } else {
+                            startCountdown();
+                        }
+                    }); 
                     homeButton.addEventListener('click', showStartScreen);
                     pauseButton.addEventListener('click', togglePause);
                     resumeButton.addEventListener('click', togglePause);
@@ -896,11 +885,336 @@
                     createRoomBtn.addEventListener('click', () => handleOnlineSetup('create'));
                     joinRoomBtn.addEventListener('click', () => handleOnlineSetup('join'));
                     freeMatchBtn.addEventListener('click', handleFreeMatch);
+                    friendMatchBtn.addEventListener('click', () => {
+                        if (friendModal) {
+                            renderFriendList();
+                            friendModal.classList.remove('hidden');
+                        }
+                    });
                     cancelOnlineBtn.addEventListener('click', () => { onlineSetupScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
+                    if (acceptRematchBtn) {
+                        acceptRematchBtn.addEventListener('click', () => {
+                            hideRematchRequestModal();
+                            myRematchReady = true;
+                            restartButton.textContent = "待機中...";
+                            restartButton.disabled = true;
+                            prepareOnlineRematchWaitingState();
+                            if (dc && dc.readyState === 'open') {
+                                dc.send(JSON.stringify({ type: 'REMATCH' }));
+                            }
+                            if (myRole === 'host' && myRematchReady && oppRematchReady) {
+                                startOnlineRematchAsHost();
+                            }
+                        });
+                    }
+                    if (declineRematchBtn) {
+                        declineRematchBtn.addEventListener('click', () => {
+                            hideRematchRequestModal();
+                        });
+                    }
+                    if (addFriendBtn) {
+                        addFriendBtn.addEventListener('click', () => {
+                            const name = addFriendInput.value.trim();
+                            if (!name) return;
+                            addFriend(name);
+                            addFriendInput.value = '';
+                        });
+                    }
+                    if (closeFriendBtn) {
+                        closeFriendBtn.addEventListener('click', () => {
+                            if (friendModal) friendModal.classList.add('hidden');
+                        });
+                    }
+                    if (acceptFriendRequestBtn) {
+                        acceptFriendRequestBtn.addEventListener('click', acceptFriendRequest);
+                    }
+                    if (declineFriendRequestBtn) {
+                        declineFriendRequestBtn.addEventListener('click', declineFriendRequest);
+                    }
 
                     setupKeyHandlers();
                     setupExtraFeatures();
                     setupKeyConfigModal();
+                    setupFriendPresence();
+                }
+
+                function saveFriendList() {
+                    try {
+                        localStorage.setItem('blockfall_friends', JSON.stringify(friendList));
+                    } catch (e) {
+                        console.error('Failed to save friends', e);
+                    }
+                }
+
+                function addFriend(name, syncDb = true) {
+                    const trimmed = name.trim();
+                    if (!trimmed || trimmed === playerNickname) return;
+                    if (!friendList.includes(trimmed)) {
+                        friendList.push(trimmed);
+                        saveFriendList();
+                        renderFriendList();
+                        watchFriendPresence(trimmed);
+                        if (syncDb) addFriendToDb(trimmed);
+                    }
+                }
+
+                function addFriendToDb(friendName) {
+                    if (!db || !playerNickname) return;
+                    const myKey = sanitizeFriendKey(playerNickname);
+                    const friendKey = sanitizeFriendKey(friendName);
+                    db.ref(`friends/${myKey}/${friendKey}`).set({ name: friendName, addedAt: Date.now() });
+                    db.ref(`friends/${friendKey}/${myKey}`).set({ name: playerNickname, addedAt: Date.now() });
+                }
+
+                function removeFriend(name) {
+                    friendList = friendList.filter(f => f !== name);
+                    saveFriendList();
+                    if (friendPresenceListeners[sanitizeFriendKey(name)]) {
+                        friendPresenceListeners[sanitizeFriendKey(name)].off();
+                        delete friendPresenceListeners[sanitizeFriendKey(name)];
+                        delete friendStatuses[name];
+                    }
+                    if (db && playerNickname) {
+                        const myKey = sanitizeFriendKey(playerNickname);
+                        const friendKey = sanitizeFriendKey(name);
+                        db.ref(`friends/${myKey}/${friendKey}`).remove();
+                        db.ref(`friends/${friendKey}/${myKey}`).remove();
+                    }
+                    renderFriendList();
+                }
+
+                function loadFriendList() {
+                    try {
+                        const stored = JSON.parse(localStorage.getItem('blockfall_friends') || '[]');
+                        return Array.isArray(stored) ? stored : [];
+                    } catch (e) {
+                        return [];
+                    }
+                }
+
+                function sanitizeFriendKey(name) {
+                    return name.trim().replace(/[.#$\[\]/]/g, '_');
+                }
+
+                function watchFriendList() {
+                    if (!db || !playerNickname || friendListsRef) return;
+                    const key = sanitizeFriendKey(playerNickname);
+                    friendListsRef = db.ref(`friends/${key}`);
+                    friendListsRef.on('value', (snap) => handleFriendListUpdate(snap.val()));
+                }
+
+                function handleFriendListUpdate(data) {
+                    const dbFriends = [];
+                    if (data) {
+                        Object.values(data).forEach(entry => {
+                            if (entry && entry.name) dbFriends.push(entry.name);
+                        });
+                    }
+                    const merged = Array.from(new Set([...friendList, ...dbFriends]));
+                    friendList = merged;
+                    saveFriendList();
+                    friendList.forEach(watchFriendPresence);
+                    renderFriendList();
+                }
+
+                function renderFriendList() {
+                    if (!friendListContainer) return;
+                    friendListContainer.innerHTML = '';
+                    if (friendList.length === 0) {
+                        friendListContainer.innerHTML = '<div class="note">フレンドを追加するとここに表示されます。</div>';
+                        return;
+                    }
+                    friendList.forEach(name => {
+                        const status = friendStatuses[name];
+                        const isOnlineFriend = status && status.online;
+                        const label = isOnlineFriend ? (status.status === 'playing' ? 'プレイ中' : status.status === 'waiting' ? '待機中' : 'オンライン') : 'オフライン';
+                        const item = document.createElement('div');
+                        item.className = 'panel-card';
+                        item.style.display = 'flex';
+                        item.style.justifyContent = 'space-between';
+                        item.style.alignItems = 'center';
+                        item.style.gap = '8px';
+                        item.innerHTML = `<div style="flex:1;"><strong>${name}</strong><br><span style="font-size:12px;color:var(--text-secondary);">${label}</span></div>`;
+                        const buttons = document.createElement('div');
+                        buttons.style.display = 'flex';
+                        buttons.style.gap = '8px';
+                        const requestBtn = document.createElement('button');
+                        requestBtn.className = 'btn';
+                        requestBtn.textContent = 'プレイ申請';
+                        requestBtn.disabled = !isOnlineFriend || name === playerNickname;
+                        requestBtn.addEventListener('click', () => sendFriendPlayRequest(name));
+                        const removeBtn = document.createElement('button');
+                        removeBtn.className = 'btn ghost';
+                        removeBtn.textContent = '削除';
+                        removeBtn.addEventListener('click', () => {
+                            removeFriend(name);
+                        });
+                        buttons.appendChild(requestBtn);
+                        buttons.appendChild(removeBtn);
+                        item.appendChild(buttons);
+                        friendListContainer.appendChild(item);
+                    });
+                }
+
+                function watchFriendPresence(name) {
+                    const key = sanitizeFriendKey(name);
+                    if (friendPresenceListeners[key]) return;
+                    const ref = db.ref('presence/' + key);
+                    friendPresenceListeners[key] = ref;
+                    ref.on('value', (snap) => {
+                        const val = snap.val();
+                        if (val) {
+                            friendStatuses[name] = val;
+                        } else {
+                            delete friendStatuses[name];
+                        }
+                        renderFriendList();
+                    });
+                }
+
+                function updateOwnPresence(status, roomId, mode) {
+                    if (!myPresenceRef) return;
+                    myPresenceRef.set({ online: true, status, roomId: roomId || null, mode: mode || null, updatedAt: Date.now() });
+                }
+
+                function setupFriendPresence() {
+                    friendList = loadFriendList();
+                    watchFriendList();
+                    friendList.forEach(watchFriendPresence);
+                    const key = sanitizeFriendKey(playerNickname);
+                    myPresenceRef = db.ref('presence/' + key);
+                    myPresenceRef.onDisconnect().remove();
+                    updateOwnPresence('idle', null, null);
+                    friendRequestsRef = db.ref('friendRequests/' + key);
+                    friendRequestsRef.on('child_added', (snap) => handleFriendRequest(snap.key, snap.val()));
+                    friendResponsesRef = db.ref('friendResponses/' + key);
+                    friendResponsesRef.on('child_added', (snap) => handleFriendResponse(snap.key, snap.val()));
+                }
+
+                function sendFriendPlayRequest(friendName) {
+                    if (!friendName || friendName === playerNickname) return;
+                    const key = sanitizeFriendKey(friendName);
+                    const requestPath = db.ref('friendRequests/' + key + '/' + sanitizeFriendKey(playerNickname));
+                    requestPath.set({ from: playerNickname, mode: gameMode || 'ONLINE_VS', timestamp: Date.now() });
+                    showFeedbackPopup(`「${friendName}」に申請を送信しました`);
+                }
+
+                function handleFriendRequest(fromKey, request) {
+                    if (!request || !request.from) return;
+                    incomingFriendRequest = { key: fromKey, ...request };
+                    if (friendRequestModal) {
+                        friendRequestText.textContent = `「${request.from}」さんが ${request.mode} でプレイ申請を送りました。承諾しますか？`;
+                        friendRequestModal.classList.remove('hidden');
+                    }
+                }
+
+                function acceptFriendRequest() {
+                    if (!incomingFriendRequest) return;
+                    const friendName = incomingFriendRequest.from;
+                    const requestMode = incomingFriendRequest.mode || 'ONLINE_VS';
+                    if (!friendRequestModal) return;
+                    friendRequestModal.classList.add('hidden');
+                    const responsePath = db.ref('friendResponses/' + sanitizeFriendKey(friendName) + '/' + sanitizeFriendKey(playerNickname));
+                    const roomId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                    responsePath.set({ accepted: true, roomId, mode: requestMode, from: playerNickname, timestamp: Date.now() });
+                    if (friendRequestsRef && incomingFriendRequest.key) {
+                        friendRequestsRef.child(incomingFriendRequest.key).remove();
+                    }
+                    createFriendMatchRoom({ from: playerNickname, mode: requestMode, roomId });
+                    incomingFriendRequest = null;
+                }
+
+                function declineFriendRequest() {
+                    if (!incomingFriendRequest) return;
+                    const friendName = incomingFriendRequest.from;
+                    const responsePath = db.ref('friendResponses/' + sanitizeFriendKey(friendName) + '/' + sanitizeFriendKey(playerNickname));
+                    responsePath.set({ accepted: false, from: playerNickname, timestamp: Date.now() });
+                    if (friendRequestsRef && incomingFriendRequest.key) {
+                        friendRequestsRef.child(incomingFriendRequest.key).remove();
+                    }
+                    if (friendRequestModal) friendRequestModal.classList.add('hidden');
+                    incomingFriendRequest = null;
+                }
+
+                function handleFriendResponse(fromKey, data) {
+                    if (!data) return;
+                    if (data.accepted) {
+                        showFeedbackPopup(`「${data.from}」さんが申請を承諾しました。部屋に参加します`);
+                        joinFriendRoom(data.roomId);
+                    } else {
+                        showFeedbackPopup(`「${data.from}」さんに断られました`);
+                    }
+                    const ref = db.ref('friendResponses/' + sanitizeFriendKey(playerNickname) + '/' + fromKey);
+                    ref.remove();
+                }
+
+                function createFriendMatchRoom(request) {
+                    const roomId = request.roomId;
+                    if (!roomId) return;
+                    onlineRoomId = roomId;
+                    myRole = 'host';
+                    onlineSeed = Math.floor(Math.random() * 100000);
+                    roomRef = db.ref('rooms/' + roomId);
+                    onlineStatusMsg.textContent = 'フレンドマッチを作成中...';
+                    roomRef.set({ status: 'waiting', seed: onlineSeed, mode: request.mode, host: { name: playerNickname }, friendInvite: { from: request.from, to: playerNickname } }).then(() => {
+                        updateOwnPresence('waiting', roomId, request.mode);
+                        setupWebRTC(true);
+                        listenToRoomStatus();
+                        onlineSetupScreen.classList.remove('hidden');
+                    });
+                }
+
+                function joinFriendRoom(roomId) {
+                    if (!roomId) return;
+                    onlineRoomId = roomId;
+                    myRole = 'guest';
+                    roomIdInput.value = roomId;
+                    roomRef = db.ref('rooms/' + roomId);
+                    onlineStatusMsg.textContent = 'フレンドの部屋に参加中...';
+                    roomRef.child('guest').set({ name: playerNickname }).then(() => {
+                        updateOwnPresence('waiting', roomId, gameMode || 'ONLINE_VS');
+                        setupWebRTC(false);
+                        listenToRoomStatus();
+                        onlineSetupScreen.classList.remove('hidden');
+                    });
+                }
+
+                function resetRematchUI() {
+                    restartButton.textContent = "再プレイ";
+                    restartButton.disabled = false;
+                    myRematchReady = false;
+                    oppRematchReady = false;
+                }
+
+                function prepareOnlineRematchWaitingState() {
+                    if (rematchModal) rematchModal.classList.add('hidden');
+                    gameoverScreen.classList.add('hidden');
+                    gameOverlay.classList.add('hidden');
+                    appContainer.classList.remove('game-inactive-blur');
+                    if (countdownInterval) clearInterval(countdownInterval);
+                    createEmptyBoard(boardEl);
+                    if (cpuBoardEl) createEmptyBoard(cpuBoardEl);
+                    showFeedbackPopup("再プレイ申請を送信しました");
+                }
+
+                function startOnlineRematchAsHost() {
+                    const newSeed = Math.floor(Math.random() * 100000);
+                    onlineSeed = newSeed;
+                    if (dc && dc.readyState === 'open') {
+                        dc.send(JSON.stringify({ type: 'START_REMATCH', seed: newSeed }));
+                    }
+                    resetRematchUI();
+                    startCountdown();
+                }
+
+                function showRematchRequestModal() {
+                    if (!rematchModal) return;
+                    rematchModal.classList.remove('hidden');
+                }
+
+                function hideRematchRequestModal() {
+                    if (!rematchModal) return;
+                    rematchModal.classList.add('hidden');
                 }
 
                 function startGame(mode) {
@@ -914,6 +1228,7 @@
                         onlineSetupScreen.classList.remove('hidden');
                         onlineStatusMsg.textContent = "";
                         roomIdInput.value = "";
+                        updateOwnPresence('lobby', null, mode);
                         return;
                     }
 
@@ -956,13 +1271,13 @@
 
                 function handleFreeMatch() {
                     onlineStatusMsg.textContent = "対戦相手を探しています...";
-                    db.ref('rooms').orderByChild('status').equalTo('waiting').limitToFirst(20).once('value')
+                    db.ref('rooms').orderByChild('status').equalTo('waiting').once('value')
                         .then((snapshot) => {
                             let foundRoomId = null;
                             if (snapshot.exists()) {
                                 snapshot.forEach((childSnapshot) => {
                                     const room = childSnapshot.val();
-                                    if (room.mode === gameMode && room.guest && room.guest.status === 'empty') {
+                                    if (room.mode === gameMode) {
                                         foundRoomId = childSnapshot.key;
                                         return true; 
                                     }
@@ -1036,6 +1351,16 @@
                             db.ref(`rooms/${onlineRoomId}`).update({ status: 'playing' });
                         }
                     };
+                    dc.onclose = () => {
+                        if (isOnline) {
+                            showFeedbackPopup("相手との接続が切れました");
+                            if (!isOver) {
+                                gameOver(cpu);
+                            } else {
+                                restartButton.classList.add('hidden');
+                            }
+                        }
+                    };
                     dc.onmessage = (event) => {
                         const data = JSON.parse(event.data);
                         if (data.type === 'STATE') {
@@ -1045,27 +1370,69 @@
                             opponentData.nextPiece = data.payload.nextPiece;
                             opponentData.heldPiece = data.payload.heldPiece;
                             opponentData.name = data.payload.name;
-                            opponentNameEl.textContent = data.payload.name; // Keep name sync fresh
+                            opponentNameEl.textContent = data.payload.name;
                         } else if (data.type === 'GARBAGE') {
                             if (player) {
                                 player.pendingGarbage += data.amount;
                             }
                         } else if (data.type === 'GAMEOVER') {
                             opponentData.isOver = true;
-                            // Check win conditions immediately
                             if (gameMode === 'ONLINE_VS') {
-                                // Opponent Died -> I Win
                                 gameOver(cpu);
                             } else if (gameMode === 'ONLINE_ULTRA') {
-                                // Opponent Ended -> Trigger disconnect and end
                                 gameOver(cpu);
                             }
+                        } else if (data.type === 'REMATCH') {
+                            oppRematchReady = true;
+                            if (!myRematchReady) {
+                                showRematchRequestModal();
+                            }
+                            if (myRole === 'host' && myRematchReady && oppRematchReady) {
+                                startOnlineRematchAsHost();
+                            }
+                        } else if (data.type === 'START_REMATCH') {
+                            onlineSeed = data.seed;
+                            resetRematchUI();
+                            startCountdown();
+                        } else if (data.type === 'LEAVE') {
+                            showFeedbackPopup("相手が退出しました");
+                            if(roomRef) roomRef.off();
+                            if(pc) { pc.close(); pc = null; }
+                            if(dc) { dc.close(); dc = null; }
+                            restartButton.classList.add('hidden');
                         }
                     };
                 }
 
                 function handleOnlineSetup(action) {
-                    const roomId = roomIdInput.value.trim().toUpperCase();
+                    let roomId = roomIdInput.value.trim().toUpperCase();
+                    if (action === 'join' && !roomId) {
+                        onlineStatusMsg.textContent = "待機中の部屋を検索しています...";
+                        db.ref('rooms').orderByChild('status').equalTo('waiting').once('value')
+                            .then((snapshot) => {
+                                let foundRoomId = null;
+                                snapshot.forEach((childSnapshot) => {
+                                    const room = childSnapshot.val();
+                                    if (room.mode === gameMode) {
+                                        foundRoomId = childSnapshot.key;
+                                        return true;
+                                    }
+                                });
+                                if (foundRoomId) {
+                                    roomIdInput.value = foundRoomId;
+                                    handleOnlineSetup('join');
+                                } else {
+                                    const newId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                                    roomIdInput.value = newId;
+                                    handleOnlineSetup('create');
+                                }
+                            })
+                            .catch((err) => {
+                                onlineStatusMsg.textContent = "エラーが発生しました";
+                                console.error(err);
+                            });
+                        return;
+                    }
                     if (!roomId) { onlineStatusMsg.textContent = "Room IDを入力してください"; return; }
                     onlineRoomId = roomId;
                     roomRef = db.ref('rooms/' + roomId);
@@ -1074,12 +1441,15 @@
                         myRole = 'host';
                         onlineStatusMsg.textContent = "部屋を作成中...";
                         const initialSeed = Math.floor(Math.random() * 100000);
+                        onlineSeed = initialSeed;
                         roomRef.set({
                             status: 'waiting',
                             seed: initialSeed,
-                            mode: gameMode
+                            mode: gameMode,
+                            host: { name: playerNickname }
                         }).then(() => {
                             onlineStatusMsg.textContent = "対戦相手を待っています...";
+                            updateOwnPresence('waiting', onlineRoomId, gameMode);
                             setupWebRTC(true);
                             listenToRoomStatus();
                         });
@@ -1092,9 +1462,12 @@
                                 if (data.status !== 'waiting') { onlineStatusMsg.textContent = "この部屋は満員かプレイ中です"; return; }
                                 if (data.mode !== gameMode) { onlineStatusMsg.textContent = "ゲームモードが一致しません"; return; }
                                 
-                                onlineStatusMsg.textContent = "参加しました。接続中...";
-                                setupWebRTC(false);
-                                listenToRoomStatus();
+                                roomRef.child('guest').set({ name: playerNickname }).then(() => {
+                                    updateOwnPresence('waiting', onlineRoomId, gameMode);
+                                    onlineStatusMsg.textContent = "参加しました。接続中...";
+                                    setupWebRTC(false);
+                                    listenToRoomStatus();
+                                });
                             } else {
                                 onlineStatusMsg.textContent = "部屋が見つかりません";
                             }
@@ -1170,6 +1543,8 @@
 
                     if (isOnline) {
                          cpu = createPlayerState(true);
+                         opponentData = { board: [], score: 0, nextPiece: null, heldPiece: null, currentPiece: null, isOver: false, name: opponentData.name };
+                         updateOwnPresence('playing', onlineRoomId, gameMode);
                          pushOnlineState(); 
                     } else {
                         cpu = null;
@@ -1254,7 +1629,7 @@
 
                 function fillPieceBag(target) {
                     const p = ['I', 'O', 'T', 'S', 'Z', 'J', 'L'];
-                    const randFunc = isOnline ? seededRandom : Math.random;
+                    const randFunc = isOnline && !target.isCPU ? seededRandom : Math.random;
                     
                     for (let i = p.length - 1; i > 0; i--) { 
                         const j = Math.floor(randFunc() * (i + 1)); 
@@ -1403,25 +1778,27 @@
                     const piece = target.currentPiece;
                     clearLockDelayTimer(target);
                     
-                    if (!isValidMove(piece, target.board)) {
+                    while (!isValidMove(piece, target.board) && piece.y > -5) {
                         piece.y--;
-                        if (!isValidMove(piece, target.board)) { gameOver(target); return; }
+                    }
+                    if (!isValidMove(piece, target.board)) {
+                        gameOver(target);
+                        return;
                     }
                     
                     const element = target.isCPU ? cpuBoardEl : boardEl;
-                    if (!lowAnimationMode) {
-                      piece.shape.forEach((row, dy) => row.forEach((val, dx) => {
+                    
+                    piece.shape.forEach((row, dy) => row.forEach((val, dx) => {
                         if (val) {
-                          const bY = piece.y + dy, bX = piece.x + dx;
-                          if (bY >= 0 && element.children[bY * COLS + bX]) {
-                            const flash = document.createElement('div');
-                            flash.className = 'lock-flash-effect';
-                            element.children[bY * COLS + bX].appendChild(flash);
-                            setTimeout(() => flash.remove(), 200);
-                          }
+                            const bY = piece.y + dy, bX = piece.x + dx;
+                            if (bY >= 0 && bX >= 0 && bX < COLS && element.children[bY * COLS + bX]) {
+                                const flash = document.createElement('div');
+                                flash.className = 'lock-flash-effect';
+                                element.children[bY * COLS + bX].appendChild(flash);
+                                setTimeout(() => flash.remove(), 200);
+                            }
                         }
-                      }));
-                    }
+                    }));
 
                     piece.shape.forEach((row, dy) => row.forEach((val, dx) => {
                         if (val) {
@@ -1491,17 +1868,15 @@
                         
                         target.clearingRows = fullRows;
 
-                        if (!lowAnimationMode) {
-                            fullRows.forEach(y => {
-                                for (let x = 0; x < COLS; x++) {
-                                    const cell = element.children[y * COLS + x];
-                                    const tile = cell.querySelector('.tile:not(.garbage)');
-                                    if (tile) {
-                                        tile.classList.add('clearing');
-                                    }
+                        fullRows.forEach(y => {
+                            for (let x = 0; x < COLS; x++) {
+                                const cell = element.children[y * COLS + x];
+                                const tile = cell.querySelector('.tile:not(.garbage)');
+                                if (tile) {
+                                    tile.classList.add('clearing');
                                 }
-                            });
-                        }
+                            }
+                        });
 
                         setTimeout(() => {
                             let newBoard = target.board.filter((_, y) => !fullRows.includes(y));
@@ -1509,7 +1884,7 @@
                             target.board = newBoard;
                             target.clearingRows = [];
                             resolve(fullRows.length);
-                        }, lowAnimationMode ? 20 : 500);
+                        }, 500);
                     });
                 }
                 
@@ -1532,15 +1907,14 @@
                     if (gameMode !== 'SPRINT') target.score += (POINTS[count] || 0) * target.level;
                     target.lines += count;
                     if (gameMode === 'SPRINT' && target.lines >= 40) { target.lines = 40; gameOver(target); }
+                    
                     if (count >= 4 && !target.isCPU) showFeedbackPopup(`PERFECT!`);
                     if (target.combo > 1 && !target.isCPU) {
                         showFeedbackPopup(`${target.combo} COMBO!`);
-                        if (!lowAnimationMode) {
-                            const boardWrap = target.isCPU ? cpuContainer.querySelector('.board') : boardEl;
-                            const comboClass = `combo-${Math.min(4, Math.floor(target.combo / 2))}`;
-                            boardWrap.classList.add(comboClass);
-                            setTimeout(() => boardWrap.classList.remove(comboClass), 300);
-                        }
+                        const boardWrap = target.isCPU ? cpuContainer.querySelector('.board') : boardEl;
+                        const comboClass = `combo-${Math.min(4, Math.floor(target.combo / 2))}`;
+                        boardWrap.classList.add(comboClass);
+                        setTimeout(() => boardWrap.classList.remove(comboClass), 300);
                     }
                     if (gameMode === 'TRAINING' || gameMode.includes('VS')) {
                         const newLevel = Math.floor(target.lines / 10) + 1;
@@ -1776,10 +2150,10 @@
                     if (loser) loser.isOver = true;
                     if (isOnline) {
                         pushOnlineState();
-                        // Disconnect immediately to prevent re-sync or countdowns
-                        if (roomRef) roomRef.off(); 
-                        if (pc) pc.close();
-                        if (dc) dc.close();
+                        myRematchReady = false;
+                        oppRematchReady = false;
+                        restartButton.textContent = "再プレイ";
+                        restartButton.disabled = false;
                     }
                     
                     clearAllInputTimers();
@@ -1799,8 +2173,6 @@
                         homeButton.classList.remove('hidden');
 
                         if (isOnline) {
-                             restartButton.classList.add('hidden'); // Only home for online
-                             
                              if (gameMode === 'ONLINE_ULTRA') {
                                  titleEl.textContent = "GAME OVER!"; 
                                  if (player.score > opponentData.score) showFeedbackPopup("YOU WIN!");
@@ -1808,7 +2180,7 @@
                                  else showFeedbackPopup("DRAW!");
                                  gameoverResult.textContent = `You: ${player.score} vs Opp: ${opponentData.score}`;
                              } else {
-                                 // VS Mode (Survival)
+                                 // VS Mode
                                  const iLost = loser === player;
                                  titleEl.textContent = iLost ? "YOU LOSE..." : "YOU WIN!";
                                  gameoverResult.textContent = `vs ${opponentData.name}`;
@@ -1824,7 +2196,6 @@
                         showGameOverScreen();
                     };
                     
-                    // Allow UI to update before blocking
                     setTimeout(processResults, 100);
                     playGameOverAnimation(loser);
                 }
@@ -1834,11 +2205,25 @@
                     if (gameInterval) clearInterval(gameInterval);
                     if (cpuActionInterval) clearInterval(cpuActionInterval);
                     if (updateInterval) clearInterval(updateInterval);
-                    if (roomRef) roomRef.off(); // Detach listeners
-                    if (pc) { pc.close(); pc = null; }
+                    
+                    if (isOnline) {
+                        if (dc && dc.readyState === 'open') {
+                            dc.send(JSON.stringify({ type: 'LEAVE' }));
+                        }
+                        if(roomRef) roomRef.off();
+                        if(pc) { pc.close(); pc = null; }
+                        if(dc) { dc.close(); dc = null; }
+                    }
+
                     isOnline = false;
                     hasOnlineGameStarted = false;
                     isCountdownActive = false; 
+                    myRematchReady = false;
+                    oppRematchReady = false;
+                    hideRematchRequestModal();
+                    if (friendModal) friendModal.classList.add('hidden');
+                    if (friendRequestModal) friendRequestModal.classList.add('hidden');
+                    if (myPresenceRef) updateOwnPresence('idle', null, null);
 
                     appContainer.className = 'app single-player-mode';
                     cpuContainer.classList.add('hidden');
@@ -1915,7 +2300,8 @@
                     }
                 }
 
-                function playHardDropAnimation(target) { if (lowAnimationMode) return; playerGameContainer.classList.add('shake-hard-drop'); setTimeout(()=> playerGameContainer.classList.remove('shake-hard-drop'), 150); for (let i = 0; i < 15; i++) { const p = document.createElement('div'); p.className = 'particle'; document.body.appendChild(p); const rect = boardEl.getBoundingClientRect(), cw = rect.width / COLS, ch = rect.height / ROWS, sx = rect.left + (Math.random() * COLS) * cw, sy = rect.top + (target.currentPiece.y + 0.5) * ch; p.style.left = `${sx}px`; p.style.top = `${sy}px`; const ang = Math.random() * Math.PI - Math.PI, vel = Math.random() * 80 + 40, ex = Math.cos(ang) * vel, ey = Math.sin(ang) * vel - 30; p.style.setProperty('--x', `${ex}px`); p.style.setProperty('--y', `${ey}px`); setTimeout(() => p.remove(), 600); } }
+                function playHardDropAnimation(target) { playerGameContainer.classList.add('shake-hard-drop'); setTimeout(()=> playerGameContainer.classList.remove('shake-hard-drop'), 150); for (let i = 0; i < 15; i++) { const p = document.createElement('div'); p.className = 'particle'; document.body.appendChild(p); const rect = boardEl.getBoundingClientRect(), cw = rect.width / COLS, ch = rect.height / ROWS, sx = rect.left + (Math.random() * COLS) * cw, sy = rect.top + (target.currentPiece.y + 0.5) * ch; p.style.left = `${sx}px`; p.style.top = `${sy}px`; const ang = Math.random() * Math.PI - Math.PI, vel = Math.random() * 80 + 40, ex = Math.cos(ang) * vel, ey = Math.sin(ang) * vel - 30; p.style.setProperty('--x', `${ex}px`); p.style.setProperty('--y', `${ey}px`); setTimeout(() => p.remove(), 600); } }
+                
                 function playGameOverAnimation(target) {
                     return new Promise(resolve => {
                         if (!target || target.isOver === false) {
