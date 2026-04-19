@@ -30,17 +30,12 @@ const items = [
     { title: "街づくり", description: "大きな町を作ろう", thumbnail: "./apps/appcity/thumbnail.png", url: "play.html?game=./apps/appctyi/index.html", recommend: null, category: "fun" },
     
     // WIP (Work In Progress) - fun
-    { title: "3Dトレーニング", description: "三次元空間で頭を鍛える新しい体験。", thumbnail: "./apps/app7/thumbnail.jpeg", url: "#", recommend: "WIP", category: "fun" },
-    { title: "砂ブロック落とし", description: "最近流行ってるあれ", thumbnail: "./apps/app12/thumbnail.jpeg", url: "#", recommend: "New", category: "fun" },
-    { title: "ブロック崩し", description: "グーグルのねあれよあれ", thumbnail: "./apps/app13/thumbnail.jpeg", url: "#", recommend: "WIP", category: "fun" },
-    { title: "パズルブロック", description: "まあ、楽しくない", thumbnail: "./apps/app14/thumbnail.jpeg", url: "#", recommend: null, category: "fun" },
-    { title: "キャンディークリッカー", description: "暇つぶし", thumbnail: "./apps/app16/thumbnail.jpeg", url: "#", recommend: null, category: "fun" },
+
 
     // --- Study ---
     { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "play.html?game=./apps/TODO/index.html", recommend: "便利", category: "study" },
 
     // --- Other (Tools & Admin) ---
-    { title: "ちょっとGPT", description: "高性能な対話プログラムとおしゃべり。", thumbnail: "./apps/app9/thumbnail.png", url: "#", recommend: "調整中", category: "other" },
     { title: "My Wallet", description: "初の本格ウェブアプリ。", thumbnail: "./apps/外部URL用写真/マイウォレット.png", url: "https://towabii.github.io/mywallet/", recommend: "PWA", category: "other" },
     { title: "管理パネル", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/kanri/", recommend: "ADMIN", category: "other" },
     { title: "BOX検索", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/SmartBOX/", recommend: "ADMIN", category: "other" },
