@@ -913,12 +913,13 @@
                         });
                     }
                     if (addFriendBtn) {
-                        addFriendBtn.addEventListener('click', () => {
+                        addFriendBtn.addEventListener('click', async () => {
                             const name = addFriendInput.value.trim();
                             if (!name) return;
-                            addFriend(name).then(() => {
+                            const success = await addFriend(name);
+                            if (success) {
                                 addFriendInput.value = '';
-                            });
+                            }
                         });
                     }
                     if (closeFriendBtn) {
@@ -951,17 +952,17 @@
                     const trimmed = name.trim();
                     if (!trimmed || trimmed === playerNickname) {
                         showFeedbackPopup('自分自身はフレンドに追加できません');
-                        return;
+                        return false;
                     }
                     if (friendList.includes(trimmed)) {
                         showFeedbackPopup('すでに追加されています');
-                        return;
+                        return false;
                     }
                     if (syncDb) {
                         const exists = await userExists(trimmed);
                         if (!exists) {
                             showFeedbackPopup('そのユーザーは見つかりませんでした');
-                            return;
+                            return false;
                         }
                     }
                     friendList.push(trimmed);
@@ -971,13 +972,18 @@
                     if (syncDb) {
                         addFriendToDb(trimmed);
                     }
+                    return true;
                 }
 
                 async function userExists(name) {
                     if (!db || !name) return false;
                     const key = sanitizeFriendKey(name);
-                    const snap = await db.ref(`users/${key}`).once('value');
-                    return snap.exists();
+                    const userSnap = await db.ref(`users/${key}`).once('value');
+                    if (userSnap.exists()) return true;
+                    const presenceSnap = await db.ref(`presence/${key}`).once('value');
+                    if (presenceSnap.exists()) return true;
+                    const friendSnap = await db.ref(`friends/${key}`).once('value');
+                    return friendSnap.exists();
                 }
 
                 function registerCurrentUser() {
