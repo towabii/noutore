@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D 鬼ごっこ 大乱闘マルチプレイ版</title>
+    <style>
+        :root {
+            --bg-color: #0f1015;
+            --panel-bg: #1a1d24;
+            --primary: #00ffff;
+            --primary-glow: #00ffff88;
+            --danger: #ff3366;
+            --danger-glow: #ff336688;
+            --text: #e2e8f0;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: var(--text);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; 
+        }
+
+        #app-container {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: #000;
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: calc(100vh * 16 / 9);
+            aspect-ratio: 16 / 9;
+            background: var(--bg-color);
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UIオーバーレイ共通 */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 16, 21, 0.95);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10;
+        }
+        
+        .hidden { display: none !important; }
+
+        h1 { margin-bottom: 20px; font-size: 3rem; text-shadow: 0 0 10px var(--primary-glow); text-align: center;}
+        h2 { margin-bottom: 20px; font-size: 2rem; color: #fff; text-align: center;}
+        
+        .input-group { display: flex; flex-direction: column; gap: 12px; width: 340px; margin-bottom: 20px;}
+        
+        input, select {
+            padding: 12px; border: none; border-radius: 6px;
+            background: #2a2d36; color: #fff; font-size: 1rem;
+            outline: none; text-align: center; font-weight: bold;
+        }
+        input:focus, select:focus { box-shadow: 0 0 0 2px var(--primary); }
+        select { cursor: pointer; }
+
+        button {
+            padding: 14px 20px; border: none; border-radius: 6px;
+            font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+            width: 100%; box-sizing: border-box;
+        }
+        button:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+        
+        .btn-host { background: var(--danger); color: #fff; box-shadow: 0 4px 15px var(--danger-glow); }
+        .btn-host:hover:not(:disabled) { background: #ff5580; transform: translateY(-2px); }
+        
+        .btn-client { background: var(--primary); color: #000; box-shadow: 0 4px 15px var(--primary-glow); }
+        .btn-client:hover:not(:disabled) { background: #33ffff; transform: translateY(-2px); }
+        
+        .btn-action { background: #4caf50; color: #fff; box-shadow: 0 4px 15px rgba(76,175,80,0.5); }
+        .btn-action:hover:not(:disabled) { background: #66bb6a; transform: translateY(-2px); }
+        
+        .btn-back { background: #555; color: #fff; margin-top: 10px; }
+        .btn-back:hover:not(:disabled) { background: #777; transform: translateY(-2px); }
+
+        /* ステージ選択・投票画面 */
+        #stage-grid {
+            display: flex; flex-wrap: wrap; gap: 15px; justify-content: center; max-width: 800px;
+        }
+        .stage-card {
+            width: 200px; height: 120px; background: #2a2d36; border: 3px solid #444;
+            border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; color: #fff;
+            position: relative;
+        }
+        .stage-card:hover { border-color: var(--primary); transform: scale(1.05); }
+        .vote-area {
+            display: flex; gap: 6px; margin-top: 12px; height: 16px; justify-content: center; width: 100%;
+        }
+        .vote-dot {
+            width: 16px; height: 16px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 5px #000;
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 2% 3%; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: none; z-index: 5;
+        }
+        .hud-box {
+            background: rgba(0, 0, 0, 0.7); padding: 10px 20px;
+            border-radius: 8px; border: 1px solid #333;
+            font-size: 1.2rem; font-weight: bold;
+        }
+        #role-display { font-size: 1.4rem; }
+        .text-oni { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
+        .text-nige { color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+        /* リザルト画面 & モーダル */
+        #result-title { font-size: 3.5rem; margin-bottom: 10px; }
+        #result-desc { font-size: 1.5rem; margin-bottom: 30px; color: #aaa; font-weight: bold; text-align: center;}
+        .status-msg { margin-top: 20px; font-size: 1.1rem; color: #aaa; text-align: center;}
+
+        #rematch-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--panel-bg); padding: 30px 40px; border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9); border: 2px solid #444;
+            z-index: 100; text-align: center;
+        }
+        #rematch-modal h3 { margin-top: 0; margin-bottom: 25px; font-size: 1.4rem; }
+        .modal-buttons { display: flex; justify-content: center; gap: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="game-wrapper">
+            <!-- ゲーム描画キャンバス -->
+            <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+            <!-- HUD (ヘッドアップディスプレイ) -->
+            <div id="hud" class="hidden">
+                <div class="hud-box">残り時間: <span id="time-display">60</span>秒</div>
+                <div class="hud-box" id="role-display">あなたは<span id="role-text">---</span>です</div>
+            </div>
+
+            <!-- 1. ホーム画面 (一番最初に表示) -->
+            <div id="home-screen" class="overlay">
+                <h1>2D 鬼ごっこ<br><span style="font-size:1.5rem; color:#aaa;">大乱闘マルチプレイ</span></h1>
+                <div class="input-group">
+                    <input type="text" id="nickname-input" placeholder="あなたのニックネーム" autocomplete="off" maxlength="10">
+                    <button class="btn-host" id="btn-go-host">ゲームを作成する (ホスト)</button>
+                    <button class="btn-client" id="btn-go-client">ゲームに参加する (クライアント)</button>
+                </div>
+                <div class="status-msg">※操作: [W/↑] ジャンプ , [A/D/←→] 移動</div>
+            </div>
+
+            <!-- 2-A. ホスト設定画面 -->
+            <div id="host-setup-screen" class="overlay hidden">
+                <h2>部屋の作成</h2>
+                <div class="input-group">
+                    <input type="text" id="host-room-id" placeholder="部屋の合言葉 (例: room123)" autocomplete="off">
+                    <select id="game-time">
+                        <option value="60" selected>制限時間: 1分</option>
+                        <option value="120">制限時間: 2分</option>
+                        <option value="180">制限時間: 3分</option>
+                    </select>
+                    <select id="max-players">
+                        <option value="2" selected>最大人数: 2人</option>
+                        <option value="3">最大人数: 3人</option>
+                        <option value="4">最大人数: 4人</option>
+                        <option value="5">最大人数: 5人</option>
+                    </select>
+                    <button class="btn-host" id="btn-create-room">この設定で作成</button>
+                    <button class="btn-back" id="btn-back-host">戻る</button>
+                </div>
+            </div>
+
+            <!-- 2-B. クライアント設定画面 -->
+            <div id="client-setup-screen" class="overlay hidden">
+                <h2>部屋に参加</h2>
+                <div class="input-group">
+                    <input type="text" id="client-room-id" placeholder="教えてもらった合言葉" autocomplete="off">
+                    <button class="btn-client" id="btn-join-room">参加する</button>
+                    <button class="btn-back" id="btn-back-client">戻る</button>
+                </div>
+            </div>
+
+            <!-- 3. ロビー待機画面 -->
+            <div id="lobby-screen" class="overlay hidden">
+                <h2>ロビー待機中</h2>
+                <div id="lobby-status" style="font-size: 1.5rem; margin-bottom: 20px; font-weight: bold;">参加者: 1 / 2 人</div>
+                <div class="input-group" style="width: 280px;">
+                    <button class="btn-action hidden" id="btn-force-start" disabled>2人以上で開始可能</button>
+                </div>
+                <div class="status-msg" id="lobby-msg">ホストの操作を待っています...</div>
+            </div>
+
+            <!-- 4. スマブラ風ステージ選択・投票画面 -->
+            <div id="stage-screen" class="overlay hidden">
+                <h2>ステージ投票</h2>
+                <div id="stage-grid">
+                    <!-- JSで動的に生成 -->
+                </div>
+                <div class="status-msg" id="stage-msg" style="margin-top: 20px;">好きなステージを選んでください！</div>
+                <div class="input-group" style="width: 280px; margin-top: 20px;">
+                    <button class="btn-action hidden" id="btn-force-decide-stage">投票を締め切る (ホスト専用)</button>
+                </div>
+            </div>
+
+            <!-- 5. リザルト画面 -->
+            <div id="result-screen" class="overlay hidden">
+                <h1 id="result-title">ゲーム終了</h1>
+                <div id="result-desc">敗北(鬼): ---<br>勝者(逃げ): ---</div>
+                <div class="input-group" style="width: 250px;">
+                    <button class="btn-client" id="btn-rematch">もう一度プレイ</button>
+                </div>
+                <div id="rematch-status" class="status-msg"></div>
+            </div>
+
+            <!-- 再戦承認モーダル -->
+            <div id="rematch-modal" class="hidden">
+                <h3>再戦の申請が届いています</h3>
+                <div class="modal-buttons">
+                    <button class="btn-client" id="btn-accept">承認</button>
+                    <button class="btn-host" id="btn-reject">拒否</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase v10 モジュールインポート -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, off, remove, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // ※ FirebaseのConfig
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeVPFYsQIwBjHw3zfQnGJvpRFZXj1V8Yk",
+            authDomain: "toway-ee817.firebaseapp.com",
+            databaseURL: "https://toway-ee817-default-rtdb.firebaseio.com",
+            projectId: "toway-ee817",
+            storageBucket: "toway-ee817.firebasestorage.app",
+            messagingSenderId: "1031134467398",
+            appId: "1:1031134467398:web:e04be1bb04466847520147",
+            measurementId: "G-3J0VQ18QGS"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ---------------------------------------------------------
+        // システム・定数・ステージ定義
+        // ---------------------------------------------------------
+        const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        const CANVAS_W = 800, CANVAS_H = 450;
+        const PLAYER_R = 25;
+        const PLAYER_COLORS = { 1: '#ff3366', 2: '#00ffff', 3: '#33ff33', 4: '#ffff33', 5: '#cc33ff' };
+
+        let myNickname = "";
+        let isHost = false;
+        let myPlayerId = null;
+        let myClientId = null;
+        let roomId = "";
+        
+        // P2P通信管理
+        let clients = {}; 
+        let nextPlayerId = 2;
+        let hostPc = null, hostDc = null;
+        let iceQueue = [];
+
+        // 入力キー
+        let myKeys = { up: false, down: false, left: false, right: false };
+        let allKeys = {}; 
+
+        let camera = { x: 1000, y: 600, scale: 0.5 };
+        const lerp = (a, b, n) => (1 - n) * a + n * b;
+        let loopStarted = false;
+        let lastTime = 0;
+        
+        // ★描画と物理演算の許可フラグ（falseでも通信・UI更新は行われる）
+        let isGameReady = false;
+
+        // 5つの特徴的なステージ定義
+        const STAGES = [
+            {
+                id: 0, name: "【1】基本", w: 2000, h: 1200,
+                solids: [
+                    { x: 0, y: 1100, w: 2000, h: 100 },
+                    { x: 800, y: 800, w: 400, h: 300 },
+                    { x: 0, y: 500, w: 150, h: 600 },
+                    { x: 1850, y: 500, w: 150, h: 600 },
+                ],
+                jumpThroughs: [
+                    { x: 300, y: 850, w: 300, h: 20 }, { x: 1400, y: 850, w: 300, h: 20 },
+                    { x: 850, y: 550, w: 300, h: 20 }, { x: 250, y: 550, w: 250, h: 20 },
+                    { x: 1500, y: 550, w: 250, h: 20 }
+                ],
+                slopes: [], movingBlocks: [], jumpPads: []
+            },
+            {
+                id: 1, name: "【2】天空", w: 1200, h: 2000,
+                solids: [], // 底なし
+                jumpThroughs: [
+                    { x: 450, y: 1800, w: 300, h: 20 }, { x: 200, y: 1500, w: 250, h: 20 },
+                    { x: 750, y: 1400, w: 250, h: 20 }, { x: 400, y: 1100, w: 400, h: 20 },
+                    { x: 100, y: 800, w: 200, h: 20 },  { x: 900, y: 700, w: 200, h: 20 },
+                    { x: 450, y: 400, w: 300, h: 20 }
+                ],
+                slopes: [], movingBlocks: [], jumpPads: []
+            },
+            {
+                id: 2, name: "【3】氷山(斜面)", w: 2000, h: 1200,
+                solids: [ { x: 0, y: 1100, w: 2000, h: 100 } ],
+                jumpThroughs: [ { x: 850, y: 600, w: 300, h: 20 } ],
+                slopes: [ 
+                    { x1: 0, y1: 500, x2: 800, y2: 1100 },
+                    { x1: 1200, y1: 1100, x2: 2000, y2: 500 }
+                ],
+                movingBlocks: [], jumpPads: []
+            },
+            {
+                id: 3, name: "【4】工場(動く床)", w: 2000, h: 1200,
+                solids: [ { x: 0, y: 1100, w: 2000, h: 100 } ],
+                jumpThroughs: [], slopes: [],
+                movingBlocks: [
+                    { x: 200, y: 850, w: 250, h: 40, vx: 200, vy: 0, minX: 200, maxX: 800, minY: 850, maxY: 850 },
+                    { x: 1550, y: 700, w: 250, h: 40, vx: -250, vy: 0, minX: 950, maxX: 1550, minY: 700, maxY: 700 },
+                    { x: 900, y: 1000, w: 200, h: 40, vx: 0, vy: -150, minX: 900, maxX: 900, minY: 300, maxY: 1000 }
+                ],
+                jumpPads: []
+            },
+            {
+                id: 4, name: "【5】カオス", w: 2500, h: 1500,
+                solids: [ { x: 0, y: 1400, w: 2500, h: 100 } ],
+                jumpThroughs: [ { x: 1100, y: 800, w: 300, h: 20 } ],
+                slopes: [ { x1: 300, y1: 1000, x2: 900, y2: 1400 } ],
+                movingBlocks: [
+                    { x: 1600, y: 1200, w: 300, h: 40, vx: 0, vy: -200, minX: 1600, maxX: 1600, minY: 500, maxY: 1200 }
+                ],
+                jumpPads: [
+                    { x: 100, y: 1350, w: 100, h: 50, force: -2200 }, 
+                    { x: 2200, y: 1350, w: 100, h: 50, force: -1800 }
+                ]
+            }
+        ];
+
+        // ゲーム状態のマスター (ホスト一元管理)
+        let gameState = {
+            status: 'home', // home, lobby, stageSelect, countdown, playing, result
+            maxPlayers: 2,
+            timeSetting: 60,
+            timeLeft: 60,
+            countdown: 3,
+            oniId: 1,
+            winnerId: 0,
+            stageId: 0,
+            stageVotes: {}, 
+            globalCooldown: 0, // 全体クールダウン
+            players: {}, // { pId: { name, x, y, vx, vy, color, active, invincible, isGrounded, prevUp, onSlope, onMovingBlock } }
+            movingBlocksState: [],
+            rematchStatus: {} // { pId: 'none' | 'pending' | 'accepted' }
+        };
+
+        // UI表示切り替え共通関数
+        function showScreen(screenId) {
+            const screens = ['home-screen', 'host-setup-screen', 'client-setup-screen', 'lobby-screen', 'stage-screen', 'result-screen'];
+            screens.forEach(s => document.getElementById(s).classList.add('hidden'));
+            if (screenId) document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // ---------------------------------------------------------
+        // UIイベントとLocalStorage (ニックネーム)
+        // ---------------------------------------------------------
+        window.onload = () => {
+            const savedName = localStorage.getItem('ninja_nickname');
+            if (savedName) document.getElementById('nickname-input').value = savedName;
+        };
+
+        function saveNickname() {
+            let name = document.getElementById('nickname-input').value.trim();
+            if (!name) name = "名無し";
+            myNickname = name;
+            localStorage.setItem('ninja_nickname', myNickname);
+        }
+
+        document.getElementById('btn-go-host').addEventListener('click', () => {
+            saveNickname();
+            showScreen('host-setup-screen');
+        });
+        document.getElementById('btn-go-client').addEventListener('click', () => {
+            saveNickname();
+            showScreen('client-setup-screen');
+        });
+        document.getElementById('btn-back-host').addEventListener('click', () => showScreen('home-screen'));
+        document.getElementById('btn-back-client').addEventListener('click', () => showScreen('home-screen'));
+
+        // ---------------------------------------------------------
+        // 1. シグナリングとスター型P2P接続
+        // ---------------------------------------------------------
+        document.getElementById('btn-create-room').addEventListener('click', async () => {
+            roomId = document.getElementById('host-room-id').value.trim();
+            if (!roomId) return alert("合言葉を入力してください");
+            
+            gameState.timeSetting = parseInt(document.getElementById('game-time').value, 10);
+            gameState.maxPlayers = parseInt(document.getElementById('max-players').value, 10);
+            
+            isHost = true; myPlayerId = 1;
+            showScreen('lobby-screen');
+            document.getElementById('btn-force-start').classList.remove('hidden');
+            document.getElementById('lobby-msg').innerText = "参加者を待っています...";
+            
+            gameState.players[1] = createPlayerState(1, myNickname);
+            gameState.rematchStatus[1] = 'none';
+            gameState.status = 'lobby';
+            updateLobbyUI();
+
+            const roomRef = ref(db, `rooms/${roomId}`);
+            await remove(roomRef); 
+
+            // クライアント参加リクエスト待機
+            onChildAdded(ref(db, `rooms/${roomId}/join_requests`), async (snap) => {
+                if (gameState.status !== 'lobby') return; 
+                if (Object.keys(clients).length + 1 >= gameState.maxPlayers) return; 
+                
+                const cId = snap.key;
+                const pId = nextPlayerId++;
+                
+                const pc = new RTCPeerConnection(rtcConfig);
+                const dc = pc.createDataChannel('gameData', { ordered: false, maxRetransmits: 0 });
+                clients[cId] = { pc, dc, pId };
+                
+                gameState.players[pId] = createPlayerState(pId, "接続中...");
+                gameState.rematchStatus[pId] = 'none';
+                allKeys[pId] = { up: false, down: false, left: false, right: false };
+                updateLobbyUI();
+
+                setupHostDataChannel(cId, dc, pId);
+
+                pc.onicecandidate = e => {
+                    if (e.candidate) push(ref(db, `rooms/${roomId}/connections/${cId}/hostIce`), e.candidate.toJSON());
+                };
+
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                await set(ref(db, `rooms/${roomId}/connections/${cId}/offer`), { type: offer.type, sdp: offer.sdp });
+
+                onValue(ref(db, `rooms/${roomId}/connections/${cId}/answer`), async ansSnap => {
+                    if (ansSnap.exists() && !pc.currentRemoteDescription) {
+                        await pc.setRemoteDescription(new RTCSessionDescription(ansSnap.val()));
+                    }
+                });
+
+                onChildAdded(ref(db, `rooms/${roomId}/connections/${cId}/clientIce`), iceSnap => {
+                    if (iceSnap.val()) pc.addIceCandidate(new RTCIceCandidate(iceSnap.val()));
+                });
+            });
+
+            if(!loopStarted) { loopStarted = true; lastTime = performance.now(); requestAnimationFrame(hostLoop); }
+        });
+
+        document.getElementById('btn-join-room').addEventListener('click', async () => {
+            roomId = document.getElementById('client-room-id').value.trim();
+            if (!roomId) return alert("合言葉を入力してください");
+            
+            isHost = false; 
+            myClientId = Math.random().toString(36).substring(2, 10);
+            showScreen('lobby-screen');
+            document.getElementById('lobby-msg').innerText = "ホストと接続中...";
+
+            await set(ref(db, `rooms/${roomId}/join_requests/${myClientId}`), true);
+
+            onValue(ref(db, `rooms/${roomId}/connections/${myClientId}/offer`), async snap => {
+                if (snap.exists() && !hostPc) {
+                    hostPc = new RTCPeerConnection(rtcConfig);
+                    hostPc.ondatachannel = e => { hostDc = e.channel; setupClientDataChannel(); };
+                    
+                    hostPc.onicecandidate = e => {
+                        if (e.candidate) push(ref(db, `rooms/${roomId}/connections/${myClientId}/clientIce`), e.candidate.toJSON());
+                    };
+
+                    await hostPc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+                    const answer = await hostPc.createAnswer();
+                    await hostPc.setLocalDescription(answer);
+                    await set(ref(db, `rooms/${roomId}/connections/${myClientId}/answer`), { type: answer.type, sdp: answer.sdp });
+
+                    onChildAdded(ref(db, `rooms/${roomId}/connections/${myClientId}/hostIce`), iceSnap => {
+                        if (iceSnap.val()) hostPc.addIceCandidate(new RTCIceCandidate(iceSnap.val()));
+                    });
+                }
+            });
+
+            if(!loopStarted) { loopStarted = true; requestAnimationFrame(clientLoop); }
+        });
+
+        function setupHostDataChannel(cId, dc, pId) {
+            dc.onopen = () => { console.log(`Client ${pId} connected.`); };
+            dc.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'join_info') {
+                    gameState.players[pId].name = data.name;
+                    checkLobbyAutoStart(); 
+                }
+                if (data.type === 'input') allKeys[pId] = data.keys;
+                if (data.type === 'vote_stage') {
+                    gameState.stageVotes[pId] = data.stageId;
+                    checkStageVotes();
+                }
+                if (data.type === 'rematch_req') handleRematchRequest(pId, data.action);
+            };
+            dc.onclose = () => { 
+                if(gameState.players[pId]) gameState.players[pId].active = false; 
+                updateLobbyUI(); 
+            };
+        }
+
+        function setupClientDataChannel() {
+            hostDc.onopen = () => {
+                document.getElementById('lobby-msg').innerText = "ホストの操作を待っています...";
+                hostDc.send(JSON.stringify({ type: 'join_info', name: myNickname }));
+            };
+            hostDc.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'state') {
+                    gameState = data.state;
+                    if (myPlayerId === null && data.assignId) myPlayerId = data.assignId;
+                    processClientStateChange();
+                }
+            };
+            hostPc.oniceconnectionstatechange = () => {
+                if (hostPc.iceConnectionState === 'disconnected' || hostPc.iceConnectionState === 'failed') {
+                    alert("通信が切断されました。"); location.reload();
+                }
+            };
+        }
+
+        function createPlayerState(id, name) {
+            return { name: name, x: 0, y: 0, vx: 0, vy: 0, color: PLAYER_COLORS[id], active: true, invincible: 0, isGrounded: false, prevUp: false, onSlope: null, onMovingBlock: null };
+        }
+
+        // ---------------------------------------------------------
+        // 2. 画面遷移ロジック と ステージ投票
+        // ---------------------------------------------------------
+        // ロビーUI更新と自動開始判定
+        function updateLobbyUI() {
+            const activeCount = Object.values(gameState.players).filter(p => p.active).length;
+            document.getElementById('lobby-status').innerText = `参加者: ${activeCount} / ${gameState.maxPlayers} 人`;
+
+            if (isHost && gameState.status === 'lobby') {
+                const btn = document.getElementById('btn-force-start');
+                if (activeCount >= 2) {
+                    btn.disabled = false;
+                    btn.innerText = "ステージ投票へ進む";
+                } else {
+                    btn.disabled = true;
+                    btn.innerText = "2人以上で開始可能";
+                }
+            }
+        }
+
+        function checkLobbyAutoStart() {
+            if (!isHost || gameState.status !== 'lobby') return;
+            updateLobbyUI();
+            const activeCount = Object.values(gameState.players).filter(p => p.active).length;
+            if (activeCount >= gameState.maxPlayers) {
+                startStageSelect();
+            }
+        }
+
+        let currentScreen = 'home';
+        function processClientStateChange() {
+            // ロードフラグ管理 (Canvas表示タイミングの制御)
+            if (gameState.status === 'countdown' || gameState.status === 'playing' || gameState.status === 'result') {
+                if (!isGameReady) isGameReady = true;
+            } else {
+                isGameReady = false;
+            }
+
+            if (gameState.status !== currentScreen) {
+                currentScreen = gameState.status;
+                document.getElementById('rematch-modal').classList.add('hidden');
+                document.getElementById('hud').classList.add('hidden');
+
+                if (currentScreen === 'lobby') {
+                    showScreen('lobby-screen');
+                    updateLobbyUI();
+                } else if (currentScreen === 'stageSelect') {
+                    showScreen('stage-screen');
+                    buildStageGrid();
+                } else if (currentScreen === 'countdown' || currentScreen === 'playing') {
+                    showScreen(null); // Canvasを前面に出すためoverlay全非表示
+                    document.getElementById('hud').classList.remove('hidden');
+                } else if (currentScreen === 'result') {
+                    showScreen('result-screen');
+                    document.getElementById('btn-rematch').classList.remove('hidden');
+                    document.getElementById('rematch-status').innerText = "";
+                    
+                    let resultMsg = "";
+                    const oniName = gameState.players[gameState.winnerId]?.name || "不明";
+                    if (gameState.winnerId === myPlayerId) {
+                        resultMsg = `敗北(鬼): ${oniName} 💀<br>あなたは逃げ切れなかった...`;
+                        document.getElementById('result-desc').style.color = "var(--danger)";
+                    } else {
+                        resultMsg = `敗北(鬼): ${oniName} 💀<br>あなたは逃げ切りました！🎉`;
+                        document.getElementById('result-desc').style.color = "var(--primary)";
+                    }
+                    document.getElementById('result-desc').innerHTML = resultMsg;
+                }
+            }
+
+            // 再戦モーダル同期
+            const myStatus = gameState.rematchStatus[myPlayerId];
+            const isAnyoneRequesting = Object.values(gameState.rematchStatus).includes('pending');
+            if (currentScreen === 'result') {
+                if (isAnyoneRequesting && myStatus === 'none') {
+                    document.getElementById('rematch-modal').classList.remove('hidden');
+                } else if (myStatus === 'accepted') {
+                    document.getElementById('rematch-modal').classList.add('hidden');
+                }
+            }
+        }
+
+        // ホスト：手動で投票へ進むボタン
+        document.getElementById('btn-force-start').addEventListener('click', () => {
+            const activeCount = Object.values(gameState.players).filter(p => p.active).length;
+            if (activeCount < 2) return;
+            startStageSelect();
+        });
+
+        // 投票画面構築
+        let isStageGridBuilt = false;
+        function buildStageGrid() {
+            if (isStageGridBuilt) return;
+            const grid = document.getElementById('stage-grid');
+            grid.innerHTML = '';
+            document.getElementById('stage-msg').innerText = "好きなステージを選んでください！";
+            
+            STAGES.forEach(st => {
+                const card = document.createElement('div');
+                card.className = 'stage-card';
+                card.onclick = () => submitStageVote(st.id);
+                
+                const title = document.createElement('div');
+                title.innerText = st.name;
+                
+                const voteArea = document.createElement('div');
+                voteArea.className = 'vote-area';
+                voteArea.id = `vote-area-${st.id}`;
+                
+                card.appendChild(title);
+                card.appendChild(voteArea);
+                grid.appendChild(card);
+            });
+
+            if (isHost) document.getElementById('btn-force-decide-stage').classList.remove('hidden');
+            isStageGridBuilt = true;
+        }
+
+        function submitStageVote(stageId) {
+            if (isHost) {
+                gameState.stageVotes[myPlayerId] = stageId;
+                checkStageVotes();
+            } else {
+                if (hostDc && hostDc.readyState === 'open') {
+                    hostDc.send(JSON.stringify({ type: 'vote_stage', stageId: stageId }));
+                }
+            }
+        }
+
+        // 毎フレームのリアルタイムUI更新 (全員の投票ドット表示)
+        function updateStageGridUI() {
+            if (gameState.status !== 'stageSelect') return;
+            
+            // ドットのクリア
+            STAGES.forEach(st => {
+                const area = document.getElementById(`vote-area-${st.id}`);
+                if (area) area.innerHTML = '';
+            });
+            
+            let myVoted = false;
+            for (let pId in gameState.stageVotes) {
+                const sId = gameState.stageVotes[pId];
+                const area = document.getElementById(`vote-area-${sId}`);
+                if (area && gameState.players[pId]) {
+                    const dot = document.createElement('div');
+                    dot.className = 'vote-dot';
+                    dot.style.backgroundColor = gameState.players[pId].color;
+                    dot.title = gameState.players[pId].name;
+                    area.appendChild(dot);
+                }
+                if (parseInt(pId) === myPlayerId) myVoted = true;
+            }
+            
+            const msgEl = document.getElementById('stage-msg');
+            if (myVoted) {
+                msgEl.innerText = "他のプレイヤーの投票を待っています...";
+            } else {
+                msgEl.innerText = "好きなステージを選んでください！";
+            }
+        }
+
+        // ホスト：投票締め切りボタン
+        document.getElementById('btn-force-decide-stage').addEventListener('click', () => {
+            forceDecideStage();
+        });
+
+        function forceDecideStage() {
+            const counts = {};
+            for(let id in gameState.stageVotes) {
+                let sId = gameState.stageVotes[id];
+                counts[sId] = (counts[sId] || 0) + 1;
+            }
+            
+            let maxVotes = -1;
+            let selectedStage = 0;
+            let hostVote = gameState.stageVotes[1]; 
+
+            for(let sId in counts) {
+                if(counts[sId] > maxVotes) {
+                    maxVotes = counts[sId];
+                    selectedStage = sId;
+                } else if (counts[sId] === maxVotes) {
+                    if (sId == hostVote) selectedStage = sId; // 同票時ホスト優先
+                }
+            }
+            if (maxVotes === -1) selectedStage = hostVote !== undefined ? hostVote : 0;
+            
+            gameState.stageId = parseInt(selectedStage);
+            initGameMatch();
+        }
+
+        function checkStageVotes() {
+            const activePlayers = Object.keys(gameState.players).filter(id => gameState.players[id].active);
+            const voteCount = Object.keys(gameState.stageVotes).length;
+            if (voteCount >= activePlayers.length && activePlayers.length >= 2) {
+                forceDecideStage();
+            }
+        }
+
+        function startStageSelect() {
+            gameState.status = 'stageSelect';
+            gameState.stageVotes = {}; 
+            isStageGridBuilt = false; // 再構築のためリセット
+            off(ref(db, `rooms/${roomId}/join_requests`)); 
+            buildStageGrid();
+        }
+
+        // ---------------------------------------------------------
+        // 3. ゲーム開始と物理演算・ループ
+        // ---------------------------------------------------------
+        function initGameMatch() {
+            gameState.status = 'countdown';
+            gameState.countdown = 3.99;
+            gameState.timeLeft = gameState.timeSetting;
+            gameState.globalCooldown = 0; 
+            currentStageId = gameState.stageId;
+            const stg = STAGES[currentStageId];
+            
+            gameState.movingBlocksState = stg.movingBlocks.map(mb => ({ ...mb }));
+            
+            let activeIds = [];
+            for (let id in gameState.players) {
+                if (gameState.players[id].active) activeIds.push(id);
+            }
+            const total = activeIds.length;
+            const startX = stg.w / 2 - ((total - 1) * 150) / 2;
+
+            for (let i = 0; i < total; i++) {
+                const id = activeIds[i];
+                gameState.players[id].x = startX + (i * 150);
+                gameState.players[id].y = 200; 
+                gameState.players[id].vx = 0; 
+                gameState.players[id].vy = 0;
+                gameState.players[id].invincible = 0;
+                gameState.players[id].onSlope = null; 
+                gameState.players[id].onMovingBlock = null;
+            }
+
+            gameState.oniId = parseInt(activeIds[Math.floor(Math.random() * activeIds.length)]);
+            gameState.winnerId = 0;
+            for(let id in gameState.rematchStatus) gameState.rematchStatus[id] = 'none';
+            
+            isGameReady = true; 
+        }
+
+        function hostLoop() {
+            const now = performance.now();
+            const dt = Math.min((now - lastTime) / 1000, 0.1); 
+            lastTime = now;
+
+            // ★物理演算はゲーム中のみ実行
+            if (isGameReady) {
+                if (gameState.status === 'countdown') {
+                    gameState.countdown -= dt;
+                    if (gameState.countdown <= 0) gameState.status = 'playing';
+                } 
+                else if (gameState.status === 'playing') {
+                    const stg = STAGES[gameState.stageId];
+                    if(stg) {
+                        for (let mb of gameState.movingBlocksState) {
+                            mb.x += mb.vx * dt;
+                            mb.y += mb.vy * dt;
+                            if (mb.x < mb.minX) { mb.x = mb.minX; mb.vx *= -1; }
+                            if (mb.x > mb.maxX) { mb.x = mb.maxX; mb.vx *= -1; }
+                            if (mb.y < mb.minY) { mb.y = mb.minY; mb.vy *= -1; }
+                            if (mb.y > mb.maxY) { mb.y = mb.maxY; mb.vy *= -1; }
+                        }
+
+                        allKeys[1] = myKeys; 
+                        for (let id in gameState.players) {
+                            const p = gameState.players[id];
+                            if (!p.active) continue;
+                            applyPhysics(p, allKeys[id] || {}, dt, parseInt(id) === gameState.oniId, stg);
+                        }
+
+                        if (gameState.globalCooldown > 0) {
+                            gameState.globalCooldown -= dt;
+                        } else {
+                            const oniP = gameState.players[gameState.oniId];
+                            if (oniP && oniP.active) {
+                                for (let id in gameState.players) {
+                                    if (id == gameState.oniId || !gameState.players[id].active) continue;
+                                    const target = gameState.players[id];
+
+                                    const dx = oniP.x - target.x;
+                                    const dy = oniP.y - target.y;
+                                    if (Math.sqrt(dx*dx + dy*dy) < PLAYER_R * 2) {
+                                        gameState.oniId = parseInt(id);
+                                        gameState.globalCooldown = 0.5; 
+                                        target.invincible = 0.5; 
+                                        break; 
+                                    }
+                                }
+                            }
+                        }
+
+                        for (let id in gameState.players) {
+                            if (gameState.players[id].invincible > 0) gameState.players[id].invincible -= dt;
+                        }
+
+                        gameState.timeLeft -= dt;
+                        if (gameState.timeLeft <= 0) {
+                            gameState.timeLeft = 0;
+                            gameState.winnerId = gameState.oniId; 
+                            gameState.status = 'result';
+                        }
+                    }
+                }
+            }
+
+            // ★P2P同期パケット送信は常に実行
+            for (let cId in clients) {
+                const c = clients[cId];
+                if (c.dc.readyState === 'open') {
+                    c.dc.send(JSON.stringify({ type: 'state', state: gameState, assignId: c.pId }));
+                }
+            }
+
+            // ★UI更新も常に実行
+            processClientStateChange(); 
+            if (gameState.status === 'stageSelect') updateStageGridUI();
+
+            // ★Canvas描画はゲーム中のみ
+            if (isGameReady) render();
+            
+            requestAnimationFrame(hostLoop);
+        }
+
+        function applyPhysics(p, keys, dt, isOni, stg) {
+            const ACCEL = isOni ? 4500 : 4000;
+            const MAX_SPEED = isOni ? 550 : 500;
+            const FRICTION = 12; 
+            const GRAVITY = 2500;
+            const JUMP_FORCE = -1150;
+            const MAX_FALL_SPEED = 1500;
+
+            let dir = 0;
+            if (keys.left) dir -= 1;
+            if (keys.right) dir += 1;
+
+            if (p.onMovingBlock) {
+                p.x += p.onMovingBlock.vx * dt;
+                p.y += p.onMovingBlock.vy * dt;
+            }
+
+            if (dir !== 0) p.vx += dir * ACCEL * dt;
+            else p.vx -= p.vx * FRICTION * dt;
+
+            if (p.onSlope) {
+                const dx = p.onSlope.x2 - p.onSlope.x1;
+                const dy = p.onSlope.y2 - p.onSlope.y1;
+                const sign = (dy / dx > 0) ? 1 : -1; 
+                p.vx += sign * 1200 * dt; 
+            }
+
+            if (p.vx > MAX_SPEED) p.vx = MAX_SPEED;
+            if (p.vx < -MAX_SPEED) p.vx = -MAX_SPEED;
+            if (Math.abs(p.vx) < 5) p.vx = 0;
+
+            p.x += p.vx * dt;
+
+            let pL = p.x - PLAYER_R, pR = p.x + PLAYER_R, pT = p.y - PLAYER_R, pB = p.y + PLAYER_R;
+            for (let b of stg.solids) {
+                if (pR > b.x && pL < b.x + b.w && pB > b.y && pT < b.y + b.h) {
+                    if (p.vx > 0) { p.x = b.x - PLAYER_R; p.vx = 0; }
+                    else if (p.vx < 0) { p.x = b.x + b.w + PLAYER_R; p.vx = 0; }
+                }
+            }
+
+            p.vy += GRAVITY * dt;
+            if (p.vy > MAX_FALL_SPEED) p.vy = MAX_FALL_SPEED;
+
+            if (keys.up && !p.prevUp && p.isGrounded) { 
+                p.vy = JUMP_FORCE; p.isGrounded = false; 
+                p.onMovingBlock = null; p.onSlope = null;
+            }
+            p.prevUp = keys.up;
+
+            let prevBottom = p.y + PLAYER_R;
+            p.y += p.vy * dt;
+            p.isGrounded = false;
+            p.onSlope = null; p.onMovingBlock = null;
+
+            pL = p.x - PLAYER_R; pR = p.x + PLAYER_R; pT = p.y - PLAYER_R; pB = p.y + PLAYER_R;
+            for (let b of stg.solids) {
+                if (pR > b.x && pL < b.x + b.w && pB > b.y && pT < b.y + b.h) {
+                    if (p.vy > 0) { p.y = b.y - PLAYER_R; p.vy = 0; p.isGrounded = true; }
+                    else if (p.vy < 0) { p.y = b.y + b.h + PLAYER_R; p.vy = 0; }
+                }
+            }
+
+            for (let jt of stg.jumpThroughs) {
+                pB = p.y + PLAYER_R;
+                if (pR > jt.x && pL < jt.x + jt.w) {
+                    if (p.vy >= 0 && prevBottom <= jt.y + 0.1 && pB >= jt.y) {
+                        p.y = jt.y - PLAYER_R; p.vy = 0; p.isGrounded = true;
+                    }
+                }
+            }
+
+            for (let mb of gameState.movingBlocksState) {
+                pB = p.y + PLAYER_R;
+                if (pR > mb.x && pL < mb.x + mb.w) {
+                    if (p.vy >= 0 && prevBottom <= mb.y + Math.max(0, mb.vy*dt) + 0.1 && pB >= mb.y) {
+                        p.y = mb.y - PLAYER_R; p.vy = 0; p.isGrounded = true;
+                        p.onMovingBlock = mb;
+                    }
+                }
+            }
+
+            for (let sl of stg.slopes) {
+                if (p.x >= sl.x1 && p.x <= sl.x2) {
+                    let lineY = sl.y1 + (sl.y2 - sl.y1) * (p.x - sl.x1) / (sl.x2 - sl.x1);
+                    pB = p.y + PLAYER_R;
+                    if (p.vy >= 0 && prevBottom <= lineY + 10 && pB >= lineY) {
+                        p.y = lineY - PLAYER_R; p.vy = 0; p.isGrounded = true;
+                        p.onSlope = sl;
+                    }
+                }
+            }
+
+            for (let jp of stg.jumpPads) {
+                if (pR > jp.x && pL < jp.x + jp.w && pB > jp.y && pT < jp.y + jp.h) {
+                    p.vy = jp.force; p.isGrounded = false;
+                }
+            }
+
+            if (p.y > stg.h + 200) { p.y = -100; p.vy = 0; p.vx = 0; }
+            if (p.x < -100) p.x = stg.w + 100;
+            if (p.x > stg.w + 100) p.x = -100;
+        }
+
+        function clientLoop() {
+            if (hostDc && hostDc.readyState === 'open') {
+                hostDc.send(JSON.stringify({ type: 'input', keys: myKeys }));
+            }
+            
+            // UIや描画は常に更新関数を回すが、中でガードが働く
+            if (gameState.status === 'stageSelect') updateStageGridUI();
+            if (isGameReady) render();
+            
+            requestAnimationFrame(clientLoop);
+        }
+
+        // ---------------------------------------------------------
+        // 4. 描画とダイナミックカメラ・鎌アニメーション
+        // ---------------------------------------------------------
+        function render() {
+            if (!isGameReady) return; 
+            
+            const stg = STAGES[gameState.stageId];
+            if (!stg) return;
+
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            let activeCount = 0;
+            for (let id in gameState.players) {
+                const p = gameState.players[id];
+                if (!p.active) continue;
+                if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+                activeCount++;
+            }
+            if (activeCount === 0) { minX = stg.w/2; maxX = stg.w/2; minY = stg.h/2; maxY = stg.h/2; }
+
+            const M_X = 600, M_Y = 450; 
+            const reqW = (maxX - minX) + M_X;
+            const reqH = (maxY - minY) + M_Y;
+            const scaleX = CANVAS_W / reqW;
+            const scaleY = CANVAS_H / reqH;
+
+            let targetScale = Math.min(scaleX, scaleY);
+            targetScale = Math.max(0.35, Math.min(1.0, targetScale));
+
+            const midX = (minX + maxX) / 2;
+            const midY = (minY + maxY) / 2;
+
+            camera.x = lerp(camera.x, midX, 0.1);
+            camera.y = lerp(camera.y, midY, 0.1);
+            camera.scale = lerp(camera.scale, targetScale, 0.08);
+
+            ctx.fillStyle = '#0f1015'; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+            ctx.save();
+            ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
+            ctx.scale(camera.scale, camera.scale);
+            ctx.translate(-camera.x, -camera.y);
+
+            ctx.fillStyle = '#1a1d24'; ctx.fillRect(0, 0, stg.w, stg.h);
+            ctx.strokeStyle = '#2a2d36'; ctx.lineWidth = 2; ctx.beginPath();
+            for(let i=0; i<=stg.w; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,stg.h); }
+            for(let i=0; i<=stg.h; i+=100) { ctx.moveTo(0,i); ctx.lineTo(stg.w,i); }
+            ctx.stroke();
+            ctx.strokeStyle = '#555'; ctx.lineWidth = 10; ctx.strokeRect(0, 0, stg.w, stg.h);
+
+            ctx.fillStyle = '#111827'; ctx.strokeStyle = '#374151'; ctx.lineWidth = 4;
+            for(let b of stg.solids) { ctx.fillRect(b.x, b.y, b.w, b.h); ctx.strokeRect(b.x, b.y, b.w, b.h); }
+
+            ctx.fillStyle = 'rgba(45, 55, 72, 0.7)'; ctx.strokeStyle = '#00ffff'; ctx.lineWidth = 3;
+            for(let jt of stg.jumpThroughs) {
+                ctx.fillRect(jt.x, jt.y, jt.w, jt.h);
+                ctx.beginPath(); ctx.moveTo(jt.x, jt.y); ctx.lineTo(jt.x + jt.w, jt.y); ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 8; ctx.lineCap = 'round';
+            for(let sl of stg.slopes) {
+                ctx.beginPath(); ctx.moveTo(sl.x1, sl.y1); ctx.lineTo(sl.x2, sl.y2); ctx.stroke();
+            }
+
+            ctx.fillStyle = '#4B0082'; ctx.strokeStyle = '#8A2BE2'; ctx.lineWidth = 4;
+            const mbs = isHost ? gameState.movingBlocksState : gameState.movingBlocksState;
+            for(let mb of mbs) {
+                ctx.fillRect(mb.x, mb.y, mb.w, mb.h); ctx.strokeRect(mb.x, mb.y, mb.w, mb.h);
+            }
+
+            ctx.fillStyle = '#ff6600'; ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 3;
+            for(let jp of stg.jumpPads) {
+                ctx.fillRect(jp.x, jp.y, jp.w, jp.h); ctx.strokeRect(jp.x, jp.y, jp.w, jp.h);
+                ctx.beginPath(); ctx.moveTo(jp.x+10, jp.y+jp.h/2); ctx.lineTo(jp.x+jp.w-10, jp.y+jp.h/2); ctx.stroke();
+            }
+
+            for (let id in gameState.players) {
+                const p = gameState.players[id];
+                if (!p.active || p.x === undefined || p.y === undefined) continue; 
+                
+                const isMe = parseInt(id) === myPlayerId;
+                const isOni = parseInt(id) === gameState.oniId;
+                
+                ctx.globalAlpha = (p.invincible > 0 && isOni) ? (0.4 + 0.6 * Math.sin(Date.now()/30)) : 1.0;
+                
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, PLAYER_R, 0, Math.PI*2);
+                ctx.fillStyle = p.color;
+                
+                if (isOni) { ctx.shadowColor = '#ff0000'; ctx.shadowBlur = 20; } 
+                else { ctx.shadowColor = p.color; ctx.shadowBlur = 10; }
+                
+                ctx.fill(); ctx.shadowBlur = 0; 
+
+                if (isOni) {
+                    let targetAngle = 0; let minDist = Infinity;
+                    for (let oid in gameState.players) {
+                        if (oid === id || !gameState.players[oid].active) continue;
+                        const other = gameState.players[oid];
+                        if (other.x === undefined) continue;
+                        const dist = Math.sqrt(Math.pow(other.x - p.x, 2) + Math.pow(other.y - p.y, 2));
+                        if (dist < minDist) { minDist = dist; targetAngle = Math.atan2(other.y - p.y, other.x - p.x); }
+                    }
+                    if (minDist === Infinity) targetAngle = Math.PI / -2; 
+
+                    ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(targetAngle); ctx.translate(PLAYER_R + 10, 0); 
+                    ctx.fillStyle = '#654321'; ctx.fillRect(-4, -35, 8, 70);
+                    ctx.beginPath(); ctx.moveTo(0, -35); ctx.quadraticCurveTo(45, -35, 45, -10); ctx.quadraticCurveTo(20, -20, 0, 5);
+                    ctx.fillStyle = '#e0e0e0'; ctx.fill(); ctx.strokeStyle = '#999'; ctx.lineWidth=1; ctx.stroke();
+                    ctx.restore();
+                }
+                ctx.globalAlpha = 1.0;
+
+                ctx.fillStyle = '#fff'; 
+                ctx.font = '16px bold sans-serif';
+                ctx.textAlign = 'center'; 
+                ctx.fillText(p.name || 'Player', p.x, p.y - 35);
+                
+                if (isMe) {
+                    ctx.fillStyle = '#ff0';
+                    ctx.font = '14px bold sans-serif';
+                    ctx.fillText('▼YOU', p.x, p.y - 55);
+                }
+            }
+            ctx.restore();
+
+            document.getElementById('time-display').innerText = Math.ceil(gameState.timeLeft);
+            const roleEl = document.getElementById('role-text');
+            if (gameState.oniId === myPlayerId) {
+                roleEl.innerText = '【鬼】'; roleEl.className = 'text-oni';
+            } else {
+                roleEl.innerText = '【逃げ】'; roleEl.className = 'text-nige';
+            }
+
+            if (gameState.status === 'countdown') {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)'; ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+                ctx.fillStyle = '#fff'; ctx.font = '80px bold sans-serif'; ctx.textAlign = 'center';
+                ctx.fillText(Math.ceil(gameState.countdown).toString(), CANVAS_W/2, CANVAS_H/2 + 25);
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 5. 再戦承認フロー 
+        // ---------------------------------------------------------
+        function handleRematchRequest(pId, action) {
+            if (action === 'req' || action === 'accept') {
+                gameState.rematchStatus[pId] = 'pending'; 
+                if (action === 'accept') gameState.rematchStatus[pId] = 'accepted';
+                if (action === 'req') gameState.rematchStatus[pId] = 'accepted';
+                
+                let isReqMode = Object.values(gameState.rematchStatus).includes('pending') || Object.values(gameState.rematchStatus).includes('accepted');
+                if (isReqMode) {
+                    for(let id in gameState.players) {
+                        if (gameState.players[id].active && gameState.rematchStatus[id] === 'none') {
+                            gameState.rematchStatus[id] = 'pending';
+                        }
+                    }
+                }
+
+                let allAccepted = true;
+                for(let id in gameState.players) {
+                    if (gameState.players[id].active && gameState.rematchStatus[id] !== 'accepted') allAccepted = false;
+                }
+                
+                if (allAccepted) {
+                    startStageSelect();
+                }
+            } 
+            else if (action === 'reject') {
+                for(let id in gameState.rematchStatus) gameState.rematchStatus[id] = 'none';
+            }
+        }
+
+        document.getElementById('btn-rematch').addEventListener('click', () => {
+            document.getElementById('btn-rematch').classList.add('hidden');
+            document.getElementById('rematch-status').innerText = "他のプレイヤーを待っています...";
+            if (isHost) handleRematchRequest(myPlayerId, 'req');
+            else if (hostDc) hostDc.send(JSON.stringify({ type: 'rematch_req', action: 'req' }));
+        });
+
+        document.getElementById('btn-accept').addEventListener('click', () => {
+            document.getElementById('rematch-modal').classList.add('hidden');
+            document.getElementById('rematch-status').innerText = "他のプレイヤーを待っています...";
+            if (isHost) handleRematchRequest(myPlayerId, 'accept');
+            else if (hostDc) hostDc.send(JSON.stringify({ type: 'rematch_req', action: 'accept' }));
+        });
+
+        document.getElementById('btn-reject').addEventListener('click', () => {
+            document.getElementById('rematch-modal').classList.add('hidden');
+            document.getElementById('btn-rematch').classList.remove('hidden');
+            document.getElementById('rematch-status').innerText = "再戦を拒否しました。";
+            if (isHost) handleRematchRequest(myPlayerId, 'reject');
+            else if (hostDc) hostDc.send(JSON.stringify({ type: 'rematch_req', action: 'reject' }));
+        });
+
+        // ---------------------------------------------------------
+        // 6. 入力イベント設定
+        // ---------------------------------------------------------
+        function handleKey(e, isDown) {
+            const key = e.key.toLowerCase();
+            if (['w', 'arrowup'].includes(key)) { myKeys.up = isDown; e.preventDefault(); }
+            if (['s', 'arrowdown'].includes(key)) { myKeys.down = isDown; e.preventDefault(); }
+            if (['a', 'arrowleft'].includes(key)) { myKeys.left = isDown; e.preventDefault(); }
+            if (['d', 'arrowright'].includes(key)) { myKeys.right = isDown; e.preventDefault(); }
+        }
+        window.addEventListener('keydown', e => handleKey(e, true), { passive: false });
+        window.addEventListener('keyup', e => handleKey(e, false), { passive: false });
+
+    </script>
+</body>
+</html>

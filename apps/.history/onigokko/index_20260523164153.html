@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D 鬼ごっこゲーム - フルスペック版</title>
+    <style>
+        /* モダン＆ダークテーマのCSS */
+        :root {
+            --bg-color: #0f1015;
+            --panel-bg: #1a1d24;
+            --primary: #00ffff;
+            --primary-glow: #00ffff88;
+            --danger: #ff3366;
+            --danger-glow: #ff336688;
+            --text: #e2e8f0;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: #000; color: var(--text);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; 
+        }
+
+        /* レスポンシブ＆フルスクリーン用コンテナ */
+        #app-container {
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center;
+            background: #000;
+        }
+
+        /* アスペクト比16:9を維持して最大化 */
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: calc(100vh * 16 / 9);
+            aspect-ratio: 16 / 9;
+            background: var(--bg-color);
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            overflow: hidden;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UIオーバーレイ */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 16, 21, 0.9);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10;
+        }
+        
+        .hidden { display: none !important; }
+
+        h1 { margin-bottom: 30px; font-size: 3rem; text-shadow: 0 0 10px var(--primary-glow); text-align: center;}
+        
+        .input-group { display: flex; flex-direction: column; gap: 15px; width: 320px; }
+        
+        input, select {
+            padding: 12px; border: none; border-radius: 6px;
+            background: #2a2d36; color: #fff; font-size: 1rem;
+            outline: none; text-align: center; font-weight: bold;
+        }
+        input:focus, select:focus { box-shadow: 0 0 0 2px var(--primary); }
+        select { cursor: pointer; }
+
+        button {
+            padding: 12px 20px; border: none; border-radius: 6px;
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .btn-host { background: var(--danger); color: #fff; box-shadow: 0 4px 15px var(--danger-glow); }
+        .btn-host:hover { background: #ff5580; transform: translateY(-2px); }
+        .btn-client { background: var(--primary); color: #000; box-shadow: 0 4px 15px var(--primary-glow); }
+        .btn-client:hover { background: #33ffff; transform: translateY(-2px); }
+
+        /* HUD */
+        #hud {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 2% 3%; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: none; z-index: 5;
+        }
+        .hud-box {
+            background: rgba(0, 0, 0, 0.6); padding: 10px 20px;
+            border-radius: 8px; border: 1px solid #333;
+            font-size: 1.2rem; font-weight: bold;
+        }
+        #role-display { font-size: 1.4rem; }
+        .text-oni { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
+        .text-nige { color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+        /* リザルト画面 & モーダル */
+        #result-title { font-size: 3.5rem; margin-bottom: 10px; }
+        #result-desc { font-size: 1.5rem; margin-bottom: 30px; color: #aaa; font-weight: bold; }
+        #status-msg { margin-top: 20px; font-size: 1rem; color: #888; text-align: center;}
+
+        #rematch-modal {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--panel-bg); padding: 30px 40px; border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9); border: 2px solid #444;
+            z-index: 100; text-align: center;
+        }
+        #rematch-modal h3 { margin-top: 0; margin-bottom: 25px; font-size: 1.4rem; }
+        .modal-buttons { display: flex; justify-content: center; gap: 20px; }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+        <div id="game-wrapper">
+            <!-- Canvas (論理解像度 800x450 を維持) -->
+            <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+            <!-- HUD -->
+            <div id="hud" class="hidden">
+                <div class="hud-box">残り時間: <span id="time-display">60</span>秒</div>
+                <div class="hud-box" id="role-display">あなたは<span id="role-text">---</span>です</div>
+            </div>
+
+            <!-- タイトル・マッチング画面 -->
+            <div id="title-screen" class="overlay">
+                <h1>2D 鬼ごっこ</h1>
+                <div class="input-group">
+                    <input type="text" id="room-id" placeholder="部屋の合言葉 (例: room123)" autocomplete="off">
+                    <!-- ゲーム時間選択 (ホスト側設定) -->
+                    <select id="game-time">
+                        <option value="60" selected>制限時間: 1分</option>
+                        <option value="120">制限時間: 2分</option>
+                        <option value="180">制限時間: 3分</option>
+                    </select>
+                    <button class="btn-host" id="btn-create">部屋を作成 (ホスト)</button>
+                    <button class="btn-client" id="btn-join">部屋に参加 (クライアント)</button>
+                </div>
+                <div id="status-msg">※操作: [W/上矢印] ジャンプ , [A/D/左右矢印] 移動</div>
+            </div>
+
+            <!-- リザルト画面 -->
+            <div id="result-screen" class="overlay hidden">
+                <h1 id="result-title">ゲーム終了</h1>
+                <div id="result-desc">勝者: ---</div>
+                <button class="btn-client" id="btn-rematch">もう一度プレイ</button>
+                <div id="rematch-status" style="margin-top: 20px; font-size: 1rem; color: #aaa;"></div>
+            </div>
+
+            <!-- 再戦承認モーダル -->
+            <div id="rematch-modal" class="hidden">
+                <h3>相手から再戦の申請が届いています</h3>
+                <div class="modal-buttons">
+                    <button class="btn-client" id="btn-accept">承認</button>
+                    <button class="btn-host" id="btn-reject">拒否</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase v10 モジュールインポート & ロジック -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, off, remove, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeVPFYsQIwBjHw3zfQnGJvpRFZXj1V8Yk",
+            authDomain: "toway-ee817.firebaseapp.com",
+            databaseURL: "https://toway-ee817-default-rtdb.firebaseio.com",
+            projectId: "toway-ee817",
+            storageBucket: "toway-ee817.firebasestorage.app",
+            messagingSenderId: "1031134467398",
+            appId: "1:1031134467398:web:e04be1bb04466847520147",
+            measurementId: "G-3J0VQ18QGS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ---------------------------------------------------------
+        // システム・ステージ定数
+        // ---------------------------------------------------------
+        const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        let pc, dc;
+        let isHost = false;
+        let myPlayerId = 1; 
+        let roomId = "";
+        let iceQueue = [];
+
+        const STAGE_W = 2000, STAGE_H = 1200;
+        const CANVAS_W = 800, CANVAS_H = 450;
+        const PLAYER_R = 25;
+
+        // ステージギミック（通り抜け不可の外壁/土台ブロック）
+        const solidBlocks = [
+            { x: 0, y: 1100, w: 2000, h: 100 },   
+            { x: 800, y: 800, w: 400, h: 300 },   
+            { x: 0, y: 500, w: 150, h: 600 },     
+            { x: 1850, y: 500, w: 150, h: 600 },  
+        ];
+
+        // ステージギミック（下からすり抜け可能なワンウェイプラットフォーム）
+        const jumpThroughs = [
+            { x: 300, y: 850, w: 300, h: 20 },
+            { x: 1400, y: 850, w: 300, h: 20 },
+            { x: 850, y: 550, w: 300, h: 20 },
+            { x: 250, y: 550, w: 250, h: 20 },
+            { x: 50, y: 300, w: 250, h: 20 },
+            { x: 550, y: 350, w: 200, h: 20 },
+            { x: 1500, y: 550, w: 250, h: 20 },
+            { x: 1700, y: 300, w: 250, h: 20 },
+            { x: 1250, y: 350, w: 200, h: 20 },
+            { x: 900, y: 250, w: 200, h: 20 },
+        ];
+
+        let gameDuration = 60; // 選択されたゲーム時間保持
+        let isRequestingRematch = false; // 再戦申請中フラグ
+        let loopStarted = false;
+
+        let gameState = {
+            status: 'title', 
+            countdown: 3, timeLeft: 60, oni: 1, invincible: 0, winner: 0,
+            p1: { x: 400, y: 1000, vx: 0, vy: 0, isGrounded: false, prevUp: false },
+            p2: { x: 1600, y: 1000, vx: 0, vy: 0, isGrounded: false, prevUp: false }
+        };
+
+        let myKeys = { up: false, down: false, left: false, right: false };
+        let clientKeys = { up: false, down: false, left: false, right: false };
+        let camera = { x: STAGE_W/2, y: STAGE_H/2, scale: 0.5 };
+        const lerp = (a, b, n) => (1 - n) * a + n * b;
+
+        const uiTitle = document.getElementById('title-screen');
+        const uiResult = document.getElementById('result-screen');
+        const uiHud = document.getElementById('hud');
+        const statusMsg = document.getElementById('status-msg');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ---------------------------------------------------------
+        // WebRTC シグナリング処理
+        // ---------------------------------------------------------
+        async function createRoom() {
+            roomId = document.getElementById('room-id').value.trim();
+            if (!roomId) return alert("合言葉を入力してください");
+            
+            // ホストの設定時間を読み取る
+            gameDuration = parseInt(document.getElementById('game-time').value, 10);
+            
+            isHost = true; myPlayerId = 1;
+            uiTitle.querySelector('.input-group').classList.add('hidden');
+            statusMsg.innerText = "部屋を作成中...";
+
+            const roomRef = ref(db, `rooms/${roomId}`);
+            await remove(roomRef); 
+
+            pc = new RTCPeerConnection(rtcConfig);
+            dc = pc.createDataChannel('gameData', { ordered: false, maxRetransmits: 0 });
+            setupDataChannel();
+
+            pc.onicecandidate = e => {
+                if (e.candidate) push(ref(db, `rooms/${roomId}/hostIce`), e.candidate.toJSON());
+            };
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await set(ref(db, `rooms/${roomId}/offer`), { type: offer.type, sdp: offer.sdp });
+            statusMsg.innerText = "クライアントの参加を待機中...";
+
+            onValue(ref(db, `rooms/${roomId}/answer`), async snap => {
+                if (snap.exists() && !pc.currentRemoteDescription) {
+                    await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+                    processIceQueue();
+                }
+            });
+            onChildAdded(ref(db, `rooms/${roomId}/clientIce`), snap => handleIceCandidate(snap.val()));
+        }
+
+        async function joinRoom() {
+            roomId = document.getElementById('room-id').value.trim();
+            if (!roomId) return alert("合言葉を入力してください");
+            isHost = false; myPlayerId = 2;
+            uiTitle.querySelector('.input-group').classList.add('hidden');
+            statusMsg.innerText = "部屋に参加中...";
+
+            const offerSnap = await get(ref(db, `rooms/${roomId}/offer`));
+            if (!offerSnap.exists()) {
+                alert("部屋が見つかりません。");
+                location.reload(); return;
+            }
+
+            pc = new RTCPeerConnection(rtcConfig);
+            pc.ondatachannel = e => { dc = e.channel; setupDataChannel(); };
+
+            pc.onicecandidate = e => {
+                if (e.candidate) push(ref(db, `rooms/${roomId}/clientIce`), e.candidate.toJSON());
+            };
+
+            await pc.setRemoteDescription(new RTCSessionDescription(offerSnap.val()));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            await set(ref(db, `rooms/${roomId}/answer`), { type: answer.type, sdp: answer.sdp });
+            statusMsg.innerText = "P2P接続を確立中...";
+
+            onChildAdded(ref(db, `rooms/${roomId}/hostIce`), snap => handleIceCandidate(snap.val()));
+        }
+
+        async function handleIceCandidate(candidateData) {
+            if (candidateData) {
+                if (pc.remoteDescription) await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+                else iceQueue.push(candidateData);
+            }
+        }
+        async function processIceQueue() {
+            for (let c of iceQueue) await pc.addIceCandidate(new RTCIceCandidate(c));
+            iceQueue = [];
+        }
+
+        function setupDataChannel() {
+            dc.onopen = () => {
+                off(ref(db, `rooms/${roomId}`)); // シグナリング完了でFirebase切り離し
+                uiTitle.classList.add('hidden');
+                uiHud.classList.remove('hidden');
+                initGame();
+            };
+            
+            dc.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (isHost) {
+                    if (data.type === 'input') clientKeys = data.keys;
+                } else {
+                    if (data.type === 'state') gameState = data.state;
+                }
+
+                // --- 再戦の相互承認処理 ---
+                if (data.type === 'rematch_request') {
+                    if (isRequestingRematch) {
+                        // 同時申請の場合は自動承認
+                        isRequestingRematch = false;
+                        if (isHost) resetGameData();
+                    } else {
+                        document.getElementById('rematch-modal').classList.remove('hidden');
+                    }
+                } else if (data.type === 'rematch_accept') {
+                    document.getElementById('rematch-modal').classList.add('hidden');
+                    isRequestingRematch = false;
+                    if (isHost) resetGameData(); // ホストがリセット処理を実行
+                } else if (data.type === 'rematch_reject') {
+                    document.getElementById('rematch-status').innerText = "相手が再戦を拒否しました。";
+                    document.getElementById('btn-rematch').classList.remove('hidden');
+                    isRequestingRematch = false;
+                }
+            };
+
+            pc.oniceconnectionstatechange = () => {
+                if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+                    alert("通信が切断されました。"); location.reload();
+                }
+            };
+        }
+
+        // ---------------------------------------------------------
+        // ゲームロジック・物理演算
+        // ---------------------------------------------------------
+        function resetGameData() {
+            gameState.status = 'countdown';
+            gameState.countdown = 3.99; 
+            gameState.timeLeft = gameDuration; // 設定時間を適用
+            gameState.oni = 1;
+            gameState.invincible = 0;
+            gameState.winner = 0;
+            gameState.p1 = { x: 400, y: 1000, vx: 0, vy: 0, isGrounded: false, prevUp: false };
+            gameState.p2 = { x: 1600, y: 1000, vx: 0, vy: 0, isGrounded: false, prevUp: false };
+            
+            isRequestingRematch = false;
+            uiResult.classList.add('hidden');
+            document.getElementById('rematch-modal').classList.add('hidden');
+            document.getElementById('rematch-status').innerText = "";
+            document.getElementById('btn-rematch').classList.remove('hidden');
+        }
+
+        function initGame() {
+            resetGameData();
+            lastTime = performance.now();
+            if (!loopStarted) {
+                loopStarted = true;
+                if (isHost) gameLoop();
+                else clientLoop();
+            }
+        }
+
+        function applyPhysics(p, keys, dt, isOni) {
+            const ACCEL = isOni ? 4500 : 4000;
+            const MAX_SPEED = isOni ? 550 : 500;
+            const FRICTION = 12; 
+            const GRAVITY = 2500;
+            const JUMP_FORCE = -1150;
+            const MAX_FALL_SPEED = 1500;
+
+            let dir = 0;
+            if (keys.left) dir -= 1;
+            if (keys.right) dir += 1;
+
+            if (dir !== 0) p.vx += dir * ACCEL * dt;
+            else p.vx -= p.vx * FRICTION * dt;
+
+            if (p.vx > MAX_SPEED) p.vx = MAX_SPEED;
+            if (p.vx < -MAX_SPEED) p.vx = -MAX_SPEED;
+            if (Math.abs(p.vx) < 5) p.vx = 0;
+
+            p.x += p.vx * dt;
+            if (p.x < PLAYER_R) { p.x = PLAYER_R; p.vx = 0; }
+            if (p.x > STAGE_W - PLAYER_R) { p.x = STAGE_W - PLAYER_R; p.vx = 0; }
+
+            let pL = p.x - PLAYER_R, pR = p.x + PLAYER_R, pT = p.y - PLAYER_R, pB = p.y + PLAYER_R;
+            for (let b of solidBlocks) {
+                if (pR > b.x && pL < b.x + b.w && pB > b.y && pT < b.y + b.h) {
+                    if (p.vx > 0) { p.x = b.x - PLAYER_R; p.vx = 0; }
+                    else if (p.vx < 0) { p.x = b.x + b.w + PLAYER_R; p.vx = 0; }
+                }
+            }
+
+            p.vy += GRAVITY * dt;
+            if (p.vy > MAX_FALL_SPEED) p.vy = MAX_FALL_SPEED;
+
+            if (keys.up && !p.prevUp && p.isGrounded) { p.vy = JUMP_FORCE; p.isGrounded = false; }
+            p.prevUp = keys.up;
+
+            let prevBottom = p.y + PLAYER_R;
+            p.y += p.vy * dt;
+            p.isGrounded = false;
+
+            if (p.y > STAGE_H - PLAYER_R) { p.y = STAGE_H - PLAYER_R; p.vy = 0; p.isGrounded = true; }
+            if (p.y < PLAYER_R) { p.y = PLAYER_R; p.vy = 0; }
+
+            pL = p.x - PLAYER_R; pR = p.x + PLAYER_R; pT = p.y - PLAYER_R; pB = p.y + PLAYER_R;
+            for (let b of solidBlocks) {
+                if (pR > b.x && pL < b.x + b.w && pB > b.y && pT < b.y + b.h) {
+                    if (p.vy > 0) { p.y = b.y - PLAYER_R; p.vy = 0; p.isGrounded = true; }
+                    else if (p.vy < 0) { p.y = b.y + b.h + PLAYER_R; p.vy = 0; }
+                }
+            }
+
+            for (let jt of jumpThroughs) {
+                pB = p.y + PLAYER_R;
+                if (pR > jt.x && pL < jt.x + jt.w) {
+                    if (p.vy >= 0 && prevBottom <= jt.y + 0.1 && pB >= jt.y) {
+                        p.y = jt.y - PLAYER_R; p.vy = 0; p.isGrounded = true;
+                    }
+                }
+            }
+        }
+
+        let lastTime = 0;
+        function gameLoop() {
+            if (!isHost) return;
+            const now = performance.now();
+            const dt = Math.min((now - lastTime) / 1000, 0.1); 
+            lastTime = now;
+
+            if (gameState.status === 'countdown') {
+                gameState.countdown -= dt;
+                if (gameState.countdown <= 0) gameState.status = 'playing';
+            } 
+            else if (gameState.status === 'playing') {
+                applyPhysics(gameState.p1, myKeys, dt, gameState.oni === 1);
+                applyPhysics(gameState.p2, clientKeys, dt, gameState.oni === 2);
+                
+                if (gameState.invincible > 0) {
+                    gameState.invincible -= dt;
+                } else {
+                    const dx = gameState.p1.x - gameState.p2.x;
+                    const dy = gameState.p1.y - gameState.p2.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < PLAYER_R * 2) {
+                        gameState.oni = gameState.oni === 1 ? 2 : 1;
+                        gameState.invincible = 0.5; 
+                    }
+                }
+                
+                gameState.timeLeft -= dt;
+                if (gameState.timeLeft <= 0) {
+                    gameState.timeLeft = 0;
+                    gameState.status = 'result';
+                    gameState.winner = gameState.oni === 1 ? 2 : 1;
+                }
+            }
+
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'state', state: gameState }));
+            }
+
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function clientLoop() {
+            if (isHost) return;
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'input', keys: myKeys }));
+            }
+            render();
+            requestAnimationFrame(clientLoop);
+        }
+
+        // ---------------------------------------------------------
+        // 描画とダイナミックカメラ (最適化版)
+        // ---------------------------------------------------------
+        function render() {
+            const p1 = gameState.p1;
+            const p2 = gameState.p2;
+
+            // --- 動的カメラの計算式修正 ---
+            const minX = Math.min(p1.x, p2.x);
+            const maxX = Math.max(p1.x, p2.x);
+            const minY = Math.min(p1.y, p2.y);
+            const maxY = Math.max(p1.y, p2.y);
+
+            // 周囲の足場が視認できるようマージンを広めに取る
+            const M_X = 600; 
+            const M_Y = 450; 
+
+            const reqW = (maxX - minX) + M_X;
+            const reqH = (maxY - minY) + M_Y;
+
+            const scaleX = CANVAS_W / reqW;
+            const scaleY = CANVAS_H / reqH;
+
+            let targetScale = Math.min(scaleX, scaleY);
+            // STAGE_W=2000 に対し、CANVAS_W=800 なので 0.4 で全体表示
+            targetScale = Math.max(0.42, Math.min(1.0, targetScale));
+
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+
+            camera.x = lerp(camera.x, midX, 0.1);
+            camera.y = lerp(camera.y, midY, 0.1);
+            camera.scale = lerp(camera.scale, targetScale, 0.08);
+
+            // 背景描画
+            ctx.fillStyle = '#0f1015';
+            ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+            ctx.save();
+            ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
+            ctx.scale(camera.scale, camera.scale);
+            ctx.translate(-camera.x, -camera.y);
+
+            // ステージ背景壁
+            ctx.fillStyle = '#1a1d24';
+            ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+
+            // グリッド線
+            ctx.strokeStyle = '#2a2d36';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i=0; i<=STAGE_W; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,STAGE_H); }
+            for(let i=0; i<=STAGE_H; i+=100) { ctx.moveTo(0,i); ctx.lineTo(STAGE_W,i); }
+            ctx.stroke();
+
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(0, 0, STAGE_W, STAGE_H);
+
+            // 障害物ブロック描画
+            ctx.fillStyle = '#111827';
+            ctx.strokeStyle = '#374151';
+            ctx.lineWidth = 4;
+            for(let b of solidBlocks) {
+                ctx.fillRect(b.x, b.y, b.w, b.h);
+                ctx.strokeRect(b.x, b.y, b.w, b.h);
+            }
+
+            // すり抜け床描画
+            ctx.fillStyle = 'rgba(45, 55, 72, 0.7)';
+            ctx.strokeStyle = '#00ffff'; 
+            ctx.lineWidth = 3;
+            for(let jt of jumpThroughs) {
+                ctx.fillRect(jt.x, jt.y, jt.w, jt.h);
+                ctx.beginPath();
+                ctx.moveTo(jt.x, jt.y);
+                ctx.lineTo(jt.x + jt.w, jt.y);
+                ctx.stroke();
+            }
+
+            // プレイヤー描画
+            const drawPlayer = (p, id) => {
+                const isMe = id === myPlayerId;
+                const isOni = gameState.oni === id;
+                
+                ctx.globalAlpha = (gameState.invincible > 0 && isOni) ? (0.4 + 0.6 * Math.sin(Date.now()/30)) : 1.0;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, PLAYER_R, 0, Math.PI*2);
+                ctx.fillStyle = isOni ? '#ff3366' : '#00ffff';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0; 
+
+                if (isMe) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '16px bold sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('YOU', p.x, p.y - 35);
+                }
+            };
+
+            drawPlayer(p1, 1);
+            drawPlayer(p2, 2);
+            ctx.restore();
+
+            // HUD更新
+            updateHUD();
+
+            if (gameState.status === 'countdown') {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+                ctx.fillStyle = '#fff';
+                ctx.font = '80px bold sans-serif';
+                ctx.textAlign = 'center';
+                const countStr = Math.ceil(gameState.countdown).toString();
+                ctx.fillText(countStr, CANVAS_W/2, CANVAS_H/2 + 25);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('time-display').innerText = Math.ceil(gameState.timeLeft);
+            const roleEl = document.getElementById('role-text');
+            if (gameState.oni === myPlayerId) {
+                roleEl.innerText = '【鬼】'; roleEl.className = 'text-oni';
+            } else {
+                roleEl.innerText = '【逃げ】'; roleEl.className = 'text-nige';
+            }
+
+            // ホストのリセット通知を検知してリザルト画面を隠す
+            if (gameState.status !== 'result' && !uiResult.classList.contains('hidden')) {
+                uiResult.classList.add('hidden');
+            }
+
+            if (gameState.status === 'result' && uiResult.classList.contains('hidden')) {
+                uiResult.classList.remove('hidden');
+                document.getElementById('rematch-status').innerText = "";
+                document.getElementById('btn-rematch').classList.remove('hidden');
+                const msg = (gameState.winner === myPlayerId) ? "あなたの勝利！🎉" : "あなたの負け...💀";
+                document.getElementById('result-desc').innerText = msg;
+                document.getElementById('result-desc').style.color = (gameState.winner === myPlayerId) ? "var(--primary)" : "var(--danger)";
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 入力イベント・ボタン制御
+        // ---------------------------------------------------------
+        function handleKey(e, isDown) {
+            const key = e.key.toLowerCase();
+            if (['w', 'arrowup'].includes(key)) { myKeys.up = isDown; e.preventDefault(); }
+            if (['s', 'arrowdown'].includes(key)) { myKeys.down = isDown; e.preventDefault(); }
+            if (['a', 'arrowleft'].includes(key)) { myKeys.left = isDown; e.preventDefault(); }
+            if (['d', 'arrowright'].includes(key)) { myKeys.right = isDown; e.preventDefault(); }
+        }
+        window.addEventListener('keydown', e => handleKey(e, true), { passive: false });
+        window.addEventListener('keyup', e => handleKey(e, false), { passive: false });
+
+        document.getElementById('btn-create').addEventListener('click', createRoom);
+        document.getElementById('btn-join').addEventListener('click', joinRoom);
+        
+        // 再戦・相互承認ボタンイベント
+        document.getElementById('btn-rematch').addEventListener('click', () => {
+            isRequestingRematch = true;
+            document.getElementById('btn-rematch').classList.add('hidden');
+            document.getElementById('rematch-status').innerText = "相手の返答を待っています...";
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'rematch_request' }));
+            }
+        });
+
+        document.getElementById('btn-accept').addEventListener('click', () => {
+            document.getElementById('rematch-modal').classList.add('hidden');
+            document.getElementById('rematch-status').innerText = "再戦を準備中...";
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'rematch_accept' }));
+            }
+            if (isHost) resetGameData(); // ホストは即座にリセット処理
+        });
+
+        document.getElementById('btn-reject').addEventListener('click', () => {
+            document.getElementById('rematch-modal').classList.add('hidden');
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'rematch_reject' }));
+            }
+            document.getElementById('rematch-status').innerText = "再戦を拒否しました。";
+        });
+
+    </script>
+</body>
+</html>

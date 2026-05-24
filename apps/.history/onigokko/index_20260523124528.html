@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D 鬼ごっこゲーム - P2P WebRTC</title>
+    <style>
+        /* モダン＆ダークテーマのCSS */
+        :root {
+            --bg-color: #0f1015;
+            --panel-bg: #1a1d24;
+            --primary: #00ffff;
+            --primary-glow: #00ffff88;
+            --danger: #ff3366;
+            --danger-glow: #ff336688;
+            --text: #e2e8f0;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            background-color: var(--bg-color); color: var(--text);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+        }
+
+        #game-container {
+            position: relative; width: 800px; height: 450px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            border-radius: 12px; overflow: hidden; background: #000;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* UIオーバーレイ */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 16, 21, 0.9);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 10;
+        }
+        
+        .hidden { display: none !important; }
+
+        h1 { margin-bottom: 30px; font-size: 2.5rem; text-shadow: 0 0 10px var(--primary-glow); }
+        
+        .input-group { display: flex; flex-direction: column; gap: 15px; width: 300px; }
+        input {
+            padding: 12px; border: none; border-radius: 6px;
+            background: #2a2d36; color: #fff; font-size: 1rem;
+            outline: none; text-align: center;
+        }
+        input:focus { box-shadow: 0 0 0 2px var(--primary); }
+
+        button {
+            padding: 12px 20px; border: none; border-radius: 6px;
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .btn-host { background: var(--danger); color: #fff; box-shadow: 0 4px 15px var(--danger-glow); }
+        .btn-host:hover { background: #ff5580; transform: translateY(-2px); }
+        .btn-client { background: var(--primary); color: #000; box-shadow: 0 4px 15px var(--primary-glow); }
+        .btn-client:hover { background: #33ffff; transform: translateY(-2px); }
+
+        /* HUD (ヘッドアップディスプレイ) */
+        #hud {
+            position: absolute; top: 0; left: 0; width: 100%;
+            padding: 15px 20px; box-sizing: border-box;
+            display: flex; justify-content: space-between; align-items: flex-start;
+            pointer-events: none; z-index: 5;
+        }
+        .hud-box {
+            background: rgba(0, 0, 0, 0.6); padding: 10px 20px;
+            border-radius: 8px; border: 1px solid #333;
+            font-size: 1.2rem; font-weight: bold;
+        }
+        #role-display { font-size: 1.4rem; }
+        .text-oni { color: var(--danger); text-shadow: 0 0 8px var(--danger); }
+        .text-nige { color: var(--primary); text-shadow: 0 0 8px var(--primary); }
+
+        /* リザルト画面 */
+        #result-title { font-size: 3rem; margin-bottom: 10px; }
+        #result-desc { font-size: 1.2rem; margin-bottom: 30px; color: #aaa; }
+        
+        #status-msg { margin-top: 20px; font-size: 0.9rem; color: #888; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Canvas -->
+        <canvas id="gameCanvas" width="800" height="450"></canvas>
+
+        <!-- HUD -->
+        <div id="hud" class="hidden">
+            <div class="hud-box">残り時間: <span id="time-display">30</span>秒</div>
+            <div class="hud-box" id="role-display">あなたは<span id="role-text">---</span>です</div>
+        </div>
+
+        <!-- タイトル・マッチング画面 -->
+        <div id="title-screen" class="overlay">
+            <h1>2D 鬼ごっこ</h1>
+            <div class="input-group">
+                <input type="text" id="room-id" placeholder="部屋の合言葉 (例: room123)" autocomplete="off">
+                <button class="btn-host" id="btn-create">部屋を作成 (ホスト)</button>
+                <button class="btn-client" id="btn-join">部屋に参加 (クライアント)</button>
+            </div>
+            <div id="status-msg"></div>
+        </div>
+
+        <!-- リザルト画面 -->
+        <div id="result-screen" class="overlay hidden">
+            <h1 id="result-title">ゲーム終了</h1>
+            <div id="result-desc">勝者: ---</div>
+            <button class="btn-client" id="btn-rematch">もう一度プレイ</button>
+            <div id="rematch-status" style="margin-top: 15px; font-size: 0.9rem; color: #aaa;"></div>
+        </div>
+    </div>
+
+    <!-- Firebase v10 モジュールインポート & ロジック -->
+    <script type="module">
+        // ---------------------------------------------------------
+        // 1. Firebaseの初期化 (ユーザーのConfigを適用)
+        // ---------------------------------------------------------
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getDatabase, ref, set, get, onValue, off, remove, push, onChildAdded } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+
+        // ※ ご自身のプロジェクトのConfigに書き換える場合はここを変更してください
+        const firebaseConfig = {
+            apiKey: "AIzaSyDeVPFYsQIwBjHw3zfQnGJvpRFZXj1V8Yk",
+            authDomain: "toway-ee817.firebaseapp.com",
+            databaseURL: "https://toway-ee817-default-rtdb.firebaseio.com",
+            projectId: "toway-ee817",
+            storageBucket: "toway-ee817.firebasestorage.app",
+            messagingSenderId: "1031134467398",
+            appId: "1:1031134467398:web:e04be1bb04466847520147"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ---------------------------------------------------------
+        // 2. WebRTC & システム定数・変数
+        // ---------------------------------------------------------
+        const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
+        let pc, dc;
+        let isHost = false;
+        let myPlayerId = 1; // 1:Host, 2:Client
+        let roomId = "";
+        let iceQueue = [];
+
+        // ゲーム定数
+        const STAGE_W = 2000, STAGE_H = 1200;
+        const CANVAS_W = 800, CANVAS_H = 450;
+        const PLAYER_R = 25;
+        const SPEED = 450; // px/sec
+
+        // ゲーム状態 (ホストが一元管理しクライアントへ同期)
+        let gameState = {
+            status: 'title', // title, countdown, playing, result
+            countdown: 3,
+            timeLeft: 30,
+            oni: 1,          // 1 or 2
+            invincible: 0,
+            winner: 0,
+            p1: { x: 400, y: 600 },
+            p2: { x: 1600, y: 600 }
+        };
+
+        // 入力・制御変数
+        let myKeys = { up: false, down: false, left: false, right: false };
+        let clientKeys = { up: false, down: false, left: false, right: false };
+        let rematchFlags = { host: false, client: false };
+
+        // カメラ状態
+        let camera = { x: STAGE_W/2, y: STAGE_H/2, scale: 0.5 };
+        const lerp = (a, b, n) => (1 - n) * a + n * b;
+
+        // UI要素
+        const uiTitle = document.getElementById('title-screen');
+        const uiResult = document.getElementById('result-screen');
+        const uiHud = document.getElementById('hud');
+        const statusMsg = document.getElementById('status-msg');
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ---------------------------------------------------------
+        // 3. WebRTC シグナリング処理
+        // ---------------------------------------------------------
+        async function createRoom() {
+            roomId = document.getElementById('room-id').value.trim();
+            if (!roomId) return alert("合言葉を入力してください");
+            isHost = true; myPlayerId = 1;
+            uiTitle.querySelector('.input-group').classList.add('hidden');
+            statusMsg.innerText = "部屋を作成中...";
+
+            const roomRef = ref(db, `rooms/${roomId}`);
+            await remove(roomRef); // 古い部屋情報をクリア
+
+            pc = new RTCPeerConnection(rtcConfig);
+            
+            // 超低遅延DataChannel設定 (UDPライク)
+            dc = pc.createDataChannel('gameData', { ordered: false, maxRetransmits: 0 });
+            setupDataChannel();
+
+            pc.onicecandidate = e => {
+                if (e.candidate) push(ref(db, `rooms/${roomId}/hostIce`), e.candidate.toJSON());
+            };
+
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            await set(ref(db, `rooms/${roomId}/offer`), { type: offer.type, sdp: offer.sdp });
+            statusMsg.innerText = "クライアントの参加を待機中...";
+
+            // Answer待機
+            const ansRef = ref(db, `rooms/${roomId}/answer`);
+            onValue(ansRef, async snap => {
+                if (snap.exists() && !pc.currentRemoteDescription) {
+                    await pc.setRemoteDescription(new RTCSessionDescription(snap.val()));
+                    processIceQueue();
+                }
+            });
+
+            // Client ICE待機
+            onChildAdded(ref(db, `rooms/${roomId}/clientIce`), snap => {
+                handleIceCandidate(snap.val());
+            });
+        }
+
+        async function joinRoom() {
+            roomId = document.getElementById('room-id').value.trim();
+            if (!roomId) return alert("合言葉を入力してください");
+            isHost = false; myPlayerId = 2;
+            uiTitle.querySelector('.input-group').classList.add('hidden');
+            statusMsg.innerText = "部屋に参加中...";
+
+            const offerSnap = await get(ref(db, `rooms/${roomId}/offer`));
+            if (!offerSnap.exists()) {
+                alert("部屋が見つかりません。");
+                location.reload(); return;
+            }
+
+            pc = new RTCPeerConnection(rtcConfig);
+            pc.ondatachannel = e => { dc = e.channel; setupDataChannel(); };
+
+            pc.onicecandidate = e => {
+                if (e.candidate) push(ref(db, `rooms/${roomId}/clientIce`), e.candidate.toJSON());
+            };
+
+            await pc.setRemoteDescription(new RTCSessionDescription(offerSnap.val()));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            await set(ref(db, `rooms/${roomId}/answer`), { type: answer.type, sdp: answer.sdp });
+            statusMsg.innerText = "P2P接続を確立中...";
+
+            // Host ICE待機
+            onChildAdded(ref(db, `rooms/${roomId}/hostIce`), snap => {
+                handleIceCandidate(snap.val());
+            });
+        }
+
+        async function handleIceCandidate(candidateData) {
+            if (candidateData) {
+                if (pc.remoteDescription) {
+                    await pc.addIceCandidate(new RTCIceCandidate(candidateData));
+                } else {
+                    iceQueue.push(candidateData);
+                }
+            }
+        }
+
+        async function processIceQueue() {
+            for (let c of iceQueue) await pc.addIceCandidate(new RTCIceCandidate(c));
+            iceQueue = [];
+        }
+
+        function setupDataChannel() {
+            dc.onopen = () => {
+                console.log("WebRTC P2P DataChannel Connected!");
+                // シグナリング完了後はFirebaseのリスナーを解除して通信を切り離す
+                off(ref(db, `rooms/${roomId}`));
+                
+                uiTitle.classList.add('hidden');
+                uiHud.classList.remove('hidden');
+                initGame();
+            };
+            
+            dc.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (isHost) {
+                    // ホストはクライアントからの入力を受け取る
+                    if (data.type === 'input') clientKeys = data.keys;
+                    if (data.type === 'rematch') rematchFlags.client = true;
+                } else {
+                    // クライアントはホストからゲーム状態を受け取る
+                    if (data.type === 'state') gameState = data.state;
+                }
+            };
+
+            pc.oniceconnectionstatechange = () => {
+                if (pc.iceConnectionState === 'disconnected' || pc.iceConnectionState === 'failed') {
+                    alert("通信が切断されました。");
+                    location.reload();
+                }
+            };
+        }
+
+        // ---------------------------------------------------------
+        // 4. ゲームロジック (ホスト側一元管理)
+        // ---------------------------------------------------------
+        function initGame() {
+            gameState.status = 'countdown';
+            gameState.countdown = 3.99; // 3, 2, 1
+            gameState.timeLeft = 30;
+            gameState.oni = 1;
+            gameState.winner = 0;
+            gameState.p1 = { x: 400, y: 600 };
+            gameState.p2 = { x: 1600, y: 600 };
+            
+            rematchFlags = { host: false, client: false };
+            uiResult.classList.add('hidden');
+            lastTime = performance.now();
+            if (isHost) gameLoop();
+            else clientLoop();
+        }
+
+        function movePlayer(p, keys, dt) {
+            let vx = 0; let vy = 0;
+            if (keys.up) vy -= 1;
+            if (keys.down) vy += 1;
+            if (keys.left) vx -= 1;
+            if (keys.right) vx += 1;
+            
+            if (vx !== 0 && vy !== 0) {
+                const len = Math.sqrt(vx*vx + vy*vy);
+                vx /= len; vy /= len;
+            }
+            p.x += vx * SPEED * dt;
+            p.y += vy * SPEED * dt;
+            
+            // 境界クランプ
+            p.x = Math.max(PLAYER_R, Math.min(STAGE_W - PLAYER_R, p.x));
+            p.y = Math.max(PLAYER_R, Math.min(STAGE_H - PLAYER_R, p.y));
+        }
+
+        let lastTime = 0;
+        function gameLoop() {
+            if (!isHost) return;
+            const now = performance.now();
+            const dt = Math.min((now - lastTime) / 1000, 0.1); // 最大0.1秒(ラグ対策)
+            lastTime = now;
+
+            if (gameState.status === 'countdown') {
+                gameState.countdown -= dt;
+                if (gameState.countdown <= 0) gameState.status = 'playing';
+            } 
+            else if (gameState.status === 'playing') {
+                movePlayer(gameState.p1, myKeys, dt);
+                movePlayer(gameState.p2, clientKeys, dt);
+                
+                // 衝突判定 (タグ)
+                if (gameState.invincible > 0) {
+                    gameState.invincible -= dt;
+                } else {
+                    const dx = gameState.p1.x - gameState.p2.x;
+                    const dy = gameState.p1.y - gameState.p2.y;
+                    if (Math.sqrt(dx*dx + dy*dy) < PLAYER_R * 2) {
+                        gameState.oni = gameState.oni === 1 ? 2 : 1;
+                        gameState.invincible = 2.0; // 2秒間無敵
+                    }
+                }
+                
+                // 時間処理
+                gameState.timeLeft -= dt;
+                if (gameState.timeLeft <= 0) {
+                    gameState.timeLeft = 0;
+                    gameState.status = 'result';
+                    // 30秒逃げ切った側（鬼じゃない方）が勝ち
+                    gameState.winner = gameState.oni === 1 ? 2 : 1;
+                }
+            }
+            else if (gameState.status === 'result') {
+                // 再戦ロジック (両方が準備完了したらリセット)
+                if (rematchFlags.host && rematchFlags.client) {
+                    initGame();
+                    // initGame内でlastTimeが更新されるのでreturnして次フレームへ
+                    return requestAnimationFrame(gameLoop); 
+                }
+            }
+
+            // クライアントへ状態同期
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'state', state: gameState }));
+            }
+
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        function clientLoop() {
+            if (isHost) return;
+            // クライアントは自分の入力を毎フレームホストへ送る
+            if (dc && dc.readyState === 'open') {
+                dc.send(JSON.stringify({ type: 'input', keys: myKeys }));
+            }
+            render();
+            requestAnimationFrame(clientLoop);
+        }
+
+        // ---------------------------------------------------------
+        // 5. 描画とダイナミックカメラ
+        // ---------------------------------------------------------
+        function render() {
+            const p1 = gameState.p1;
+            const p2 = gameState.p2;
+
+            // ダイナミックカメラの計算
+            const midX = (p1.x + p2.x) / 2;
+            const midY = (p1.y + p2.y) / 2;
+            const dist = Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+            
+            // 距離に応じたズーム計算 (近い=ズームイン, 遠い=ズームアウト)
+            const minScale = 0.45; // 全体が見える
+            const maxScale = 1.30; // アップ
+            // dist が 300(近) 〜 1500(遠) でスケールを線形補間
+            let t = (dist - 300) / (1500 - 300);
+            t = Math.max(0, Math.min(1, t)); // 0~1クランプ
+            const targetScale = maxScale - t * (maxScale - minScale);
+
+            // Lerpで滑らかにカメラを追従
+            camera.x = lerp(camera.x, midX, 0.1);
+            camera.y = lerp(camera.y, midY, 0.1);
+            camera.scale = lerp(camera.scale, targetScale, 0.08);
+
+            // 背景クリア
+            ctx.fillStyle = '#0f1015';
+            ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+            ctx.save();
+            ctx.translate(CANVAS_W / 2, CANVAS_H / 2);
+            ctx.scale(camera.scale, camera.scale);
+            ctx.translate(-camera.x, -camera.y);
+
+            // ステージ床
+            ctx.fillStyle = '#1a1d24';
+            ctx.fillRect(0, 0, STAGE_W, STAGE_H);
+
+            // グリッド線 (広さの演出)
+            ctx.strokeStyle = '#2a2d36';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i=0; i<=STAGE_W; i+=100) { ctx.moveTo(i,0); ctx.lineTo(i,STAGE_H); }
+            for(let i=0; i<=STAGE_H; i+=100) { ctx.moveTo(0,i); ctx.lineTo(STAGE_W,i); }
+            ctx.stroke();
+
+            // ステージ外枠
+            ctx.strokeStyle = '#555';
+            ctx.lineWidth = 10;
+            ctx.strokeRect(0, 0, STAGE_W, STAGE_H);
+
+            // プレイヤー描画関数
+            const drawPlayer = (p, id) => {
+                const isMe = id === myPlayerId;
+                const isOni = gameState.oni === id;
+                
+                // 無敵時の点滅
+                ctx.globalAlpha = (gameState.invincible > 0 && isOni) ? (0.4 + 0.6 * Math.sin(Date.now()/50)) : 1.0;
+                
+                // 円
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, PLAYER_R, 0, Math.PI*2);
+                ctx.fillStyle = isOni ? '#ff3366' : '#00ffff';
+                ctx.shadowColor = ctx.fillStyle;
+                ctx.shadowBlur = 15;
+                ctx.fill();
+                ctx.shadowBlur = 0; // リセット
+
+                // 自分のマーカー
+                if (isMe) {
+                    ctx.fillStyle = '#fff';
+                    ctx.font = '16px bold sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('YOU', p.x, p.y - 35);
+                }
+            };
+
+            drawPlayer(p1, 1);
+            drawPlayer(p2, 2);
+            ctx.restore();
+
+            // HUD更新
+            updateHUD();
+
+            // カウントダウン描画
+            if (gameState.status === 'countdown') {
+                ctx.fillStyle = 'rgba(0,0,0,0.5)';
+                ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+                ctx.fillStyle = '#fff';
+                ctx.font = '80px bold sans-serif';
+                ctx.textAlign = 'center';
+                const countStr = Math.ceil(gameState.countdown).toString();
+                ctx.fillText(countStr, CANVAS_W/2, CANVAS_H/2 + 25);
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('time-display').innerText = Math.ceil(gameState.timeLeft);
+            const roleEl = document.getElementById('role-text');
+            if (gameState.oni === myPlayerId) {
+                roleEl.innerText = '【鬼】';
+                roleEl.className = 'text-oni';
+            } else {
+                roleEl.innerText = '【逃げ】';
+                roleEl.className = 'text-nige';
+            }
+
+            // リザルト画面制御
+            if (gameState.status === 'result' && uiResult.classList.contains('hidden')) {
+                uiResult.classList.remove('hidden');
+                document.getElementById('rematch-status').innerText = "";
+                const msg = (gameState.winner === myPlayerId) ? "あなたの勝利！🎉" : "あなたの負け...💀";
+                document.getElementById('result-desc').innerText = msg;
+                document.getElementById('result-desc').style.color = (gameState.winner === myPlayerId) ? "var(--primary)" : "var(--danger)";
+            }
+        }
+
+        // ---------------------------------------------------------
+        // 6. 入力イベント
+        // ---------------------------------------------------------
+        function handleKey(e, isDown) {
+            const key = e.key.toLowerCase();
+            if (['w', 'arrowup'].includes(key)) { myKeys.up = isDown; e.preventDefault(); }
+            if (['s', 'arrowdown'].includes(key)) { myKeys.down = isDown; e.preventDefault(); }
+            if (['a', 'arrowleft'].includes(key)) { myKeys.left = isDown; e.preventDefault(); }
+            if (['d', 'arrowright'].includes(key)) { myKeys.right = isDown; e.preventDefault(); }
+        }
+        window.addEventListener('keydown', e => handleKey(e, true));
+        window.addEventListener('keyup', e => handleKey(e, false));
+
+        // ボタンイベント
+        document.getElementById('btn-create').addEventListener('click', createRoom);
+        document.getElementById('btn-join').addEventListener('click', joinRoom);
+        
+        document.getElementById('btn-rematch').addEventListener('click', () => {
+            document.getElementById('rematch-status').innerText = "相手の準備を待っています...";
+            if (isHost) {
+                rematchFlags.host = true;
+            } else {
+                rematchFlags.client = true;
+                if (dc && dc.readyState === 'open') {
+                    dc.send(JSON.stringify({ type: 'rematch' }));
+                }
+            }
+        });
+
+    </script>
+</body>
+</html>

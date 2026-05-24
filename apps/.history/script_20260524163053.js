@@ -18,7 +18,7 @@ const scheduleData = [
 // アイテムリスト
 const items = [
     // --- Fun (Games) ---
-    { title: "2D鬼ごっこ", description: "5人まで一緒に対戦可能", thumbnail: "./apps/onigokko/image.png", url: "./apps/onigokko/index.html", recommend: "BEST", category: "fun" },
+    { title: "2D鬼ごっこ", description: "5人まで一緒に対戦可能", thumbnail: "./apps/o", url: "https://towabii.github.io/friend-station/", recommend: "BEST", category: "fun" },
     { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "play.html?game=./apps/app10/index.html", recommend: "BEST", category: "fun" },
     { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "play.html?game=./apps/app2/index.html", recommend: "人気", category: "fun" },
     { title: "17番出口", description: "不思議な地下通路を探索する作品。", thumbnail: "./apps/app8/thumbnail.png", url: "play.html?game=./apps/app8/index.html", recommend: "Beta", category: "fun" },
