@@ -26,19 +26,14 @@
     <script src="https://cdn.jsdelivr.net/npm/qrcode@1/build/qrcode.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body data-theme="light">
 
-    <div class="bg-glow-orange"></div>
-    <div class="bg-glow-blue"></div>
-
     <div id="loader">
-        <div class="loader-content">
-            <div class="spinner"></div>
-            <p class="loader-text">Loading Toway</p>
-        </div>
+        <div class="spinner"></div>
+        <p>Loading Toway...</p>
     </div>
 
     <nav class="navbar">
@@ -51,15 +46,15 @@
                 
                 <div class="nav-menu">
                     <button class="nav-item active" data-target="home">
-                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                         ホーム
                     </button>
                     <button class="nav-item" data-target="faq">
-                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                         FAQ
                     </button>
                     <button class="nav-item" data-target="author">
-                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                        <svg class="icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                         作者
                     </button>
                 </div>
@@ -110,7 +105,7 @@
         </section>
 
         <section id="content-faq" class="view-section">
-            <div class="text-container animate-fade">
+            <div class="text-container">
                 <h2>よくある質問</h2>
                 <div class="faq-box">
                     <details open>
@@ -154,10 +149,8 @@
         </section>
 
         <section id="content-author" class="view-section">
-            <div class="author-profile-box animate-fade">
-                <div class="avatar-wrapper">
-                    <img src="kao.png" alt="TOWA" class="author-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNjNDA0MyI+PHJlY3Qgd2lkdGg9Ij20IiBoZWlnaHQ9IjI0IiBmaWxsPSIjREREIi8+PC9zdmc+';">
-                </div>
+            <div class="author-profile-box">
+                <img src="kao.png" alt="TOWA" class="author-avatar" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzNjNDA0MyI+PHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiBmaWxsPSIjREREIi8+PC9zdmc+';">
                 <h1>TOWA</h1>
                 <p class="author-title">Student Developer</p>
                 <p class="author-desc">
@@ -198,10 +191,8 @@
                     <img id="details-modal-img" src="" alt="">
                 </div>
                 <div class="modal-info">
-                    <div>
-                        <h2 id="details-modal-title">タイトル</h2>
-                        <p id="details-modal-desc">説明文</p>
-                    </div>
+                    <h2 id="details-modal-title">タイトル</h2>
+                    <p id="details-modal-desc">説明文</p>
                     
                     <div class="modal-buttons unified-buttons">
                         <a id="details-modal-launch-btn" href="#" target="_blank" class="play-btn">

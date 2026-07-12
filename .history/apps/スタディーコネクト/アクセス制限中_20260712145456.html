@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>アクセス制限中 - ACCESS WARNING</title>
+    <style>
+        /* -------------------------------------------
+           ページ全体のスタイル（ダークモード・警告色）
+           ------------------------------------------- */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh; /* 画面いっぱいの高さ */
+            background-color: #0d0d0d; /* ほぼ黒 */
+            background-image: 
+                radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #ccc;
+        }
+
+        /* -------------------------------------------
+           カード（警告ボックス）のデザイン
+           ------------------------------------------- */
+        .warning-card {
+            background: #151515;
+            border: 1px solid #333;
+            border-top: 6px solid #ffcc00; /* 警告色の太いライン */
+            border-radius: 8px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+            max-width: 500px;
+            width: 90%;
+            padding: 40px;
+            text-align: center;
+            position: relative;
+        }
+
+        /* 装飾：右上のラベル */
+        .warning-card::before {
+            content: "BETA ENV";
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 10px;
+            color: #555;
+            border: 1px solid #333;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* アイコン */
+        .icon-alert {
+            font-size: 50px;
+            margin-bottom: 20px;
+            display: block;
+            text-shadow: 0 0 10px rgba(255, 204, 0, 0.3);
+        }
+
+        /* タイトル */
+        h1 {
+            color: #fff;
+            font-size: 26px;
+            margin: 0 0 15px 0;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        h1 span {
+            color: #ffcc00; /* 黄色の強調 */
+        }
+
+        /* 説明文 */
+        p.description {
+            font-size: 14px;
+            line-height: 1.8;
+            color: #aaa;
+            margin-bottom: 30px;
+            text-align: left;
+            background: #1f1f1f;
+            padding: 15px;
+            border-radius: 4px;
+        }
+
+        /* リスクリスト */
+        ul.risk-list {
+            text-align: left;
+            margin: 0 0 30px 0;
+            padding: 0;
+            list-style: none;
+            font-size: 13px;
+            color: #ff5555; /* エラーレッド */
+        }
+        ul.risk-list li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+        ul.risk-list li::before {
+            content: "!";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #ff5555;
+        }
+
+        /* -------------------------------------------
+           リンクボタンのデザイン
+           ------------------------------------------- */
+        .access-button {
+            display: block;
+            width: 100%;
+            padding: 18px 0;
+            background-color: #ffcc00;
+            color: #000;
+            text-decoration: none; /* 下線を消す */
+            font-size: 16px;
+            font-weight: 900;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .access-button:hover {
+            background-color: #ffdb4d;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255, 204, 0, 0.4);
+        }
+
+        .access-button:active {
+            transform: translateY(0);
+        }
+        
+        /* 転送先URLの補助テキスト */
+        .url-preview {
+            margin-top: 15px;
+            font-size: 11px;
+            color: #555;
+            font-family: monospace;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="warning-card">
+        <span class="icon-alert">⚠️</span>
+        
+        <h1>Beta <span>Access</span></h1>
+        
+        <p class="description">
+            これより先は<strong>試験運用中（ベータ版）</strong>の環境です。<br>
+            アクセスを制限しています。
+        </p>
+
+        <ul class="risk-list">
+            <li>データが保持されない可能性があります</li>
+            <li>予告なくサービスを停止する場合があります</li>
+            <li>このサイトにアクセスした場合他ゲームに影響する可能性があります</li>
+        </ul>
+
+        <!-- ▼▼▼ ここに飛ばしたいサイトのURLを書きます ▼▼▼ -->
+        <a href="" class="access-button">
+            上記を理解してアクセス
+        </a>
+        <!-- ▲▲▲ ここまで ▲▲▲ -->
+
+        <div class="url-preview">Target: External Site</div>
+    </div>
+
+</body>
+</html>

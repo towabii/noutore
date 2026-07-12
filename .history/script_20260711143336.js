@@ -18,7 +18,6 @@ const scheduleData = [
 // アイテムリスト
 const items = [
     // --- Fun (Games) ---
-    { title: "Friend Station", description: "試験運用中", thumbnail: "./apps/スタディーコネクト/thumbnail.png", url: "./apps/スタディーコネクト/アクセス制限中.html", recommend: "ADMIN", category: "fun" },
     { title: "2D鬼ごっこ", description: "5人まで一緒に対戦可能", thumbnail: "./apps/onigokko/image.png", url: "./apps/onigokko/index.html", recommend: "BEST", category: "fun" },
     { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "play.html?game=./apps/app10/index.html", recommend: "BEST", category: "fun" },
     { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "play.html?game=./apps/app2/index.html", recommend: "人気", category: "fun" },
@@ -31,7 +30,6 @@ const items = [
     
     // WIP (Work In Progress) - fun
 
-
     // --- Study ---
     { title: "学習プランナー Pro", description: "提出物の期限を管理できるカレンダー。", thumbnail: "./apps/外部URL用写真/学習.png", url: "play.html?game=./apps/TODO/index.html", recommend: "便利", category: "study" },
 
@@ -41,16 +39,16 @@ const items = [
     { title: "BOX検索", description: "開発者のみアクセス。", thumbnail: "./apps/外部URL用写真/NOIMAGE.jpeg", url: "https://towabii.github.io/SmartBOX/", recommend: "ADMIN", category: "other" },
 ];
 
+// お気に入り管理用配列
+let favorites = JSON.parse(localStorage.getItem('toway-favorites')) || [];
+let currentCategory = 'fun';
+
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // ロード画面のフェードアウト処理
+    // ロード画面
     setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if(loader) {
-            loader.classList.add('fade-out');
-            setTimeout(() => loader.style.display = 'none', 600);
-        }
-    }, 1000); 
+        document.getElementById('loader').classList.add('fade-out');
+    }, 800); 
 
     // テーマ設定
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -84,77 +82,117 @@ document.addEventListener('DOMContentLoaded', async function() {
             card.className = 'game-card';
             card.dataset.id = index;
             card.dataset.category = item.category;
+            card.dataset.title = item.title.toLowerCase();
+            card.dataset.desc = item.description.toLowerCase();
 
-            // バッジ（おすすめ度など）が設定されている場合の要素追加
-            const badgeHTML = item.recommend ? `<span class="card-badge badge-${item.recommend.toLowerCase()}">${item.recommend}</span>` : '';
+            // お気に入り状態の判定
+            const isFav = favorites.includes(item.title);
+
+            // バッジHTMLの生成
+            let badgeHTML = '';
+            if (item.recommend) {
+                let badgeClass = 'badge-normal';
+                if (item.recommend === 'BEST') badgeClass = 'badge-best';
+                if (item.recommend === 'ADMIN') badgeClass = 'badge-admin';
+                badgeHTML = `<span class="card-badge ${badgeClass}">${item.recommend}</span>`;
+            }
 
             const imgHTML = `<img src="${item.thumbnail}" class="card-img" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>NO IMAGE</div>'">`;
-            const overlay = `
-                <div class="card-overlay">
-                    <h3 class="card-title">${item.title}</h3>
-                    <p class="card-short-desc">${item.description || ''}</p>
-                </div>
-            `;
-
+            
+            // クールな常時表示タイトル＋ホバーで説明が浮き出るレイアウトへリニューアル
             card.innerHTML = `
                 <div class="card-img-wrapper">${imgHTML}</div>
                 ${badgeHTML}
-                ${overlay}
+                <button class="card-fav-bubble ${isFav ? 'active' : ''}" data-title="${item.title}">
+                    <svg fill="${isFav ? 'currentColor' : 'none'}" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"/></svg>
+                </button>
+                <div class="card-info-bar">
+                    <h3 class="card-title">${item.title}</h3>
+                    <p class="card-short-desc">${item.description}</p>
+                </div>
             `;
             container.appendChild(card);
         });
+
+        // カード内のお気に入りクイッククリックイベント
+        document.querySelectorAll('.card-fav-bubble').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation(); // 詳細モーダルが開くのを防ぐ
+                const title = btn.dataset.title;
+                toggleFavorite(title);
+                generateItemCards(); // 再描画して状態を同期
+                applyFilter(currentCategory); // フィルターを再適用
+            });
+        });
+    }
+
+    // お気に入りの切り替えロジック
+    function toggleFavorite(title) {
+        if (favorites.includes(title)) {
+            favorites = favorites.filter(f => f !== title);
+            showToast("お気に入りから削除しました");
+        } else {
+            favorites.push(title);
+            showToast("お気に入りに追加しました！⭐");
+        }
+        localStorage.setItem('toway-favorites', JSON.stringify(favorites));
     }
 
     function applyFilter(category) {
+        currentCategory = category;
         document.querySelectorAll('.pill-btn[data-category]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.category === category);
         });
 
-        const container = document.getElementById('item-grid');
-        if (!container) return;
-        
-        const allCards = Array.from(container.children);
-        let visibleCount = 0;
+        const query = document.getElementById('search-input').value.toLowerCase();
+        const allCards = document.getElementById('item-grid').children;
 
-        allCards.forEach(card => {
+        Array.from(allCards).forEach(card => {
             const itemCat = card.dataset.category;
-            if (category === 'all' || itemCat === category) {
+            const itemTitle = card.dataset.title;
+            const itemDesc = card.dataset.desc;
+            const itemRealTitle = items[card.dataset.id].title;
+
+            // カテゴリの一致判定（お気に入りフィルター対応）
+            let matchCat = false;
+            if (category === 'all') matchCat = true;
+            else if (category === 'favorite') matchCat = favorites.includes(itemRealTitle);
+            else matchCat = (itemCat === category);
+
+            // 検索ワードの一致判定
+            const matchSearch = itemTitle.includes(query) || itemDesc.includes(query);
+
+            if (matchCat && matchSearch) {
                 card.style.display = 'block';
-                // 時間差出現アニメーションのためのディレイ設定 (Stagger effect)
-                card.style.setProperty('--delay-index', visibleCount);
-                card.classList.remove('animate-in');
-                void card.offsetWidth; // リフローを起こしてアニメーションを再トリガー
-                card.classList.add('animate-in');
-                visibleCount++;
             } else {
                 card.style.display = 'none';
-                card.classList.remove('animate-in');
             }
         });
     }
 
+    // カテゴリフィルタークリック
     document.querySelectorAll('.pill-btn[data-category]').forEach(btn => {
         btn.addEventListener('click', () => applyFilter(btn.dataset.category));
     });
 
-    // ナビゲーション
-    document.querySelectorAll('.nav-item').forEach(btn => {
+    // リアルタイム検索のイベントリスナー
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('input', () => applyFilter(currentCategory));
+    }
+
+    // ナビゲーション（PC用・モバイル用共通ロジックへリニューアル）
+    document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(btn => {
         btn.addEventListener('click', () => {
             const target = btn.dataset.target;
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`content-${target}`).classList.add('active');
             
-            const nextSec = document.getElementById(`content-${target}`);
-            if(nextSec) {
-                nextSec.classList.add('active');
-                // 切り替え時にも時間差エフェクトをリセットして再発動
-                if(target === 'home') {
-                    const activePill = document.querySelector('.pill-btn.active');
-                    if(activePill) applyFilter(activePill.dataset.category);
-                }
-            }
-            
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            // 全てのナビボタンのactiveを一度外して、同じターゲットのものをアクティブにする
+            document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(b => {
+                b.classList.toggle('active', b.dataset.target === target);
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     });
 
@@ -170,7 +208,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     document.querySelectorAll('[data-close-modal]').forEach(btn => btn.onclick = (e) => closeModal(e.target));
     document.querySelectorAll('.modal-overlay').forEach(m => m.onclick = (e) => { if(e.target === m) closeModal(m); });
 
-    // 詳細
+    // 詳細モーダル展開
     document.getElementById('item-grid').addEventListener('click', (e) => {
         const card = e.target.closest('.game-card');
         if(!card) return;
@@ -183,6 +221,16 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         document.getElementById('details-modal-title').textContent = item.title;
         document.getElementById('details-modal-desc').textContent = item.description;
+        
+        // モーダル内のバッジ処理
+        const modalBadge = document.getElementById('details-modal-badge');
+        if(item.recommend) {
+            modalBadge.textContent = item.recommend;
+            modalBadge.style.display = 'inline-block';
+        } else {
+            modalBadge.style.display = 'none';
+        }
+
         const img = document.getElementById('details-modal-img');
         img.src = item.thumbnail;
         img.style.display = 'block';
@@ -190,6 +238,22 @@ document.addEventListener('DOMContentLoaded', async function() {
 
         const launch = document.getElementById('details-modal-launch-btn');
         launch.href = item.url;
+
+        // モーダル内のお気に入りボタン状態更新
+        const favBtn = document.getElementById('details-modal-fav-btn');
+        const updateFavBtnStyle = () => {
+            const isFav = favorites.includes(item.title);
+            favBtn.classList.toggle('active', isFav);
+            favBtn.querySelector('svg').setAttribute('fill', isFav ? 'currentColor' : 'none');
+        };
+        updateFavBtnStyle();
+
+        favBtn.onclick = () => {
+            toggleFavorite(item.title);
+            updateFavBtnStyle();
+            generateItemCards(); // 背景のカード状態を同期
+            applyFilter(currentCategory);
+        };
         
         document.getElementById('details-modal-share-btn').onclick = () => {
             document.getElementById('share-url-input').value = new URL(item.url, location.href).href;
@@ -218,6 +282,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const btn = document.getElementById('fb-submit-btn');
         btn.disabled = true; btn.textContent = "送信中...";
         
+        // ユーザーID取得
         let userId = localStorage.getItem('toway-user-id');
         if (!userId) {
             userId = 'u-' + Math.random().toString(36).substring(2, 10);
@@ -237,11 +302,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                     }
                 })
             });
-            showToast("🚀 送信しました！");
+            showToast("送信しました！");
             closeModal(document.getElementById('help-modal'));
             fbForm.reset();
         } catch(e) {
-            showToast("🚀 送信しました！(オフライン)");
+            showToast("送信しました！(オフライン)");
             closeModal(document.getElementById('help-modal'));
             fbForm.reset();
         } finally {
@@ -249,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         }
     });
 
-    // その他
+    // その他テーマ切り替え
     document.getElementById('theme-toggle').addEventListener('change', (e) => {
         const theme = e.target.checked ? 'dark' : 'light';
         document.body.dataset.theme = theme;
@@ -258,21 +323,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('copy-url-btn').onclick = () => {
         navigator.clipboard.writeText(document.getElementById('share-url-input').value);
-        showToast("📋 コピーしました");
+        showToast("コピーしました");
     };
 
     // 更新履歴・予定表
     document.getElementById('show-update-info-btn').onclick = () => {
-        const html = updateHistory.map(u => `<div class="info-list-item"><b>${u.date}</b>: ${u.title}<br><small>${u.details.join(', ')}</small></div>`).join('') || '履歴なし';
+        const html = updateHistory.map(u => `<div class="info-item"><b>${u.date}</b>: ${u.title}<br><small>${u.details.join(', ')}</small></div>`).join('') || '履歴なし';
         document.getElementById('info-modal-title').textContent = '更新履歴';
-        document.getElementById('info-modal-content').innerHTML = `<div class="modal-scroll-wrapper">${html}</div>`;
+        document.getElementById('info-modal-content').innerHTML = html;
         openModal('info-modal');
     };
     
     document.getElementById('show-schedule-btn').onclick = () => {
-        const html = scheduleData.map(s => `<div class="info-list-item"><b>${s.date}</b>: ${s.name}</div>`).join('') || '予定なし';
+        const html = scheduleData.map(s => `<div class="info-item"><b>${s.date}</b>: ${s.name}</div>`).join('') || '予定なし';
         document.getElementById('info-modal-title').textContent = '今後の予定';
-        document.getElementById('info-modal-content').innerHTML = `<div class="modal-scroll-wrapper">${html}</div>`;
+        document.getElementById('info-modal-content').innerHTML = html;
         openModal('info-modal');
     };
 
@@ -290,9 +355,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 本格的な法的テキスト
     const termsText = `
         <div style="font-size:0.95rem; line-height:1.7;">
-            <h4>第1条（適用）</h4>
+            <h4 style="color:var(--primary);">第1条（適用）</h4>
             <p>本利用規約は、当サイトの利用条件を定めるものです。利用者は、本規約に同意した上で当サイトを利用するものとします。</p>
-            <h4>第2条（禁止事項）</h4>
+            <h4 style="color:var(--primary);">第2条（禁止事項）</h4>
             <p>利用者は、以下の行為を行ってはなりません。</p>
             <ul>
                 <li>法令または公序良俗に違反する行為</li>
@@ -300,18 +365,18 @@ document.addEventListener('DOMContentLoaded', async function() {
                 <li>当サイトのサービスの運営を妨害するおそれのある行為</li>
                 <li>他のユーザーに関する個人情報等を収集または蓄積する行為</li>
             </ul>
-            <h4>第3条（免責事項）</h4>
+            <h4 style="color:var(--primary);">第3条（免責事項）</h4>
             <p>当サイトの利用により生じたいかなる損害（PCの不具合、学校での指導、成績への影響等）についても、運営者は一切の責任を負いません。自己責任でご利用ください。</p>
-            <h4>第4条（著作権）</h4>
+            <h4 style="color:var(--primary);">第4条（著作権）</h4>
             <p>当サイトのコンテンツ（文章、画像、プログラム等）の著作権は、TOWAに帰属します。無断転載を禁じます。</p>
         </div>
     `;
 
     const privacyText = `
         <div style="font-size:0.95rem; line-height:1.7;">
-            <h4>1. 情報の取得</h4>
+            <h4 style="color:var(--primary);">1. 情報の取得</h4>
             <p>当サイトでは、アクセス解析ツールを使用しています。これらはデータの収集のためにCookieを使用することがあります。</p>
-            <h4>2. 個人情報の利用目的</h4>
+            <h4 style="color:var(--primary);">2. 個人情報の利用目的</h4>
             <p>お問い合わせフォームから取得したお名前やメールアドレス等の個人情報は、お問い合わせへの対応のみに利用し、第三者に提供することはありません。</p>
         </div>
     `;
@@ -325,9 +390,9 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     const compatibilityText = `
         <div style="font-size:0.95rem; line-height:1.7;">
-            <h4>推奨ブラウザ</h4>
+            <h4 style="color:var(--primary);">推奨ブラウザ</h4>
             <p>Google Chrome 最新版<br>Microsoft Edge 最新版<br>Safari 最新版</p>
-            <h4>推奨デバイス</h4>
+            <h4 style="color:var(--primary);">推奨デバイス</h4>
             <p>PC（Windows / Mac / Chromebook）での利用を強く推奨します。<br>スマートフォン・タブレットでも閲覧可能ですが、一部のゲームはキーボード操作が必要なため動作しない場合があります。</p>
         </div>
     `;

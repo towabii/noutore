@@ -18,7 +18,6 @@ const scheduleData = [
 // アイテムリスト
 const items = [
     // --- Fun (Games) ---
-    { title: "Friend Station", description: "試験運用中", thumbnail: "./apps/スタディーコネクト/thumbnail.png", url: "./apps/スタディーコネクト/アクセス制限中.html", recommend: "ADMIN", category: "fun" },
     { title: "2D鬼ごっこ", description: "5人まで一緒に対戦可能", thumbnail: "./apps/onigokko/image.png", url: "./apps/onigokko/index.html", recommend: "BEST", category: "fun" },
     { title: "ブロック落とし", description: "CPUと対戦できるブロック落とし！", thumbnail: "./apps/app10/thumbnail.jpeg", url: "play.html?game=./apps/app10/index.html", recommend: "BEST", category: "fun" },
     { title: "ブロックトレーニング", description: "同じ色のブロックをそろえて消そう！", thumbnail: "./apps/app2/thumbnail.png", url: "play.html?game=./apps/app2/index.html", recommend: "人気", category: "fun" },
@@ -43,14 +42,10 @@ const items = [
 
 document.addEventListener('DOMContentLoaded', async function() {
     
-    // ロード画面のフェードアウト処理
+    // ロード画面
     setTimeout(() => {
-        const loader = document.getElementById('loader');
-        if(loader) {
-            loader.classList.add('fade-out');
-            setTimeout(() => loader.style.display = 'none', 600);
-        }
-    }, 1000); 
+        document.getElementById('loader').classList.add('fade-out');
+    }, 800); 
 
     // テーマ設定
     const savedTheme = localStorage.getItem('theme') || 'light';
@@ -80,25 +75,17 @@ document.addEventListener('DOMContentLoaded', async function() {
         container.innerHTML = '';
 
         items.forEach((item, index) => {
+            // ゲームカードのみ生成
             const card = document.createElement('div');
             card.className = 'game-card';
             card.dataset.id = index;
             card.dataset.category = item.category;
 
-            // バッジ（おすすめ度など）が設定されている場合の要素追加
-            const badgeHTML = item.recommend ? `<span class="card-badge badge-${item.recommend.toLowerCase()}">${item.recommend}</span>` : '';
-
             const imgHTML = `<img src="${item.thumbnail}" class="card-img" loading="lazy" onerror="this.parentElement.innerHTML='<div class=\\'no-img\\'>NO IMAGE</div>'">`;
-            const overlay = `
-                <div class="card-overlay">
-                    <h3 class="card-title">${item.title}</h3>
-                    <p class="card-short-desc">${item.description || ''}</p>
-                </div>
-            `;
+            const overlay = `<div class="card-overlay"><h3 class="card-title">${item.title}</h3></div>`;
 
             card.innerHTML = `
                 <div class="card-img-wrapper">${imgHTML}</div>
-                ${badgeHTML}
                 ${overlay}
             `;
             container.appendChild(card);
@@ -110,26 +97,10 @@ document.addEventListener('DOMContentLoaded', async function() {
             btn.classList.toggle('active', btn.dataset.category === category);
         });
 
-        const container = document.getElementById('item-grid');
-        if (!container) return;
-        
-        const allCards = Array.from(container.children);
-        let visibleCount = 0;
-
-        allCards.forEach(card => {
+        const allCards = document.getElementById('item-grid').children;
+        Array.from(allCards).forEach(card => {
             const itemCat = card.dataset.category;
-            if (category === 'all' || itemCat === category) {
-                card.style.display = 'block';
-                // 時間差出現アニメーションのためのディレイ設定 (Stagger effect)
-                card.style.setProperty('--delay-index', visibleCount);
-                card.classList.remove('animate-in');
-                void card.offsetWidth; // リフローを起こしてアニメーションを再トリガー
-                card.classList.add('animate-in');
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-                card.classList.remove('animate-in');
-            }
+            card.style.display = (category === 'all' || itemCat === category) ? 'block' : 'none';
         });
     }
 
@@ -142,16 +113,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         btn.addEventListener('click', () => {
             const target = btn.dataset.target;
             document.querySelectorAll('.view-section').forEach(sec => sec.classList.remove('active'));
-            
-            const nextSec = document.getElementById(`content-${target}`);
-            if(nextSec) {
-                nextSec.classList.add('active');
-                // 切り替え時にも時間差エフェクトをリセットして再発動
-                if(target === 'home') {
-                    const activePill = document.querySelector('.pill-btn.active');
-                    if(activePill) applyFilter(activePill.dataset.category);
-                }
-            }
+            document.getElementById(`content-${target}`).classList.add('active');
             
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
@@ -218,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         const btn = document.getElementById('fb-submit-btn');
         btn.disabled = true; btn.textContent = "送信中...";
         
+        // ユーザーID取得
         let userId = localStorage.getItem('toway-user-id');
         if (!userId) {
             userId = 'u-' + Math.random().toString(36).substring(2, 10);
@@ -237,11 +200,11 @@ document.addEventListener('DOMContentLoaded', async function() {
                     }
                 })
             });
-            showToast("🚀 送信しました！");
+            showToast("送信しました！");
             closeModal(document.getElementById('help-modal'));
             fbForm.reset();
         } catch(e) {
-            showToast("🚀 送信しました！(オフライン)");
+            showToast("送信しました！(オフライン)");
             closeModal(document.getElementById('help-modal'));
             fbForm.reset();
         } finally {
@@ -258,21 +221,21 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     document.getElementById('copy-url-btn').onclick = () => {
         navigator.clipboard.writeText(document.getElementById('share-url-input').value);
-        showToast("📋 コピーしました");
+        showToast("コピーしました");
     };
 
     // 更新履歴・予定表
     document.getElementById('show-update-info-btn').onclick = () => {
-        const html = updateHistory.map(u => `<div class="info-list-item"><b>${u.date}</b>: ${u.title}<br><small>${u.details.join(', ')}</small></div>`).join('') || '履歴なし';
+        const html = updateHistory.map(u => `<div><b>${u.date}</b>: ${u.title}<br><small>${u.details.join(', ')}</small></div>`).join('<hr>') || '履歴なし';
         document.getElementById('info-modal-title').textContent = '更新履歴';
-        document.getElementById('info-modal-content').innerHTML = `<div class="modal-scroll-wrapper">${html}</div>`;
+        document.getElementById('info-modal-content').innerHTML = html;
         openModal('info-modal');
     };
     
     document.getElementById('show-schedule-btn').onclick = () => {
-        const html = scheduleData.map(s => `<div class="info-list-item"><b>${s.date}</b>: ${s.name}</div>`).join('') || '予定なし';
+        const html = scheduleData.map(s => `<div><b>${s.date}</b>: ${s.name}</div>`).join('<hr>') || '予定なし';
         document.getElementById('info-modal-title').textContent = '今後の予定';
-        document.getElementById('info-modal-content').innerHTML = `<div class="modal-scroll-wrapper">${html}</div>`;
+        document.getElementById('info-modal-content').innerHTML = html;
         openModal('info-modal');
     };
 
@@ -289,7 +252,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 本格的な法的テキスト
     const termsText = `
-        <div style="font-size:0.95rem; line-height:1.7;">
+        <div style="font-size:0.9rem; line-height:1.6;">
             <h4>第1条（適用）</h4>
             <p>本利用規約は、当サイトの利用条件を定めるものです。利用者は、本規約に同意した上で当サイトを利用するものとします。</p>
             <h4>第2条（禁止事項）</h4>
@@ -308,7 +271,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     `;
 
     const privacyText = `
-        <div style="font-size:0.95rem; line-height:1.7;">
+        <div style="font-size:0.9rem; line-height:1.6;">
             <h4>1. 情報の取得</h4>
             <p>当サイトでは、アクセス解析ツールを使用しています。これらはデータの収集のためにCookieを使用することがあります。</p>
             <h4>2. 個人情報の利用目的</h4>
@@ -317,14 +280,14 @@ document.addEventListener('DOMContentLoaded', async function() {
     `;
 
     const personalInfoText = `
-        <div style="font-size:0.95rem; line-height:1.7;">
+        <div style="font-size:0.9rem; line-height:1.6;">
             <p>当サイトでは、お問い合わせ時に入力いただいた個人情報（お名前、IPアドレス等）を厳重に管理し、不正アクセス、紛失、漏洩等が起きないよう安全対策を講じます。</p>
             <p>法的機関からの開示請求があった場合を除き、ご本人の同意なく第三者に提供することはありません。</p>
         </div>
     `;
 
     const compatibilityText = `
-        <div style="font-size:0.95rem; line-height:1.7;">
+        <div style="font-size:0.9rem; line-height:1.6;">
             <h4>推奨ブラウザ</h4>
             <p>Google Chrome 最新版<br>Microsoft Edge 最新版<br>Safari 最新版</p>
             <h4>推奨デバイス</h4>

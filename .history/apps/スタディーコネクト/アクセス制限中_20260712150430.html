@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>アクセス制限中 | Friend Station Beta</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    background:#0f1115;
+    color:#f5f5f5;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    padding:30px;
+}
+
+.card{
+    width:100%;
+    max-width:650px;
+    background:#181b20;
+    border:1px solid #2d3138;
+    border-radius:18px;
+    padding:40px;
+    box-shadow:0 15px 45px rgba(0,0,0,.35);
+}
+
+.badge{
+    display:inline-block;
+    padding:6px 12px;
+    border-radius:999px;
+    background:#ffb10022;
+    color:#ffcb47;
+    font-size:13px;
+    font-weight:600;
+    margin-bottom:20px;
+}
+
+h1{
+    font-size:34px;
+    margin-bottom:12px;
+}
+
+.sub{
+    color:#9ca3af;
+    line-height:1.8;
+    margin-bottom:30px;
+}
+
+.notice{
+    background:#20242b;
+    border-left:4px solid #ffb300;
+    border-radius:8px;
+    padding:18px;
+    margin-bottom:25px;
+}
+
+.notice h2{
+    font-size:18px;
+    margin-bottom:10px;
+}
+
+.notice p{
+    color:#c7c7c7;
+    line-height:1.7;
+}
+
+ul{
+    margin-top:15px;
+    padding-left:20px;
+}
+
+li{
+    margin:10px 0;
+    color:#d5d5d5;
+    line-height:1.6;
+}
+
+.warning{
+    margin-top:25px;
+    background:#281d1d;
+    border:1px solid #6d3838;
+    border-radius:8px;
+    padding:18px;
+}
+
+.warning h3{
+    color:#ff7070;
+    margin-bottom:10px;
+}
+
+.warning p{
+    line-height:1.7;
+    color:#ddd;
+}
+
+.check{
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    margin:30px 0;
+}
+
+.check input{
+    margin-top:4px;
+    transform:scale(1.2);
+}
+
+.check label{
+    line-height:1.8;
+    color:#ddd;
+}
+
+button{
+    width:100%;
+    border:none;
+    background:#3b82f6;
+    color:white;
+    padding:18px;
+    font-size:17px;
+    font-weight:700;
+    border-radius:12px;
+    cursor:pointer;
+    transition:.2s;
+}
+
+button:hover{
+    background:#2563eb;
+}
+
+button:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+}
+
+.cancel{
+    margin-top:15px;
+    display:block;
+    text-align:center;
+    color:#8f98a3;
+    text-decoration:none;
+}
+
+footer{
+    margin-top:25px;
+    text-align:center;
+    color:#707782;
+    font-size:13px;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="card">
+
+<span class="badge">BETA ACCESS</span>
+
+<h1>アクセス制限中</h1>
+
+<p class="sub">
+Friend Stationは現在ベータ版です。<br>
+このページを経由してアクセスした利用者のみ利用できます。
+</p>
+
+<div class="notice">
+
+<h2>ご利用前にご確認ください</h2>
+
+<p>
+本サービスは開発中です。利用する前に以下をご確認ください。
+</p>
+
+<ul>
+<li>サービス内容は予告なく変更・終了する場合があります。</li>
+
+<li>チャット・投稿などのデータが保存されない、または削除される場合があります。</li>
+
+<li>不具合により正常に動作しない場合があります。</li>
+
+<li>開発中のため、十分なセキュリティ対策を実施していますが、予期しない不具合や情報漏えいのリスクを完全に排除することはできません。</li>
+
+<li>パスワード・住所・電話番号・クレジットカード情報など重要な個人情報は送信しないでください。</li>
+
+</ul>
+
+</div>
+
+<div class="warning">
+
+<h3>重要</h3>
+
+<p>
+
+このサービスは正式版ではありません。<br>
+利用によって発生したデータの消失・不具合などについて責任を負うことはできません。
+
+</p>
+
+</div>
+
+<div class="check">
+
+<input type="checkbox" id="agree">
+
+<label for="agree">
+
+上記の内容を確認し、理解したうえでベータ版へアクセスします。
+
+</label>
+
+</div>
+
+<button id="continueBtn" disabled>
+
+同意してFriend Stationへアクセス
+
+</button>
+
+<a href="/" class="cancel">
+
+戻る
+
+</a>
+
+<footer>
+
+Friend Station Beta Access
+
+</footer>
+
+<script>
+
+const checkbox=document.getElementById("agree");
+const button=document.getElementById("continueBtn");
+
+checkbox.addEventListener("change",()=>{
+
+button.disabled=!checkbox.checked;
+
+});
