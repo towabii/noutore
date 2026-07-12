@@ -345,8 +345,6 @@
                                 <div class="overlay-footer">
                                     <button class="btn" id="createRoomBtn">部屋を作成 (ホスト)</button>
                                     <button class="btn" id="joinRoomBtn">部屋に参加 (ゲスト)</button>
-                                    <button class="btn" id="friendMatchBtn">フレンド</button>
-                                    <button class="btn" id="freeMatchBtn" style="background: linear-gradient(145deg, #FFD166, #e5b000); color: #000;">ランダムマッチ (フリー)</button>
                                     <button class="btn ghost" id="cancelOnlineBtn">ホームへ戻る</button>
                                 </div>
                             </div>
@@ -453,30 +451,6 @@
                     </div>
                 </div>
             </div>
-            <div id="friendModal" class="modal-overlay hidden">
-                <div class="modal-content">
-                    <h2>フレンド</h2>
-                    <p class="note">このブラウザにフレンド情報を保存します。</p>
-                    <div class="friend-input-row" style="display:flex; gap:8px; margin:12px 0;">
-                        <input type="text" id="addFriendInput" class="password-input" placeholder="フレンドの名前" style="flex:1; font-size:16px;" />
-                        <button class="btn" id="addFriendBtn">追加</button>
-                    </div>
-                    <div id="friend-list" class="friend-list" style="max-height:260px; overflow:auto; display:grid; gap:10px;"></div>
-                    <div class="modal-footer">
-                        <button class="btn ghost" id="closeFriendBtn">閉じる</button>
-                    </div>
-                </div>
-            </div>
-            <div id="friendRequestModal" class="modal-overlay hidden">
-                <div class="modal-content">
-                    <h2>プレイ申請</h2>
-                    <p id="friendRequestText"></p>
-                    <div class="modal-footer">
-                        <button class="btn" id="acceptFriendRequestBtn">承諾</button>
-                        <button class="btn ghost" id="declineFriendRequestBtn">断る</button>
-                    </div>
-                </div>
-            </div>
             <div id="rematchModal" class="modal-overlay hidden">
                 <div class="modal-content">
                     <h2>再プレイ申請</h2>
@@ -528,9 +502,13 @@
                 messagingSenderId: "1031134467398",
                 appId: "1:1031134467398:web:32adc0826e1f3e06520147"
             };
-            firebase.initializeApp(firebaseConfig);
-            const auth = firebase.auth();
-            const db = firebase.database();
+            // 修正: 認証完了まで Database のインスタンスを作成・利用しない。
+            let auth = null;
+            let db = null;
+            let isAuthenticated = false;
+            const isFirebaseReady = () => isAuthenticated && db !== null;
+            // 修正: null / undefined の値に対する toLowerCase() 呼び出しを防ぐ。
+            const safeLowerCase = value => typeof value === 'string' ? value.toLowerCase() : '';
 
             let playerNickname = "Player";
             
@@ -546,14 +524,22 @@
                 const skipBtn = document.getElementById('skipBtn');
                 const nicknameInput = document.getElementById('nicknameInput');
 
-                // セキュリティ強化のための匿名ログイン (Anonymous Auth)
+                // 修正: 匿名認証の失敗はゲーム起動を妨げず、成功時だけ Database を有効化する。
                 try {
+                    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+                    auth = firebase.auth();
                     await auth.signInAnonymously();
+                    db = firebase.database();
+                    isAuthenticated = true;
                     skipBtn.textContent = "決定";
                     skipBtn.disabled = false;
                 } catch(e) {
                     console.error("Authentication failed:", e);
-                    skipBtn.textContent = "エラーが発生しました";
+                    // 修正: 認証失敗時はオンライン/Firebase 機能だけを無効化し、ローカル機能は継続する。
+                    isAuthenticated = false;
+                    db = null;
+                    skipBtn.textContent = "決定";
+                    skipBtn.disabled = false;
                 }
 
                 const savedName = localStorage.getItem('blockfall_nickname');
@@ -620,7 +606,7 @@
                 const pauseRestartButton = document.getElementById('pauseRestartButton');
 
                 // Online Elements
-                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg'), freeMatchBtn = document.getElementById('freeMatchBtn'), friendMatchBtn = document.getElementById('friendMatchBtn'), friendModal = document.getElementById('friendModal'), addFriendInput = document.getElementById('addFriendInput'), addFriendBtn = document.getElementById('addFriendBtn'), closeFriendBtn = document.getElementById('closeFriendBtn'), friendListContainer = document.getElementById('friend-list'), friendRequestModal = document.getElementById('friendRequestModal'), friendRequestText = document.getElementById('friendRequestText'), acceptFriendRequestBtn = document.getElementById('acceptFriendRequestBtn'), declineFriendRequestBtn = document.getElementById('declineFriendRequestBtn'), rematchModal = document.getElementById('rematchModal'), acceptRematchBtn = document.getElementById('acceptRematchBtn'), declineRematchBtn = document.getElementById('declineRematchBtn');
+                const onlineSetupScreen = document.getElementById('online-setup-screen'), roomIdInput = document.getElementById('roomIdInput'), createRoomBtn = document.getElementById('createRoomBtn'), joinRoomBtn = document.getElementById('joinRoomBtn'), cancelOnlineBtn = document.getElementById('cancelOnlineBtn'), onlineStatusMsg = document.getElementById('online-status-msg'), rematchModal = document.getElementById('rematchModal'), acceptRematchBtn = document.getElementById('acceptRematchBtn'), declineRematchBtn = document.getElementById('declineRematchBtn');
 
                 let player = {};
                 let opponentPlayer = null; // Renamed from cpu
@@ -639,14 +625,6 @@
                 let hasOnlineGameStarted = false; 
                 let myRematchReady = false;
                 let oppRematchReady = false;
-                let friendList = [];
-                let friendStatuses = {};
-                let friendPresenceListeners = {};
-                let incomingFriendRequest = null;
-                let myPresenceRef = null;
-                let friendRequestsRef = null;
-                let friendResponsesRef = null;
-                let friendListsRef = null;
 
                 const defaultKeyMap = { moveLeft: 'ArrowLeft', moveRight: 'ArrowRight', softDrop: 'ArrowDown', hardDrop: 'ArrowUp', rotateLeft: 'z', rotateRight: 'x', hold: 'c' };
                 const actionLabels = { moveLeft: '左移動', moveRight: '右移動', softDrop: 'ソフトドロップ', hardDrop: 'ハードドロップ', rotateLeft: '左回転', rotateRight: '右回転', hold: 'ホールド' };
@@ -697,10 +675,6 @@
                     // Online Handlers
                     createRoomBtn.addEventListener('click', () => handleOnlineSetup('create'));
                     joinRoomBtn.addEventListener('click', () => handleOnlineSetup('join'));
-                    freeMatchBtn.addEventListener('click', handleFreeMatch);
-                    friendMatchBtn.addEventListener('click', () => {
-                        if (friendModal) { renderFriendList(); friendModal.classList.remove('hidden'); }
-                    });
                     cancelOnlineBtn.addEventListener('click', () => { onlineSetupScreen.classList.add('hidden'); startScreen.classList.remove('hidden'); });
                     if (acceptRematchBtn) {
                         acceptRematchBtn.addEventListener('click', () => {
@@ -715,23 +689,10 @@
                     }
                     if (declineRematchBtn) declineRematchBtn.addEventListener('click', hideRematchRequestModal);
                     
-                    if (addFriendBtn) {
-                        addFriendBtn.addEventListener('click', async () => {
-                            const name = addFriendInput.value.trim();
-                            if (!name) return;
-                            const success = await addFriend(name);
-                            if (success) addFriendInput.value = '';
-                        });
-                    }
-                    if (closeFriendBtn) closeFriendBtn.addEventListener('click', () => { if (friendModal) friendModal.classList.add('hidden'); });
-                    if (acceptFriendRequestBtn) acceptFriendRequestBtn.addEventListener('click', acceptFriendRequest);
-                    if (declineFriendRequestBtn) declineFriendRequestBtn.addEventListener('click', declineFriendRequest);
-
                     setupKeyHandlers();
                     setupTouchHandlers();
                     setupExtraFeatures();
                     setupKeyConfigModal();
-                    setupFriendPresence();
                 }
 
                 function saveFriendList() { try { localStorage.setItem('blockfall_friends', JSON.stringify(friendList)); } catch (e) { console.error('Failed to save friends', e); } }
@@ -749,13 +710,15 @@
                 }
 
                 function registerCurrentUser() {
-                    if (!db || !playerNickname) return;
+                    // 修正: 認証失敗時は Database へアクセスしない。
+                    if (!isFirebaseReady() || !playerNickname) return;
                     const key = sanitizeFriendKey(playerNickname);
                     db.ref(`users/${key}`).set({ name: playerNickname, updatedAt: Date.now() }).catch(e => console.warn(e));
                 }
 
                 function addFriendToDb(friendName) {
-                    if (!db || !playerNickname) return;
+                    // 修正: 認証失敗時は Database へアクセスしない。
+                    if (!isFirebaseReady() || !playerNickname) return;
                     const myKey = sanitizeFriendKey(playerNickname);
                     const friendKey = sanitizeFriendKey(friendName);
                     db.ref(`friends/${myKey}/${friendKey}`).set({ name: friendName, addedAt: Date.now() });
@@ -770,7 +733,8 @@
                         delete friendPresenceListeners[sanitizeFriendKey(name)];
                         delete friendStatuses[name];
                     }
-                    if (db && playerNickname) {
+                    // 修正: 認証成功時だけフレンド情報を Database から削除する。
+                    if (isFirebaseReady() && playerNickname) {
                         const myKey = sanitizeFriendKey(playerNickname);
                         const friendKey = sanitizeFriendKey(name);
                         db.ref(`friends/${myKey}/${friendKey}`).remove();
@@ -783,7 +747,8 @@
                 function sanitizeFriendKey(name) { return name.trim().replace(/[.#$\[\]/]/g, '_'); }
 
                 function watchFriendList() {
-                    if (!db || !playerNickname || friendListsRef) return;
+                    // 修正: 認証失敗時は Database の監視を開始しない。
+                    if (!isFirebaseReady() || !playerNickname || friendListsRef) return;
                     const key = sanitizeFriendKey(playerNickname);
                     friendListsRef = db.ref(`friends/${key}`);
                     friendListsRef.on('value', (snap) => handleFriendListUpdate(snap.val()));
@@ -825,6 +790,8 @@
                 }
 
                 function watchFriendPresence(name) {
+                    // 修正: 認証失敗時は Presence を参照しない。
+                    if (!isFirebaseReady()) return;
                     const key = sanitizeFriendKey(name);
                     if (friendPresenceListeners[key]) return;
                     const ref = db.ref('presence/' + key);
@@ -844,6 +811,9 @@
 
                 function setupFriendPresence() {
                     friendList = loadFriendList();
+                    renderFriendList();
+                    // 修正: ローカルのフレンド一覧は表示し、Database 連携だけを停止する。
+                    if (!isFirebaseReady()) return;
                     watchFriendList();
                     friendList.forEach(watchFriendPresence);
                     const key = sanitizeFriendKey(playerNickname);
@@ -858,6 +828,8 @@
                 }
 
                 function sendFriendPlayRequest(friendName) {
+                    // 修正: 認証失敗時はフレンド対戦リクエストを送信しない。
+                    if (!isFirebaseReady()) return;
                     if (!friendName || friendName === playerNickname) return;
                     const key = sanitizeFriendKey(friendName);
                     const requestPath = db.ref('friendRequests/' + key + '/' + sanitizeFriendKey(playerNickname));
@@ -875,6 +847,8 @@
                 }
 
                 function acceptFriendRequest() {
+                    // 修正: 認証失敗時は Database を使う対戦処理を実行しない。
+                    if (!isFirebaseReady()) return;
                     if (!incomingFriendRequest) return;
                     const friendName = incomingFriendRequest.from;
                     const requestMode = incomingFriendRequest.mode || 'ONLINE_VS';
@@ -888,6 +862,8 @@
                 }
 
                 function declineFriendRequest() {
+                    // 修正: 認証失敗時は Database を使う対戦処理を実行しない。
+                    if (!isFirebaseReady()) return;
                     if (!incomingFriendRequest) return;
                     const friendName = incomingFriendRequest.from;
                     const responsePath = db.ref('friendResponses/' + sanitizeFriendKey(friendName) + '/' + sanitizeFriendKey(playerNickname));
@@ -898,6 +874,8 @@
                 }
 
                 function handleFriendResponse(fromKey, data) {
+                    // 修正: 認証失敗時は Database を参照・更新しない。
+                    if (!isFirebaseReady()) return;
                     if (!data) return;
                     if (data.accepted) {
                         showFeedbackPopup(`「${data.from}」さんが申請を承諾しました`);
@@ -909,6 +887,8 @@
                 }
 
                 function createFriendMatchRoom(request) {
+                    // 修正: 認証成功時のみ Firebase Database を使って部屋を作成する。
+                    if (!isFirebaseReady()) return;
                     const roomId = request.roomId;
                     if (!roomId) return;
                     onlineRoomId = roomId;
@@ -925,6 +905,8 @@
                 }
 
                 function joinFriendRoom(roomId) {
+                    // 修正: 認証成功時のみ Firebase Database を使って部屋へ参加する。
+                    if (!isFirebaseReady()) return;
                     if (!roomId) return;
                     onlineRoomId = roomId;
                     myRole = 'guest';
@@ -975,12 +957,16 @@
                     isOnline = false;
 
                     if (mode === 'ONLINE_VS' || mode === 'ONLINE_ULTRA') {
+                        // 修正: 認証に失敗した場合は Firebase を必要とするオンライン機能だけを無効化する。
+                        if (!isFirebaseReady()) {
+                            showFeedbackPopup('オンライン対戦は認証成功後に利用できます');
+                            return;
+                        }
                         isOnline = true;
                         startScreen.classList.add('hidden');
                         onlineSetupScreen.classList.remove('hidden');
                         onlineStatusMsg.textContent = "";
                         roomIdInput.value = "";
-                        updateOwnPresence('lobby', null, mode);
                         return;
                     }
 
@@ -1021,35 +1007,14 @@
                     }, 1000);
                 }
 
-                function handleFreeMatch() {
-                    onlineStatusMsg.textContent = "対戦相手を探しています...";
-                    db.ref('rooms').orderByChild('status').equalTo('waiting').once('value')
-                        .then((snapshot) => {
-                            let foundRoomId = null;
-                            if (snapshot.exists()) {
-                                snapshot.forEach((childSnapshot) => {
-                                    if (childSnapshot.val().mode === gameMode) {
-                                        foundRoomId = childSnapshot.key; return true; 
-                                    }
-                                });
-                            }
-                            if (foundRoomId) {
-                                roomIdInput.value = foundRoomId; 
-                                handleOnlineSetup('join');
-                            } else {
-                                const randomId = Math.random().toString(36).substring(2, 8).toUpperCase();
-                                roomIdInput.value = randomId;
-                                handleOnlineSetup('create');
-                            }
-                        }).catch((err) => { onlineStatusMsg.textContent = "エラーが発生しました"; console.error(err); });
-                }
-
                 // WebRTC Setup
                 async function setupWebRTC(isHost) {
+                    // 修正: WebRTC のシグナリングに使う Database は認証成功時のみ利用する。
+                    if (!isFirebaseReady()) return;
                     pc = new RTCPeerConnection(rtcConfig);
 
                     pc.onicecandidate = event => {
-                        if (event.candidate && onlineRoomId) {
+                        if (isFirebaseReady() && event.candidate && onlineRoomId) {
                             const path = isHost ? 'hostCandidates' : 'guestCandidates';
                             db.ref(`rooms/${onlineRoomId}/${path}`).push(event.candidate.toJSON());
                         }
@@ -1097,7 +1062,8 @@
                 function setupDataChannel(channel) {
                     dc = channel;
                     dc.onopen = () => {
-                        if (myRole === 'host' && onlineRoomId) db.ref(`rooms/${onlineRoomId}`).update({ status: 'playing' });
+                        // 修正: 認証状態を再確認してから Database を更新する。
+                        if (isFirebaseReady() && myRole === 'host' && onlineRoomId) db.ref(`rooms/${onlineRoomId}`).update({ status: 'playing' });
                     };
                     dc.onclose = () => {
                         if (isOnline && !isOver) {
@@ -1140,6 +1106,11 @@
                 }
 
                 function handleOnlineSetup(action) {
+                    // 修正: 認証失敗時は Database へ接続・アクセスしない。
+                    if (!isFirebaseReady()) {
+                        onlineStatusMsg.textContent = 'オンライン対戦は認証成功後に利用できます';
+                        return;
+                    }
                     let roomId = roomIdInput.value.trim().toUpperCase();
                     if (action === 'join' && !roomId) {
                         onlineStatusMsg.textContent = "待機中の部屋を検索しています...";
@@ -1165,7 +1136,6 @@
                         onlineSeed = initialSeed;
                         roomRef.set({ status: 'waiting', seed: initialSeed, mode: gameMode, host: { name: playerNickname } }).then(() => {
                             onlineStatusMsg.textContent = "対戦相手を待っています...";
-                            updateOwnPresence('waiting', onlineRoomId, gameMode);
                             setupWebRTC(true);
                             listenToRoomStatus();
                         });
@@ -1178,7 +1148,6 @@
                                 if (data.status !== 'waiting') { onlineStatusMsg.textContent = "満員かプレイ中です"; return; }
                                 if (data.mode !== gameMode) { onlineStatusMsg.textContent = "ゲームモードが一致しません"; return; }
                                 roomRef.child('guest').set({ name: playerNickname }).then(() => {
-                                    updateOwnPresence('waiting', onlineRoomId, gameMode);
                                     onlineStatusMsg.textContent = "参加しました。接続中...";
                                     setupWebRTC(false);
                                     listenToRoomStatus();
@@ -1213,6 +1182,8 @@
                 }
 
                 function listenToRoomStatus() {
+                    // 修正: 認証失敗時は Database のルーム監視を開始しない。
+                    if (!isFirebaseReady() || !roomRef) return;
                     roomRef.child('status').on('value', (snap) => {
                         const status = snap.val();
                         if (status === 'playing' && !hasOnlineGameStarted && !isCountdownActive) {
@@ -1252,7 +1223,6 @@
                     if (isOnline) {
                          opponentPlayer = createPlayerState(true);
                          opponentData = { board: [], score: 0, nextPiece: null, heldPiece: null, currentPiece: null, isOver: false, name: opponentData.name };
-                         updateOwnPresence('playing', onlineRoomId, gameMode);
                          pushOnlineState(); 
                     } else {
                         opponentPlayer = null;
@@ -1783,9 +1753,6 @@
 
                     isOnline = false; hasOnlineGameStarted = false; isCountdownActive = false; myRematchReady = false; oppRematchReady = false;
                     hideRematchRequestModal();
-                    if (friendModal) friendModal.classList.add('hidden');
-                    if (friendRequestModal) friendRequestModal.classList.add('hidden');
-                    if (myPresenceRef) updateOwnPresence('idle', null, null);
 
                     appContainer.className = 'app single-player-mode';
                     cpuContainer.classList.add('hidden'); playerNextPanelVS.classList.add('hidden'); cpuInfoPanel.classList.add('hidden');
@@ -1812,13 +1779,15 @@
                         if (e.key === 'Escape' && !isOver && !document.querySelector('.modal-overlay:not(.hidden)')) { e.preventDefault(); togglePause(); return; }
                         if (isPaused || isOver || (player && player.isOver) || document.querySelector('.modal-overlay:not(.hidden)')) return;
                         if (!keys[e.key]) { 
-                            const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase()); 
+                            // 修正: 保存済みキー設定に null / undefined が含まれても入力処理を継続する。
+                            const action = Object.keys(keyMap || {}).find(act => safeLowerCase(keyMap[act]) === safeLowerCase(e.key));
                             if (action) { e.preventDefault(); handleKeyPress(action); }
                         }
                         keys[e.key] = true;
                     });
                     document.addEventListener('keyup', e => {
-                        const action = Object.keys(keyMap).find(act => keyMap[act].toLowerCase() === e.key.toLowerCase());
+                        // 修正: 保存済みキー設定に null / undefined が含まれても入力処理を継続する。
+                        const action = Object.keys(keyMap || {}).find(act => safeLowerCase(keyMap[act]) === safeLowerCase(e.key));
                         if (action === 'moveLeft' || action === 'moveRight') { clearTimeout(dasTimer); clearInterval(arrTimer); dasTimer = null; arrTimer = null; }
                         if (action === 'softDrop') { clearInterval(softDropTimer); softDropTimer = null; }
                         keys[e.key] = false;
@@ -1878,7 +1847,18 @@
                 }
                 function playSound(id) { if (!soundToggle.checked) return; const a = document.getElementById(id); if (a) { a.currentTime = 0; a.play().catch(() => {}); } }
                 function showFeedbackPopup(text) { const p = document.createElement('div'); p.textContent = text; p.className = 'feedback-popup'; document.body.appendChild(p); p.addEventListener('animationend', () => p.remove()); }
-                function loadKeyMap() { try { const s = JSON.parse(localStorage.getItem('blockfall_keymap')); keyMap = s ? { ...defaultKeyMap, ...s } : { ...defaultKeyMap }; } catch (e) { keyMap = { ...defaultKeyMap }; } }
+                function loadKeyMap() {
+                    try {
+                        const savedKeyMap = JSON.parse(localStorage.getItem('blockfall_keymap'));
+                        // 修正: localStorage 内の null / undefined / 非文字列のキー設定を既定値へ戻す。
+                        keyMap = { ...defaultKeyMap };
+                        if (savedKeyMap && typeof savedKeyMap === 'object') {
+                            Object.keys(defaultKeyMap).forEach(action => {
+                                if (typeof savedKeyMap[action] === 'string' && savedKeyMap[action]) keyMap[action] = savedKeyMap[action];
+                            });
+                        }
+                    } catch (e) { keyMap = { ...defaultKeyMap }; }
+                }
                 function saveKeyMap() { try { localStorage.setItem('blockfall_keymap', JSON.stringify(keyMap)); } catch (e) { alert('設定の保存に失敗しました。'); } }
                 function setupKeyConfigModal() {
                     const modal = document.getElementById('keyConfigModal'), keyConfigList = document.getElementById('key-config-list'), saveBtn = document.getElementById('saveKeysBtn'), resetBtn = document.getElementById('resetKeysBtn');
@@ -1895,7 +1875,8 @@
                     function captureKey(e) {
                         e.preventDefault(); e.stopPropagation(); const newKey = e.key; const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`);
                         if (newKey === 'Escape') { if (currentEl) currentEl.textContent = keyMap[actionToChange]; }
-                        else { const isUsed = Object.values(keyMap).some(k => k.toLowerCase() === newKey.toLowerCase()); if (isUsed && keyMap[actionToChange].toLowerCase() !== newKey.toLowerCase()) { alert(`使用済です。`); if (currentEl) currentEl.textContent = keyMap[actionToChange]; } else { keyMap[actionToChange] = newKey; if (currentEl) currentEl.textContent = newKey; } }
+                        // 修正: 未定義のキー設定やイベント値でも toLowerCase() の例外を発生させない。
+                        else { const isUsed = Object.values(keyMap || {}).some(k => safeLowerCase(k) === safeLowerCase(newKey)); if (isUsed && safeLowerCase(keyMap[actionToChange]) !== safeLowerCase(newKey)) { alert(`使用済です。`); if (currentEl) currentEl.textContent = keyMap[actionToChange] || ''; } else if (typeof newKey === 'string' && newKey) { keyMap[actionToChange] = newKey; if (currentEl) currentEl.textContent = newKey; } }
                         if (currentEl) currentEl.classList.remove('listening'); document.removeEventListener('click', cancelKeyChange); actionToChange = null;
                     }
                     function cancelKeyChange(e) { if (e.target.dataset.action !== actionToChange) { const currentEl = document.querySelector(`.key-display[data-action="${actionToChange}"]`); if (currentEl) { currentEl.textContent = keyMap[actionToChange]; currentEl.classList.remove('listening'); } document.removeEventListener('keydown', captureKey, { capture: true }); actionToChange = null; } }
@@ -1915,7 +1896,8 @@
                     const originalTitle = document.title, favicon = document.getElementById('favicon'), originalFavicon = favicon ? favicon.href : '', fakeTitle = '翻訳', fakeFavicon = 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🌐</text></svg>';
                     window.addEventListener('blur', () => { document.title = fakeTitle; if (favicon) favicon.href = fakeFavicon; });
                     window.addEventListener('focus', () => { document.title = originalTitle; if (favicon) favicon.href = originalFavicon; });
-                    if (translatorInput) { translatorInput.addEventListener('keyup', () => { if (translatorOutput) translatorOutput.value = translatorInput.value.toLowerCase().split('').map(char => ({ 'a': 'b', 'あ': 'い', 'i': 'j' })[char] || char).join(''); }); }
+                    // 修正: 入力値が null / undefined でも翻訳表示処理を継続する。
+                    if (translatorInput) { translatorInput.addEventListener('keyup', () => { if (translatorOutput) translatorOutput.value = safeLowerCase(translatorInput.value).split('').map(char => ({ 'a': 'b', 'あ': 'い', 'i': 'j' })[char] || char).join(''); }); }
                     
                     document.getElementById('menu-nickname-btn').addEventListener('click', () => {
                         const newName = prompt('新しいニックネームを入力:', playerNickname);
