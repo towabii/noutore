@@ -382,6 +382,11 @@
                         <option value="3">最大人数: 3人</option>
                         <option value="4">最大人数: 4人</option>
                         <option value="5">最大人数: 5人</option>
+                        <option value="6">最大人数: 6人</option>
+                        <option value="7">最大人数: 7人</option>
+                        <option value="8">最大人数: 8人</option>
+                        <option value="9">最大人数: 9人</option>
+                        <option value="10">最大人数: 10人</option>
                     </select>
                     <button class="btn-host" id="btn-create-room">この設定で作成</button>
                     <button class="btn-back" id="btn-back-host">戻る</button>
@@ -498,7 +503,10 @@
         // ---------------------------------------------------------
         const rtcConfig = { iceServers: [{ urls: "stun:stun.l.google.com:19302" }] };
         const PLAYER_R = 25;
-        const PLAYER_COLORS = { 1: '#ff3366', 2: '#00ffff', 3: '#33ff33', 4: '#ffff33', 5: '#cc33ff' };
+        const PLAYER_COLORS = {
+            1: '#ff3366', 2: '#00ffff', 3: '#33ff33', 4: '#ffff33', 5: '#cc33ff',
+            6: '#ff9933', 7: '#ff66cc', 8: '#66ccff', 9: '#99ff33', 10: '#ff6666'
+        };
 
         let myNickname = "";
         let isHost = false;
