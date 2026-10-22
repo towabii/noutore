@@ -230,14 +230,14 @@
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
             </div>
 
-            <h1>システム緊急メンテナンス</h1>
-            <p class="desc">現在、重大な不具合により緊急メンテナンスを実施中です。</p>
+            <h1>緊急メンテナンスのお知らせ</h1>
+            <p class="desc">いつもご利用いただき、誠にありがとうございます。ただいま、システムの安全性を高めるための緊急セキュリティメンテナンスを実施しております。</p>
 
             <!-- 障害・担当者情報 -->
             <div class="info-grid">
                 <div class="info-item">
                     <span class="info-label">復旧目処</span>
-                    <span class="info-val" style="color:#d32f2f;">目処なし(全システム)</span>
+                    <span class="info-val" style="color:#d32f2f;">2026/10/24</span>
                 </div>
                 <div class="info-item">
                     <span class="info-label">対応担当者</span>
@@ -291,10 +291,10 @@
         //  【設定エリア】 ここを変更してください
         // ==========================================
         const CONFIG = {
-            siteName: "とわの作った楽しいやつ",
-            adminName: "とわ",
+            siteName: "TOWAY",
+            adminName: "TOWA",
             reloadSeconds: 60, // 自動更新秒数
-            tickerText: "電波工事中です。",
+            tickerText: "ただいま、システムの安全性を高めるための緊急セキュリティメンテナンスを実施しております。",
             news: [
                 "Friend Stationのバージョン1を公開",
                 "TOWAY",
@@ -327,9 +327,9 @@
         function getRandom(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
         
         const regions = [
-            { name: "沖縄県", min: 2, max: 2 }, // 指定: 23-26
-            { name: "福岡県", min: 5, max: 6 },
-            { name: "長野県", min: 2, max: 9 }
+            { name: "那覇市", min: 2, max: 2 }, // 指定: 23-26
+            { name: "那覇市", min: 5, max: 6 },
+            { name: "那覇市", min: 2, max: 9 }
         ];
 
         let total = 0;
