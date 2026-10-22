@@ -1,384 +1,612 @@
+
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>メンテナンス中</title>
-    <style>
-        :root {
-            --bg-color: #eef2f5; /* 背景色 */
-            --card-bg: #ffffff;
-            --primary-red: #d32f2f; /* アクセントカラー（赤） */
-            --text-main: #333333;
-            --text-sub: #666666;
-            --news-bg: #e3f2fd;
-            --news-border: #90caf9;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#111216">
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+  <title>緊急メンテナンスのお知らせ | TOWAY</title>
 
-        body {
-            font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding-top: 50px; /* 上部のティッカー分 */
-            overflow: hidden; /* 画面全体のスクロールを禁止 */
-        }
+  <style>
+    :root {
+      --background: #111216;
+      --surface: #191a1f;
+      --surface-light: #202127;
+      --border: #303138;
+      --text: #f2f3f5;
+      --muted: #a1a3ad;
+      --accent: #d94752;
+      --accent-light: #f08089;
+      --content-width: 860px;
+    }
 
-        /* --- 1. 上部固定ティッカー --- */
-        .ticker-wrap {
-            position: fixed;
-            top: 0; left: 0; width: 100%;
-            background-color: var(--primary-red);
-            color: white;
-            height: 40px;
-            line-height: 40px;
-            overflow: hidden;
-            z-index: 2000;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .ticker {
-            display: inline-block;
-            white-space: nowrap;
-            padding-left: 100%;
-            animation: ticker 30s linear infinite;
-        }
-        .ticker-item {
-            display: inline-block;
-            padding: 0 2rem;
-            font-weight: bold;
-            font-size: 0.95rem;
-        }
-        @keyframes ticker {
-            0% { transform: translate3d(0, 0, 0); }
-            100% { transform: translate3d(-100%, 0, 0); }
-        }
+    * {
+      box-sizing: border-box;
+    }
 
-        /* --- 2. 右上固定ステータス（時計＆カウントダウン） --- */
-        .top-status-pill {
-            position: fixed;
-            top: 50px; /* ティッカーの下 */
-            right: 15px;
-            background: rgba(0, 0, 0, 0.85);
-            color: #fff;
-            padding: 8px 16px;
-            border-radius: 0 0 8px 8px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            z-index: 1500;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-            font-family: monospace; /* 数字の幅を揃える */
-        }
-        .status-row { display: flex; align-items: center; margin-bottom: 2px; }
-        .status-row:last-child { margin-bottom: 0; color: #ff8a80; } /* カウントダウンは少し赤く */
-        .status-icon { margin-right: 6px; width: 14px; height: 14px; }
+    html {
+      min-height: 100%;
+      background: var(--background);
+    }
 
-        /* --- 3. メインカード --- */
-        .container {
-            background: var(--card-bg);
-            width: 95%;
-            max-width: 700px;
-            height: 85vh; /* 画面の85%の高さ */
-            border-radius: 10px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            display: flex;
-            flex-direction: column; /* 中身を縦並びに */
-            border-top: 5px solid var(--primary-red);
-            position: relative;
-        }
+    body {
+      min-height: 100vh;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      color: var(--text);
+      background: var(--background);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Noto Sans JP",
+        "Yu Gothic",
+        Meiryo,
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
 
-        /* スクロールエリア（中身が増えてもここでスクロール） */
-        .scrollable-content {
-            flex: 1; /* 残りの高さを全部使う */
-            overflow-y: auto; /* 縦スクロール許可 */
-            padding: 2rem;
-        }
+    a {
+      color: inherit;
+    }
 
-        /* 固定フッターエリア（バーとボタン） */
-        .fixed-footer {
-            padding: 1rem 2rem;
-            background: #fff;
-            border-top: 1px solid #eee;
-            border-radius: 0 0 10px 10px;
-        }
+    /* ヘッダー */
 
-        /* デザインパーツ */
-        .site-name {
-            font-size: 1.2rem; font-weight: bold; color: var(--text-sub);
-            text-align: center; margin-bottom: 1.5rem; border-bottom: 2px solid #f5f5f5; padding-bottom: 1rem;
-        }
+    .header {
+      border-bottom: 1px solid var(--border);
+      background: #141519;
+    }
 
-        .icon-wrapper {
-            margin: 0 auto 1rem;
-            width: 64px; height: 64px;
-            background: #ffebee; border-radius: 50%;
-            color: var(--primary-red);
-            display: flex; justify-content: center; align-items: center;
-            animation: pulse 2s infinite;
-        }
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.4); }
-            70% { box-shadow: 0 0 0 15px rgba(211, 47, 47, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
-        }
+    .header-inner {
+      width: min(100% - 48px, 1080px);
+      min-height: 76px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
 
-        h1 { font-size: 1.5rem; color: #2c3e50; text-align: center; margin-bottom: 0.5rem; }
-        p.desc { text-align: center; font-size: 0.9rem; color: #666; margin-bottom: 1.5rem; }
+    .logo {
+      color: var(--text);
+      font-size: 23px;
+      font-weight: 800;
+      letter-spacing: .14em;
+      text-decoration: none;
+    }
 
-        /* 情報グリッド */
-        .info-grid {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 1.5rem;
-        }
-        .info-item { background: #f9f9f9; padding: 10px; border-radius: 6px; font-size: 0.9rem; }
-        .info-label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 3px; }
-        .info-val { font-weight: bold; color: #333; }
+    .logo span {
+      color: var(--accent);
+    }
 
-        /* 待機人数エリア */
-        .queue-box {
-            background: #fffdeb; border: 1px solid #fff59d;
-            border-radius: 6px; padding: 12px; margin-bottom: 1.5rem;
-        }
-        .queue-head {
-            font-size: 0.85rem; font-weight: bold; color: #f57f17;
-            display: flex; justify-content: space-between; margin-bottom: 8px;
-        }
-        .queue-total { font-size: 1.1rem; color: #bf360c; }
-        .region-list {
-            list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 5px;
-        }
-        .region-li {
-            font-size: 0.8rem; border-bottom: 1px dashed #ddd;
-            display: flex; justify-content: space-between; padding: 2px 0;
-        }
+    .header-label {
+      color: var(--muted);
+      font-size: 11px;
+      letter-spacing: .12em;
+    }
 
-        /* ニュースエリア */
-        .news-box {
-            background: var(--news-bg); border: 1px solid var(--news-border);
-            border-radius: 6px; padding: 12px; margin-bottom: 1rem;
-        }
-        .news-head {
-            color: #1565c0; font-weight: bold; font-size: 0.95rem; margin-bottom: 8px;
-            display: flex; align-items: center;
-        }
-        .news-list { list-style: none; padding: 0; }
-        .news-li {
-            font-size: 0.9rem; margin-bottom: 6px; padding-left: 12px; position: relative; line-height: 1.4;
-        }
-        .news-li::before {
-            content: "▶"; position: absolute; left: 0; top: 1px; font-size: 0.7rem; color: #1565c0;
-        }
+    /* メインコンテンツ */
 
-        /* 更新バー */
-        .progress-wrap {
-            margin-bottom: 15px; text-align: center;
-        }
-        .progress-text { font-size: 0.75rem; color: #888; margin-bottom: 4px; }
-        .progress-bg { width: 100%; height: 6px; background: #eee; border-radius: 3px; overflow: hidden; }
-        .progress-bar { width: 100%; height: 100%; background: var(--primary-red); transform-origin: left; transition: width 1s linear; }
+    .main {
+      flex: 1;
+      width: min(100% - 40px, var(--content-width));
+      margin: 0 auto;
+      padding: 68px 0 76px;
+    }
 
-        /* ボタン */
-        .btn {
-            display: flex; justify-content: center; align-items: center;
-            width: 100%; padding: 14px; background: #333; color: #fff;
-            text-decoration: none; border-radius: 6px; font-weight: bold; transition: 0.3s;
-        }
-        .btn:hover { background: #555; }
-        .btn svg { margin-right: 8px; width: 18px; height: 18px; }
+    .page-heading {
+      margin-bottom: 34px;
+    }
 
-        /* スマホ調整 */
-        @media (max-width: 600px) {
-            .container { width: 100%; height: 100vh; border-radius: 0; }
-            .info-grid { grid-template-columns: 1fr; }
-        }
-    </style>
+    .eyebrow {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 22px;
+      color: var(--accent-light);
+      font-size: 12px;
+      font-weight: 650;
+      letter-spacing: .12em;
+    }
+
+    .eyebrow-line {
+      width: 25px;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(27px, 4vw, 38px);
+      font-weight: 700;
+      line-height: 1.55;
+      letter-spacing: -.035em;
+    }
+
+    .heading-sub {
+      margin: 12px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .13em;
+    }
+
+    /* 案内パネル */
+
+    .notice {
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--surface);
+    }
+
+    .notice-top {
+      padding: 27px 30px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface-light);
+    }
+
+    .notice-label {
+      margin: 0 0 13px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .06em;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .status-dot {
+      position: relative;
+      width: 9px;
+      height: 9px;
+      flex: 0 0 9px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .status-dot::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border: 1px solid rgba(217, 71, 82, .4);
+      border-radius: 50%;
+    }
+
+    .status-text {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .notice-body {
+      padding: 30px;
+    }
+
+    .notice-title {
+      margin: 0 0 17px;
+      font-size: 17px;
+      font-weight: 650;
+      line-height: 1.7;
+    }
+
+    .description {
+      margin: 0;
+      color: #c2c3cb;
+      font-size: 14px;
+      line-height: 2.1;
+      overflow-wrap: anywhere;
+    }
+
+    /* 情報一覧 */
+
+    .information {
+      margin-top: 28px;
+      border-top: 1px solid var(--border);
+    }
+
+    .information-row {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr);
+      gap: 20px;
+      padding: 21px 4px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .information-label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    .information-value {
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.8;
+      overflow-wrap: anywhere;
+    }
+
+    .status-value {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-light);
+      font-weight: 650;
+    }
+
+    .status-value::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .time-note {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    /* 注意事項 */
+
+    .guidance {
+      margin-top: 30px;
+      padding: 21px 23px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, .015);
+    }
+
+    .guidance-title {
+      margin: 0 0 10px;
+      font-size: 13px;
+      font-weight: 650;
+    }
+
+    .guidance-text {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 2;
+    }
+
+    .update-info {
+      margin-top: 22px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.9;
+      text-align: right;
+    }
+
+    /* フッター */
+
+    .footer {
+      border-top: 1px solid var(--border);
+      background: #141519;
+    }
+
+    .footer-inner {
+      width: min(100% - 48px, 1080px);
+      min-height: 78px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .footer-brand {
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: .1em;
+    }
+
+    .copyright {
+      color: #777984;
+      font-size: 11px;
+      text-align: right;
+    }
+
+    /* スマートフォン対応 */
+
+    @media (max-width: 600px) {
+      .header-inner {
+        width: calc(100% - 36px);
+        min-height: 66px;
+      }
+
+      .logo {
+        font-size: 20px;
+      }
+
+      .header-label {
+        max-width: 130px;
+        font-size: 9px;
+        text-align: right;
+        line-height: 1.7;
+      }
+
+      .main {
+        width: calc(100% - 32px);
+        padding: 45px 0 50px;
+      }
+
+      .page-heading {
+        margin-bottom: 25px;
+      }
+
+      .eyebrow {
+        margin-bottom: 17px;
+        font-size: 10px;
+      }
+
+      h1 {
+        font-size: clamp(25px, 7vw, 32px);
+      }
+
+      .notice-top {
+        padding: 22px 20px;
+      }
+
+      .status-text {
+        font-size: 15px;
+      }
+
+      .notice-body {
+        padding: 23px 20px;
+      }
+
+      .notice-title {
+        font-size: 16px;
+      }
+
+      .description {
+        font-size: 13px;
+      }
+
+      .information-row {
+        grid-template-columns: 1fr;
+        gap: 7px;
+        padding: 17px 2px;
+      }
+
+      .information-label,
+      .information-value {
+        font-size: 12px;
+      }
+
+      .guidance {
+        padding: 18px;
+      }
+
+      .footer-inner {
+        width: calc(100% - 36px);
+        min-height: 72px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+  </style>
 </head>
+
 <body>
+  <header class="header">
+    <div class="header-inner">
+      <a class="logo" href="#" aria-label="TOWAY">TOW<span>A</span>Y</a>
 
-    <!-- 1. 流れる文字 -->
-    <div class="ticker-wrap">
-        <div class="ticker" id="ticker-content">
-            <!-- JSで挿入 -->
-        </div>
+      <div class="header-label">
+        SYSTEM INFORMATION
+      </div>
     </div>
+  </header>
 
-    <!-- 2. 右上の時計＆カウントダウン -->
-    <div class="top-status-pill">
-        <div class="status-row">
-            <svg class="status-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-            <span id="clock-display">00:00:00</span>
+  <main class="main">
+    <section class="page-heading">
+      <div class="eyebrow">
+        <span class="eyebrow-line"></span>
+        IMPORTANT NOTICE
+      </div>
+
+      <h1>緊急メンテナンスのお知らせ</h1>
+
+      <p class="heading-sub">
+        SYSTEM MAINTENANCE
+      </p>
+    </section>
+
+    <section class="notice" aria-labelledby="notice-title">
+      <div class="notice-top">
+        <p class="notice-label">現在の稼働状況</p>
+
+        <div class="status-row" role="status" aria-live="polite">
+          <span class="status-dot" aria-hidden="true"></span>
+
+          <span class="status-text" id="status-title">
+            緊急メンテナンスを実施しております
+          </span>
         </div>
-        <div class="status-row">
-            <svg class="status-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 4v6h-6"></path><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-            <span id="countdown-display">あと --秒</span>
+      </div>
+
+      <div class="notice-body">
+        <h2 class="notice-title" id="notice-title">
+          PHPの影響による緊急メンテナンスについて
+        </h2>
+
+        <p class="description">
+          平素よりTOWAYをご利用いただき、誠にありがとうございます。<br>
+          現在、PHPの影響による問題への対応のため、
+          緊急メンテナンスを実施しております。<br>
+          ご利用の皆さまには多大なるご不便とご迷惑をおかけしておりますことを、
+          深くお詫び申し上げます。<br>
+          安定したサービスの提供に向けて対応を進めておりますので、
+          恐れ入りますが、復旧まで今しばらくお待ちくださいますようお願い申し上げます。
+        </p>
+      </div>
+    </section>
+
+    <section class="information" aria-label="メンテナンス情報">
+      <div class="information-row">
+        <div class="information-label">対象サービス</div>
+        <div class="information-value">TOWAY</div>
+      </div>
+
+      <div class="information-row">
+        <div class="information-label">発生事象</div>
+        <div class="information-value">
+          PHPの影響によるシステム上の問題
         </div>
+      </div>
+
+      <div class="information-row">
+        <div class="information-label">対応状況</div>
+        <div class="information-value">
+          <span class="status-value" id="status-value">
+            緊急メンテナンス中
+          </span>
+        </div>
+      </div>
+
+      <div class="information-row">
+        <div class="information-label">開始日時</div>
+        <div>
+          <div class="information-value" id="start-time">
+            読み込み中...
+          </div>
+          <div class="time-note">日本時間（JST）</div>
+        </div>
+      </div>
+
+      <div class="information-row">
+        <div class="information-label">復旧予定</div>
+        <div class="information-value">
+          現時点では未定です。確定次第、情報を更新いたします。
+        </div>
+      </div>
+    </section>
+
+    <section class="guidance">
+      <h2 class="guidance-title">ご利用の皆さまへ</h2>
+
+      <p class="guidance-text">
+        メンテナンス中は、対象サービスをご利用いただけない場合がございます。
+        また、復旧時刻に関するお問い合わせについては、
+        現時点で確定した情報をご案内できない場合がございます。
+        何卒ご理解とご協力を賜りますようお願い申し上げます。
+      </p>
+    </section>
+
+    <div class="update-info">
+      このページは定期的に再読み込みされます。<br>
+      最終表示更新：<span id="last-updated">--</span>
     </div>
+  </main>
 
-    <!-- 3. メインコンテナ -->
-    <div class="container">
-        <!-- スクロールする部分 -->
-        <div class="scrollable-content">
-            <div class="site-name" id="site-name-area"></div>
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand">TOWAY</div>
 
-            <div class="icon-wrapper">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-            </div>
-
-            <h1>緊急メンテナンスのお知らせ</h1>
-            <p class="desc">いつもご利用いただき、誠にありがとうございます。ただいま、システムの安全性を高めるための緊急セキュリティメンテナンスを実施しております。</p>
-
-            <!-- 障害・担当者情報 -->
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">復旧目処</span>
-                    <span class="info-val" style="color:#d32f2f;">2026/10/24</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">対応担当者</span>
-                    <span class="info-val" id="admin-name"></span>
-                </div>
-            </div>
-
-            <!-- ゲームニュース (ご要望の箇所) -->
-            <div class="news-box">
-                <div class="news-head">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="margin-right:5px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                    最新ゲームニュース
-                </div>
-                <ul class="news-list" id="news-list">
-                    <!-- JSで挿入 -->
-                </ul>
-            </div>
-
-            <!-- 待機人数 -->
-            <div class="queue-box">
-                <div class="queue-head">
-                    アクセス待機状況 (リアルタイム)
-                    <span class="queue-total"><span id="total-val">0</span>人</span>
-                </div>
-                <ul class="region-list" id="region-list">
-                    <!-- JSで挿入 -->
-                </ul>
-            </div>
-        </div>
-
-        <!-- 固定フッター (バーとボタン) -->
-        <div class="fixed-footer">
-            <!-- 更新バー -->
-            <div class="progress-wrap">
-                <div class="progress-text">自動更新まで</div>
-                <div class="progress-bg">
-                    <div class="progress-bar" id="progress-bar"></div>
-                </div>
-            </div>
-
-            <a href="https://forms.gle/oVnf5Eokshvbq92F9" class="btn" target="_blank" rel="noopener noreferrer">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-                お問い合わせフォーム
-            </a>
-        </div>
+      <div class="copyright">
+        © <span id="year"></span> TOWAY. All rights reserved.
+      </div>
     </div>
+  </footer>
 
-    <!-- ▼▼▼ 設定とロジック ▼▼▼ -->
-    <script>
-        // ==========================================
-        //  【設定エリア】 ここを変更してください
-        // ==========================================
-        const CONFIG = {
-            siteName: "TOWAY",
-            adminName: "TOWA",
-            reloadSeconds: 60, // 自動更新秒数
-            tickerText: "ただいま、システムの安全性を高めるための緊急セキュリティメンテナンスを実施しております。",
-            news: [
-                "Friend Stationのバージョン1を公開",
-                "TOWAY",
-                "TOWAY"
-            ]
-        };
+  <script>
+    "use strict";
 
-        // ==========================================
-        //  プログラム本体
-        // ==========================================
+    /*
+     * TOWAY メンテナンスページ設定
+     */
 
-        // 1. テキスト等の反映
-        document.getElementById('site-name-area').textContent = CONFIG.siteName;
-        document.getElementById('admin-name').textContent = CONFIG.adminName;
+    // 実際のメンテナンス開始日時を指定してください。
+    // 例: "2026-10-22T15:30:00+09:00"
+    // null の場合、最初に開いた時刻をブラウザに保存します。
+    const MAINTENANCE_START = null;
 
-        // ティッカー（ループ用に3回繰り返す）
-        const tickDiv = document.getElementById('ticker-content');
-        const itemHtml = `<span class="ticker-item">${CONFIG.tickerText}</span>`;
-        tickDiv.innerHTML = itemHtml + itemHtml + itemHtml;
+    // 自動再読み込み間隔（ミリ秒）
+    // 60000 = 60秒、0 = 無効
+    const RELOAD_INTERVAL_MS = 60000;
 
-        // ニュースリスト生成
-        const newsUl = document.getElementById('news-list');
-        let newsHtml = "";
-        CONFIG.news.forEach(text => {
-            newsHtml += `<li class="news-li">${text}</li>`;
-        });
-        newsUl.innerHTML = newsHtml;
+    const STORAGE_KEY = "toway_maintenance_start";
 
-        // 2. 待機人数シミュレーション (指定条件に対応)
-        function getRandom(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
-        
-        const regions = [
-            { name: "那覇市", min: 2, max: 2 }, // 指定: 23-26
-            { name: "那覇市", min: 5, max: 6 },
-            { name: "那覇市", min: 2, max: 9 }
-        ];
+    function formatDate(date) {
+      return new Intl.DateTimeFormat("ja-JP", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+        timeZone: "Asia/Tokyo"
+      }).format(date);
+    }
 
-        let total = 0;
-        let regionHtml = "";
-        regions.forEach(r => {
-            const val = getRandom(r.min, r.max);
-            total += val;
-            regionHtml += `<li class="region-li"><span>${r.name}</span><span>${val}人</span></li>`;
-        });
-        document.getElementById('region-list').innerHTML = regionHtml;
-        document.getElementById('total-val').textContent = total;
+    function getMaintenanceStart() {
+      if (MAINTENANCE_START !== null) {
+        const configuredDate = new Date(MAINTENANCE_START);
 
-        // 3. 時計 & カウントダウン & バー処理
-        let timeLeft = CONFIG.reloadSeconds;
-        const clockEl = document.getElementById('clock-display');
-        const countEl = document.getElementById('countdown-display');
-        const barEl = document.getElementById('progress-bar');
+        if (!Number.isNaN(configuredDate.getTime())) {
+          return configuredDate;
+        }
+      }
 
-        function updateClock() {
-            const now = new Date();
-            const h = now.getHours().toString().padStart(2, '0');
-            const m = now.getMinutes().toString().padStart(2, '0');
-            const s = now.getSeconds().toString().padStart(2, '0');
-            clockEl.textContent = `${h}:${m}:${s}`;
+      try {
+        const savedDate = localStorage.getItem(STORAGE_KEY);
+
+        if (savedDate) {
+          const parsedDate = new Date(savedDate);
+
+          if (!Number.isNaN(parsedDate.getTime())) {
+            return parsedDate;
+          }
         }
 
-        // 毎秒実行する処理
-        const timer = setInterval(() => {
-            // 時計更新
-            updateClock();
+        const now = new Date();
 
-            // カウントダウン処理
-            timeLeft--;
-            countEl.textContent = `あと ${timeLeft}秒`;
+        localStorage.setItem(
+          STORAGE_KEY,
+          now.toISOString()
+        );
 
-            // バーの幅を更新
-            const percent = (timeLeft / CONFIG.reloadSeconds) * 100;
-            barEl.style.width = percent + "%";
+        return now;
+      } catch (error) {
+        return new Date();
+      }
+    }
 
-            if (timeLeft <= 0) {
-                clearInterval(timer);
-                window.location.reload();
-            }
-        }, 1000);
+    const startDate = getMaintenanceStart();
 
-        // 初期実行
-        updateClock();
-        countEl.textContent = `あと ${timeLeft}秒`;
-        
-    </script>
+    document.getElementById("start-time").textContent =
+      formatDate(startDate);
+
+    document.getElementById("last-updated").textContent =
+      formatDate(new Date());
+
+    document.getElementById("year").textContent =
+      new Date().getFullYear();
+
+    if (
+      Number.isFinite(RELOAD_INTERVAL_MS) &&
+      RELOAD_INTERVAL_MS > 0
+    ) {
+      window.setInterval(() => {
+        window.location.reload();
+      }, RELOAD_INTERVAL_MS);
+    }
+  </script>
 </body>
 </html>
